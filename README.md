@@ -160,3 +160,10 @@ native/
 ├─ README.md
 └─ tsconfig.json
 
+i want something like this
+
+          <Text
+            style={{ fontSize: tokens.typography.xs, fontWeight: tokens.typography.700 , opacity: 0.6, color: colors.onBackground }}
+          >
+            BLOG
+          </Text>

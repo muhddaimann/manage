@@ -2,9 +2,7 @@
 export type Density = "compact" | "comfortable" | "spacious";
 
 export type Spacing = {
-  /** 0..12 scale (px) */
   scale: readonly number[];
-  /** quick named aliases */
   xxs: number; xs: number; sm: number; md: number; lg: number; xl: number; "2xl": number; "3xl": number;
 };
 
@@ -41,6 +39,12 @@ export type Layout = {
   radiusForSheets: number;
 };
 
+export type Typography = {
+  sizes: { xs: number; sm: number; md: number; lg: number; xl: number; "2xl": number; "3xl": number };
+  weights: { reg: "400"; med: "500"; semibold: "600"; bold: "700" };
+  opacities: { muted: number; normal: number };
+};
+
 export type DesignTokens = {
   density: Density;
   spacing: Spacing;
@@ -50,9 +54,9 @@ export type DesignTokens = {
   elevation: Elevation;
   opacity: Opacity;
   layout: Layout;
+  typography: Typography;
 };
 
-/** Easing helpers */
 const cubic = (a: number, b: number, c: number, d: number) => (t: number) =>
   ((a * t + b) * t + c) * t + d;
 
@@ -65,21 +69,26 @@ export function createDesignTokens(density: Density = "comfortable", scale = 1):
   const densityFactor = density === "compact" ? 0.9 : density === "spacious" ? 1.1 : 1.0;
   const s = (n: number) => Math.round(n * scale * densityFactor);
 
-  // 4px base scale
   const base = [0, 2, 4, 6, 8, 12, 16, 20, 24, 32, 40, 48, 64].map(s) as unknown as readonly number[];
+
+  const typography: Typography = {
+    sizes: { xs: 12, sm: 14, md: 16, lg: 20, xl: 24, "2xl": 28, "3xl": 32 },
+    weights: { reg: "400", med: "500", semibold: "600", bold: "700" },
+    opacities: { muted: 0.6, normal: 1 },
+  };
 
   return {
     density,
     spacing: {
       scale: base,
-      xxs: base[2],  // 4
-      xs: base[4],   // 8
-      sm: base[5],   // 12
-      md: base[6],   // 16
-      lg: base[8],   // 24
-      xl: base[9],   // 32
-      "2xl": base[10], // 40
-      "3xl": base[12], // 64
+      xxs: base[2],
+      xs: base[4],
+      sm: base[5],
+      md: base[6],
+      lg: base[8],
+      xl: base[9],
+      "2xl": base[10],
+      "3xl": base[12],
     },
     radii: {
       none: 0,
@@ -125,8 +134,8 @@ export function createDesignTokens(density: Density = "comfortable", scale = 1):
       grid: { columns: 12, gutter: s(16), margin: s(16) },
       radiusForSheets: s(20),
     },
+    typography,
   };
 }
 
-/** Default tokens */
 export const design: DesignTokens = createDesignTokens();
