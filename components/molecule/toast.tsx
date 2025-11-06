@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { View, Pressable, Animated, Platform } from "react-native";
-import { useTheme, Text, Button } from "react-native-paper";
+import { useTheme, Text } from "react-native-paper";
+import { Button } from "../../components/atom/button";
 import { useDesign } from "../../contexts/designContext";
 import type { ToastOptions } from "../../contexts/overlayContext";
 
@@ -21,7 +22,7 @@ export function ToastBar({
       state.variant === "info"
         ? colors.primary
         : state.variant === "success"
-        ? colors.primaryContainer
+        ? colors.tertiary
         : state.variant === "warning"
         ? colors.secondary
         : state.variant === "error"
@@ -95,11 +96,11 @@ export function ToastBar({
               ios: {
                 shadowColor: "#000",
                 shadowOpacity: 0.18,
-                shadowRadius: 12,
-                shadowOffset: { width: 0, height: 8 },
+                shadowRadius: tokens.elevation.level5 * 2,
+                shadowOffset: { width: 0, height: tokens.elevation.level5 },
               },
-              android: { elevation: 6 },
-              default: { elevation: 6 },
+              android: { elevation: tokens.elevation.level5 },
+              default: { elevation: tokens.elevation.level5 },
             }),
           }}
         >
@@ -122,8 +123,11 @@ export function ToastBar({
             >
               <View style={{ flex: 1, paddingVertical: tokens.spacing.xs }}>
                 <Text
-                  variant="bodyMedium"
-                  style={{ color: fg }}
+                  style={{
+                    color: fg,
+                    fontSize: tokens.typography.sizes.md,
+                    fontWeight: tokens.typography.weights.reg,
+                  }}
                   numberOfLines={2}
                 >
                   {state.message}

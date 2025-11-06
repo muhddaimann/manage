@@ -14,9 +14,11 @@ import { ToastBar } from "../components/molecule/toast";
 import { ModalSheet } from "../components/molecule/modal";
 import {
   useFonts,
-  ComicNeue_400Regular,
-  ComicNeue_700Bold,
-} from "@expo-google-fonts/comic-neue";
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,8 +40,10 @@ function AppShell() {
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    ComicNeue_400Regular,
-    ComicNeue_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
   });
 
   const onLayoutRootView = React.useCallback(async () => {

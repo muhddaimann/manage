@@ -1,208 +1,175 @@
 import React from "react";
-import {
-  View,
-  Image,
-  ScrollView,
-  Platform,
-  ViewStyle,
-  StyleProp,
-} from "react-native";
-import { useTheme, Chip, Button, Divider } from "react-native-paper";
+import { ScrollView, View } from "react-native";
+import { useTheme, Divider, Text } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
-import { useBlog } from "../../../hooks/useBlog";
 import {
   H1,
   H2,
+  H3,
   Subtitle,
   Body,
   BodySmall,
   Caption,
   Overline,
 } from "../../../components/atom/text";
+import { Button } from "../../../components/atom/button";
 
-type CardVariant = "elevated" | "outlined";
-
-function CardBox({
-  children,
-  variant = "elevated",
-  radius = 12,
-  style,
-  bg,
-  borderColor,
-}: {
-  children: React.ReactNode;
-  variant?: CardVariant;
-  radius?: number;
-  style?: StyleProp<ViewStyle>;
-  bg: string;
-  borderColor: string;
-}) {
-  return (
-    <View
-      style={[
-        { borderRadius: radius, backgroundColor: "transparent" },
-        variant === "elevated"
-          ? Platform.select({
-              ios: {
-                shadowColor: "#000",
-                shadowOpacity: 0.16,
-                shadowRadius: 12,
-                shadowOffset: { width: 0, height: 8 },
-              },
-              android: { elevation: 3 },
-              default: { elevation: 3 },
-            })
-          : { borderWidth: 1, borderColor },
-        style,
-      ]}
-    >
-      <View
-        style={{
-          backgroundColor: bg,
-          borderRadius: radius,
-          overflow: "hidden",
-        }}
-      >
-        {children}
-      </View>
-    </View>
-  );
-}
-
-function CardBody({
-  children,
-  paddingV = 12,
-  gap = 8,
-}: {
-  children: React.ReactNode;
-  paddingV?: number;
-  gap?: number;
-}) {
-  return <View style={{ gap, paddingVertical: paddingV }}>{children}</View>;
-}
-
-export default function Home() {
+export default function Atom() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const { featured, posts } = useBlog();
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView
-        contentContainerStyle={{
-          padding: tokens.spacing.lg,
-          gap: tokens.spacing.lg,
-        }}
-      >
+    <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ padding: tokens.spacing.md, gap: tokens.spacing.xs }}>
+        <H1 color={colors.primary}>Heading 1</H1>
+        <H2 color={colors.secondary}>Heading 2</H2>
+        <H3 color={colors.tertiary}>Heading 3</H3>
+        <Subtitle color={colors.error}>Subtitle</Subtitle>
+        <Body color={colors.primary}>Body text</Body>
+        <BodySmall color={colors.secondary}>Small body text</BodySmall>
+        <Caption color={colors.tertiary}>Caption text</Caption>
+        <Overline color={colors.error}>Overline text</Overline>
+
+        <Divider style={{ marginVertical: tokens.spacing.md }} />
+
         <View style={{ gap: tokens.spacing.xs }}>
-          <Overline muted>BLOG</Overline>
-          <H1 color={colors.primary}>Latest stories & guides</H1>
-          <Subtitle color={colors.onSurfaceVariant}>
-            Practical tips for React Native, Paper, and design systems.
-          </Subtitle>
-          <Caption color={colors.onSurfaceVariant}>
-            Practical tips for React Native, Paper, and design systems.
-          </Caption>
+          <Text
+            style={{
+              color: colors.primary,
+              fontSize: tokens.typography.sizes["3xl"],
+              fontWeight: tokens.typography.weights.bold,
+            }}
+          >
+            Heading 1 (Paper Text)
+          </Text>
+          <Text
+            style={{
+              color: colors.secondary,
+              fontSize: tokens.typography.sizes["2xl"],
+              fontWeight: tokens.typography.weights.bold,
+            }}
+          >
+            Heading 2 (Paper Text)
+          </Text>
+          <Text
+            style={{
+              color: colors.tertiary,
+              fontSize: tokens.typography.sizes.xl,
+              fontWeight: tokens.typography.weights.bold,
+            }}
+          >
+            Heading 3 (Paper Text)
+          </Text>
+          <Text
+            style={{
+              color: colors.error,
+              fontSize: tokens.typography.sizes.lg,
+              fontWeight: tokens.typography.weights.semibold,
+            }}
+          >
+            Subtitle (Paper Text)
+          </Text>
+          <Text
+            style={{
+              color: colors.primary,
+              fontSize: tokens.typography.sizes.md,
+              fontWeight: tokens.typography.weights.reg,
+            }}
+          >
+            Body text (Paper Text)
+          </Text>
+          <Text
+            style={{
+              color: colors.secondary,
+              fontSize: tokens.typography.sizes.sm,
+              fontWeight: tokens.typography.weights.reg,
+            }}
+          >
+            Small body text (Paper Text)
+          </Text>
+          <Text
+            style={{
+              color: colors.tertiary,
+              fontSize: tokens.typography.sizes.xs,
+              fontWeight: tokens.typography.weights.reg,
+              opacity: tokens.typography.opacities.muted,
+            }}
+          >
+            Caption text (Paper Text)
+          </Text>
+          <Text
+            style={{
+              color: colors.error,
+              fontSize: tokens.typography.sizes.xs,
+              fontWeight: tokens.typography.weights.med,
+              opacity: tokens.typography.opacities.muted,
+            }}
+          >
+            Overline text (Paper Text)
+          </Text>
         </View>
 
-        <CardBox
-          variant="elevated"
-          radius={tokens.radii.lg}
-          bg={colors.surface}
-          borderColor={colors.outlineVariant}
-          style={{ overflow: "visible" }}
-        >
-          <Image
-            source={{ uri: featured.cover }}
-            style={{ width: "100%", height: 180 }}
-            resizeMode="cover"
-          />
-          <View style={{ paddingHorizontal: tokens.spacing.md }}>
-            <CardBody paddingV={tokens.spacing.md} gap={tokens.spacing.md}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  gap: tokens.spacing.xs,
-                  flexWrap: "wrap",
-                }}
-              >
-                {featured.tags.map((t) => (
-                  <Chip key={t} compact>
-                    {t}
-                  </Chip>
-                ))}
-              </View>
-              <H2>{featured.title}</H2>
-              <Body color={colors.onSurfaceVariant}>{featured.excerpt}</Body>
-              <View
-                style={{
-                  flexDirection: "row",
-                  gap: tokens.spacing.xs,
-                  alignItems: "center",
-                }}
-              >
-                <Body weight="semibold">{featured.author}</Body>
-                <BodySmall color={colors.onSurfaceVariant}>
-                  • {featured.date}
-                </BodySmall>
-              </View>
-              <Button mode="contained" onPress={() => {}}>
-                Read featured
-              </Button>
-            </CardBody>
+        <Divider style={{ marginVertical: tokens.spacing.md }} />
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: tokens.spacing.lg }}>
+          <View style={{ gap: tokens.spacing.md }}>
+            <H3>Primary Tone</H3>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
+              <Button size="small" onPress={() => {}}>Contained</Button>
+              <Button size="medium" onPress={() => {}}>Contained</Button>
+              <Button size="large" onPress={() => {}}>Contained</Button>
+            </View>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
+              <Button mode="contained-tonal" size="small" onPress={() => {}}>Contained Tonal</Button>
+              <Button mode="contained-tonal" size="medium" onPress={() => {}}>Contained Tonal</Button>
+              <Button mode="contained-tonal" size="large" onPress={() => {}}>Contained Tonal</Button>
+            </View>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
+              <Button mode="outlined" size="small" onPress={() => {}}>Outlined</Button>
+              <Button mode="outlined" size="medium" onPress={() => {}}>Outlined</Button>
+              <Button mode="outlined" size="large" onPress={() => {}}>Outlined</Button>
+            </View>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
+              <Button mode="elevated" size="small" onPress={() => {}}>Elevated</Button>
+              <Button mode="elevated" size="medium" onPress={() => {}}>Elevated</Button>
+              <Button mode="elevated" size="large" onPress={() => {}}>Elevated</Button>
+            </View>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
+              <Button mode="text" size="small" onPress={() => {}}>Text</Button>
+              <Button mode="text" size="medium" onPress={() => {}}>Text</Button>
+              <Button mode="text" size="large" onPress={() => {}}>Text</Button>
+            </View>
           </View>
-        </CardBox>
-
-        <Divider style={{ backgroundColor: colors.outlineVariant }} />
-
-        <View style={{ gap: tokens.spacing.md }}>
-          {posts.map((p) => (
-            <CardBox
-              key={p.id}
-              variant="outlined"
-              radius={tokens.radii.lg}
-              bg={colors.surface}
-              borderColor={colors.outlineVariant}
-            >
-              <View style={{ paddingHorizontal: tokens.spacing.md }}>
-                <CardBody paddingV={tokens.spacing.md} gap={tokens.spacing.sm}>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      gap: tokens.spacing.xs,
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    {p.tags.map((t) => (
-                      <Chip key={t} compact>
-                        {t}
-                      </Chip>
-                    ))}
-                  </View>
-                  <H2>{p.title}</H2>
-                  <Body color={colors.onSurfaceVariant}>{p.excerpt}</Body>
-                  <View
-                    style={{
-                      marginTop: tokens.spacing.xs,
-                      flexDirection: "row",
-                      gap: tokens.spacing.xs,
-                      alignItems: "center",
-                    }}
-                  >
-                    <Body weight="semibold">{p.author}</Body>
-                    <BodySmall color={colors.onSurfaceVariant}>
-                      • {p.date}
-                    </BodySmall>
-                  </View>
-                  <Button mode="text" onPress={() => {}}>
-                    Read more
-                  </Button>
-                </CardBody>
-              </View>
-            </CardBox>
-          ))}
-        </View>
-      </ScrollView>
-    </View>
+          <View style={{ gap: tokens.spacing.md }}>
+            <H3>Error Tone</H3>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
+              <Button tone="error" size="small" onPress={() => {}}>Contained</Button>
+              <Button tone="error" size="medium" onPress={() => {}}>Contained</Button>
+              <Button tone="error" size="large" onPress={() => {}}>Contained</Button>
+            </View>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
+              <Button tone="error" mode="contained-tonal" size="small" onPress={() => {}}>Contained Tonal</Button>
+              <Button tone="error" mode="contained-tonal" size="medium" onPress={() => {}}>Contained Tonal</Button>
+              <Button tone="error" mode="contained-tonal" size="large" onPress={() => {}}>Contained Tonal</Button>
+            </View>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
+              <Button tone="error" mode="outlined" size="small" onPress={() => {}}>Outlined</Button>
+              <Button tone="error" mode="outlined" size="medium" onPress={() => {}}>Outlined</Button>
+              <Button tone="error" mode="outlined" size="large" onPress={() => {}}>Outlined</Button>
+            </View>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
+              <Button tone="error" mode="elevated" size="small" onPress={() => {}}>Elevated</Button>
+              <Button tone="error" mode="elevated" size="medium" onPress={() => {}}>Elevated</Button>
+              <Button tone="error" mode="elevated" size="large" onPress={() => {}}>Elevated</Button>
+            </View>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
+              <Button tone="error" mode="text" size="small" onPress={() => {}}>Text</Button>
+              <Button tone="error" mode="text" size="medium" onPress={() => {}}>Text</Button>
+              <Button tone="error" mode="text" size="large" onPress={() => {}}>Text</Button>
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    </ScrollView>
   );
 }

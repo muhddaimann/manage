@@ -83,9 +83,9 @@ export function ModalSheet({
             width: "100%",
             shadowColor: "#000",
             shadowOpacity: 0.18,
-            shadowRadius: 16,
-            shadowOffset: { width: 0, height: -8 },
-            elevation: 16,
+            shadowRadius: tokens.elevation.level5 * 2,
+            shadowOffset: { width: 0, height: -tokens.elevation.level5 },
+            elevation: tokens.elevation.level5,
             backgroundColor: "transparent",
           }}
         >
@@ -104,9 +104,9 @@ export function ModalSheet({
             >
               <View
                 style={{
-                  width: 36,
-                  height: 4,
-                  borderRadius: 999,
+                  width: tokens.spacing.lg * 2,
+                  height: tokens.spacing.xs,
+                  borderRadius: tokens.radii.pill,
                   backgroundColor: colors.outlineVariant,
                   opacity: 0.8,
                 }}

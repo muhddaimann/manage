@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Pressable, Platform } from "react-native";
-import { Button, Text, useTheme, Divider } from "react-native-paper";
+import { useTheme, Divider, Text } from "react-native-paper";
+import { Button } from "../../components/atom/button";
 import { useDesign } from "../../contexts/designContext";
 import type { AlertOptions } from "../../contexts/overlayContext";
 
@@ -42,11 +43,11 @@ export function AlertDialog({
             ios: {
               shadowColor: "#000",
               shadowOpacity: 0.18,
-              shadowRadius: 12,
-              shadowOffset: { width: 0, height: 8 },
+              shadowRadius: tokens.elevation.level5 * 2,
+              shadowOffset: { width: 0, height: tokens.elevation.level5 },
             },
-            android: { elevation: 6 },
-            default: { elevation: 6 },
+            android: { elevation: tokens.elevation.level5 },
+            default: { elevation: tokens.elevation.level5 },
           }),
         }}
       >
@@ -65,8 +66,11 @@ export function AlertDialog({
               }}
             >
               <Text
-                variant="titleMedium"
-                style={{ color: colors.onBackground }}
+                style={{
+                  color: colors.onBackground,
+                  fontSize: tokens.typography.sizes.lg,
+                  fontWeight: tokens.typography.weights.semibold,
+                }}
               >
                 {state.title}
               </Text>
@@ -81,8 +85,11 @@ export function AlertDialog({
               }}
             >
               <Text
-                variant="bodyMedium"
-                style={{ color: colors.onSurfaceVariant }}
+                style={{
+                  color: colors.onSurfaceVariant,
+                  fontSize: tokens.typography.sizes.md,
+                  fontWeight: tokens.typography.weights.reg,
+                }}
               >
                 {state.message}
               </Text>

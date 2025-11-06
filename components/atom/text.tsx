@@ -14,6 +14,13 @@ type BaseProps = Omit<PaperTextProps<never>, "style"> & {
   style?: TextStyle | TextStyle[];
 };
 
+const fontFamilies = {
+  reg: "Inter_400Regular",
+  med: "Inter_500Medium",
+  semibold: "Inter_600SemiBold",
+  bold: "Inter_700Bold",
+};
+
 function BaseText({
   children,
   color,
@@ -26,8 +33,10 @@ function BaseText({
   const { colors } = useTheme();
   const { tokens } = useDesign();
 
-  const w = tokens.typography.weights[weight];
-  const opacity = muted ? tokens.typography.opacities.muted : tokens.typography.opacities.normal;
+  const fontFamily = fontFamilies[weight];
+  const opacity = muted
+    ? tokens.typography.opacities.muted
+    : tokens.typography.opacities.normal;
 
   return (
     <PaperText
@@ -35,7 +44,7 @@ function BaseText({
         {
           color: color ?? colors.onBackground,
           opacity,
-          fontWeight: w,
+          fontFamily,
           fontSize: rest.size,
           textAlign: align,
         },
