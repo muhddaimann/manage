@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import { View } from "react-native";
 import { Stack, SplashScreen } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -21,11 +21,14 @@ import {
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
 
-SplashScreen.preventAutoHideAsync();
+void (async () => {
+  try {
+    await SplashScreen.preventAutoHideAsync();
+  } catch {}
+})();
 
 function AppShell() {
   const { dark, colors } = useTheme();
-
   return (
     <>
       <StatusBar style={dark ? "light" : "dark"} />
@@ -40,14 +43,9 @@ function AppShell() {
             contentStyle: { backgroundColor: colors.background },
           }}
         >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="(modals)"
-            options={{
-              presentation: "modal",
-            }}
-          />
           <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="(modals)" options={{ presentation: "modal" }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>
       </View>
     </>
@@ -62,8 +60,22 @@ export default function RootLayout() {
     Inter_700Bold,
   });
 
-  const onLayoutRootView = React.useCallback(async () => {
-    if (fontsLoaded) await SplashScreen.hideAsync();
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      try {
+        await SplashScreen.hideAsync();
+      } catch {}
+    }
+  }, [fontsLoaded]);
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      (async () => {
+        try {
+          await SplashScreen.hideAsync();
+        } catch {}
+      })();
+    }
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;

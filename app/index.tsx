@@ -38,17 +38,24 @@ export default function Index() {
       <View style={{ gap: tokens.spacing.md }}>
         <Button
           onPress={() => router.push("/(modals)/signIn")}
-          mode="contained"
+          variant="default"
+          fullWidth
+          rounded="sm"
         >
           Sign In
         </Button>
-        <Button onPress={() => router.push("/(modals)/signUp")} mode="outlined">
+        <Button
+          onPress={() => router.push("/(modals)/signUp")}
+          variant="secondary"
+          fullWidth
+          rounded="sm"
+        >
           Create Account
         </Button>
       </View>
 
       <View style={{ alignItems: "center" }}>
-        <Button mode="text" onPress={() => router.push("/(modals)/forgot")}>
+        <Button variant="link" onPress={() => router.push("/(modals)/forgot")}>
           Forgot password?
         </Button>
       </View>

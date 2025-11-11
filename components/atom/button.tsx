@@ -6,61 +6,53 @@ import {
   StyleProp,
   ViewStyle,
   Text,
+  View,
+  StyleSheet,
 } from "react-native";
 import { ActivityIndicator, useTheme } from "react-native-paper";
 import { useDesign } from "../../contexts/designContext";
 
-type Mode = "text" | "outlined" | "contained" | "contained-tonal" | "elevated";
+type Variant =
+  | "default"
+  | "secondary"
+  | "destructive"
+  | "outline"
+  | "ghost"
+  | "link";
+type Size = "sm" | "md" | "lg" | "icon";
 type IconComp = React.ComponentType<{ color?: string; size?: number }>;
-type Tone = "primary" | "error";
-
-type Size = "small" | "medium" | "large";
 
 type Props = {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onPress?: (e: GestureResponderEvent) => void;
-  mode?: Mode;
-  tone?: Tone;
   disabled?: boolean;
   loading?: boolean;
+  variant?: Variant;
+  size?: Size;
   IconLeft?: IconComp;
   IconRight?: IconComp;
   style?: StyleProp<ViewStyle>;
-  fullWidth?: boolean;
-  size?: Size;
-  dense?: boolean;
-  compact?: boolean;
   rounded?: "sm" | "md" | "lg" | "pill";
-  textColor?: string;
+  fullWidth?: boolean;
   accessibilityLabel?: string;
 };
 
 export function Button({
   children,
   onPress,
-  mode = "contained",
-  tone = "primary",
-  disabled = false,
-  loading = false,
+  disabled,
+  loading,
+  variant = "default",
+  size = "md",
   IconLeft,
   IconRight,
   style,
-  fullWidth,
-  size = "medium",
-  dense,
-  compact,
   rounded = "md",
+  fullWidth,
   accessibilityLabel,
-  textColor,
 }: Props) {
   const { colors, dark } = useTheme();
   const { tokens } = useDesign();
-
-  const isDense = dense ?? size === "small";
-
-  const height = size === "large" ? tokens.sizes.touch.minHeight + tokens.spacing.xs : isDense
-    ? Math.max(36, tokens.sizes.touch.minHeight - tokens.spacing.xs)
-    : tokens.sizes.touch.minHeight;
 
   const radius =
     rounded === "sm"
@@ -71,102 +63,116 @@ export function Button({
       ? tokens.radii.lg
       : tokens.radii.pill;
 
-  const padX = compact ? tokens.spacing.sm : (size === "large" ? tokens.spacing.xl : isDense ? tokens.spacing.md : tokens.spacing.lg);
-  const gap = tokens.spacing.xs;
-  const iconSize = tokens.sizes.icon.md;
+  const h =
+    size === "sm"
+      ? Math.max(36, tokens.sizes.touch.minHeight - tokens.spacing.xs)
+      : size === "lg"
+      ? tokens.sizes.touch.minHeight + tokens.spacing.xs
+      : tokens.sizes.touch.minHeight;
 
-  const base =
-    tone === "error"
-      ? {
-          main: colors.error,
-          onMain: colors.onError,
-          container: colors.errorContainer,
-          onContainer: colors.onErrorContainer,
-          outline: colors.error,
-          ripple: dark ? `${colors.onError}22` : `${colors.error}22`,
-        }
-      : {
-          main: colors.primary,
-          onMain: colors.onPrimary,
-          container: colors.primaryContainer,
-          onContainer: colors.onPrimaryContainer,
-          outline: colors.outline,
-          ripple: dark ? `${colors.onSurface}22` : `${colors.primary}22`,
-        };
+  const padX =
+    size === "icon"
+      ? 0
+      : size === "sm"
+      ? tokens.spacing.md
+      : size === "lg"
+      ? tokens.spacing.xl
+      : tokens.spacing.lg;
 
-  const palette = (() => {
-    if (disabled) {
-      return {
-        bg:
-          mode === "contained" ||
-          mode === "contained-tonal" ||
-          mode === "elevated"
-            ? colors.surfaceDisabled
-            : "transparent",
+  const iconSize =
+    size === "sm"
+      ? tokens.sizes.icon.sm
+      : size === "lg"
+      ? tokens.sizes.icon.lg
+      : size === "icon"
+      ? tokens.sizes.icon.lg
+      : tokens.sizes.icon.md;
+
+  const base = {
+    fg: colors.onSurface,
+    muted: colors.onSurfaceVariant,
+    border: colors.outline,
+    surface: colors.surface,
+    primary: colors.primary,
+    onPrimary: colors.onPrimary,
+    danger: colors.error,
+    onDanger: colors.onError,
+  };
+
+  const palette = disabled
+    ? {
+        bg: colors.surfaceDisabled,
         fg: colors.onSurfaceDisabled,
         border: colors.surfaceDisabled,
-        elevation: 0,
-      };
-    }
-    switch (mode) {
-      case "contained":
-        return {
-          bg: base.main,
-          fg: base.onMain,
-          border: "transparent",
-          elevation: tokens.elevation.level1,
-        };
-      case "contained-tonal":
-        return {
-          bg: base.container,
-          fg: base.onContainer,
-          border: "transparent",
-          elevation: 0,
-        };
-      case "outlined":
-        return {
-          bg: "transparent",
-          fg: base.main,
-          border: base.outline,
-          elevation: 0,
-        };
-      case "text":
-        return {
-          bg: "transparent",
-          fg: base.main,
-          border: "transparent",
-          elevation: 0,
-        };
-      case "elevated":
-        return {
-          bg: colors.surface,
-          fg: base.main,
-          border: "transparent",
-          elevation: tokens.elevation.level1,
-        };
-      default:
-        return {
-          bg: base.main,
-          fg: base.onMain,
-          border: "transparent",
-          elevation: tokens.elevation.level1,
-        };
-    }
-  })();
+      }
+    : variant === "default"
+    ? { bg: base.primary, fg: base.onPrimary, border: "transparent" }
+    : variant === "secondary"
+    ? { bg: base.surface, fg: base.fg, border: base.border }
+    : variant === "destructive"
+    ? { bg: base.danger, fg: base.onDanger, border: "transparent" }
+    : variant === "outline"
+    ? { bg: "transparent", fg: base.fg, border: base.border }
+    : variant === "ghost"
+    ? { bg: "transparent", fg: base.fg, border: "transparent" }
+    : { bg: "transparent", fg: base.primary, border: "transparent" };
 
-  const shadow =
-    palette.elevation > 0
-      ? Platform.select({
-          ios: {
+  const [pressed, setPressed] = React.useState(false);
+
+  const shadow = Platform.select({
+    ios:
+      variant === "default" || variant === "destructive"
+        ? {
             shadowColor: colors.shadow,
-            shadowOpacity: 0.18,
-            shadowRadius: palette.elevation * 2,
-            shadowOffset: { width: 0, height: palette.elevation },
-          },
-          android: { elevation: palette.elevation },
-          default: { elevation: palette.elevation },
-        })
-      : undefined;
+            shadowOpacity: 0.12,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 4 },
+          }
+        : undefined,
+    android: undefined,
+    default: undefined,
+  });
+
+  const content = loading ? (
+    <ActivityIndicator size="small" color={palette.fg as string} />
+  ) : (
+    <>
+      {IconLeft ? (
+        <IconLeft color={palette.fg as string} size={iconSize} />
+      ) : null}
+      {typeof children === "string" ? (
+        <Text
+          style={{
+            color: palette.fg as string,
+            fontFamily: "Inter_500Medium",
+            fontWeight: "500",
+            fontSize:
+              size === "sm"
+                ? tokens.typography.sizes.sm
+                : size === "lg"
+                ? tokens.typography.sizes.lg
+                : tokens.typography.sizes.md,
+            lineHeight: Math.round(
+              (size === "sm"
+                ? tokens.typography.sizes.sm
+                : size === "lg"
+                ? tokens.typography.sizes.lg
+                : tokens.typography.sizes.md) * 1.25
+            ),
+            textDecorationLine: variant === "link" ? "underline" : "none",
+          }}
+          numberOfLines={1}
+        >
+          {children}
+        </Text>
+      ) : (
+        children
+      )}
+      {IconRight ? (
+        <IconRight color={palette.fg as string} size={iconSize} />
+      ) : null}
+    </>
+  );
 
   return (
     <Pressable
@@ -174,53 +180,41 @@ export function Button({
       accessibilityLabel={accessibilityLabel}
       disabled={disabled || loading}
       onPress={onPress}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
       android_ripple={
         disabled || loading
           ? undefined
-          : { color: base.ripple, borderless: false }
+          : { color: dark ? "#ffffff22" : "#00000011", borderless: false }
       }
       hitSlop={tokens.sizes.touch.hitSlop}
       style={[
         {
-          minHeight: height,
+          alignSelf: fullWidth ? "stretch" : "auto",
+          minHeight: h,
           paddingHorizontal: padX,
           borderRadius: radius,
-          backgroundColor: palette.bg,
-          borderWidth: mode === "outlined" ? 1 : 0,
-          borderColor: palette.border,
+          backgroundColor: palette.bg as string,
+          borderWidth:
+            variant === "outline" || variant === "secondary"
+              ? StyleSheet.hairlineWidth
+              : 0,
+          borderColor: palette.border as string,
+          flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
-          flexDirection: "row",
-          gap,
-          alignSelf: fullWidth ? "stretch" : "auto",
+          gap: tokens.spacing.xs,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
         },
         shadow as any,
+        size === "icon" ? { width: h, paddingHorizontal: 0 } : null,
         style,
       ]}
     >
-      {loading ? (
-        <ActivityIndicator size="small" color={palette.fg} />
+      {variant === "ghost" || variant === "link" ? (
+        <View style={{ paddingVertical: tokens.spacing.xs }}>{content}</View>
       ) : (
-        <>
-          {IconLeft ? <IconLeft color={textColor ?? palette.fg} size={iconSize} /> : null}
-          {typeof children === "string" ? (
-            <Text
-              style={{
-                color: textColor ?? palette.fg,
-                fontFamily: "Inter_500Medium",
-                fontWeight: "500",
-                fontSize: tokens.typography.sizes.md,
-                lineHeight: Math.round(tokens.typography.sizes.md * 1.25),
-              }}
-              numberOfLines={1}
-            >
-              {children}
-            </Text>
-          ) : (
-            children
-          )}
-          {IconRight ? <IconRight color={textColor ?? palette.fg} size={iconSize} /> : null}
-        </>
+        content
       )}
     </Pressable>
   );

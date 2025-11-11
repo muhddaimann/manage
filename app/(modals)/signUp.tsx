@@ -1,5 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ScrollView, View, TextInput as RNInput, Animated } from "react-native";
+import {
+  ScrollView,
+  View,
+  TextInput as RNInput,
+  Animated,
+  InteractionManager,
+} from "react-native";
 import { useTheme, Text, TextInput, Divider } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDesign } from "../../contexts/designContext";
@@ -48,8 +54,10 @@ export default function SignUpModal() {
     !mismatch;
 
   useEffect(() => {
-    const t = setTimeout(() => userRef.current?.focus(), 50);
-    return () => clearTimeout(t);
+    const task = InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(() => userRef.current?.focus());
+    });
+    return () => task.cancel();
   }, []);
 
   useEffect(() => {
@@ -114,14 +122,14 @@ export default function SignUpModal() {
     if (Object.keys(nextErr).length || mismatch) {
       if (!u) userRef.current?.focus();
       else if (!p) passRef.current?.focus();
-      else if (!c || mismatch) confRef.current?.focus();
+      else confRef.current?.focus();
       return;
     }
     await signIn(u, p);
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -196,6 +204,8 @@ export default function SignUpModal() {
                 setPassword(t);
                 if (fieldErr.pass)
                   setFieldErr((e) => ({ ...e, pass: undefined }));
+                if (confirm && t === confirm)
+                  setFieldErr((e) => ({ ...e, conf: undefined }));
               }}
               secureTextEntry={!showPass}
               ref={passRef}
@@ -222,7 +232,8 @@ export default function SignUpModal() {
               value={confirm}
               onChangeText={(t) => {
                 setConfirm(t);
-                if (!t) setFieldErr((e) => ({ ...e, conf: undefined }));
+                if (!t || t === password)
+                  setFieldErr((e) => ({ ...e, conf: undefined }));
               }}
               secureTextEntry={!showConfirm}
               ref={confRef}
@@ -268,8 +279,10 @@ export default function SignUpModal() {
         >
           <Button
             onPress={onSubmit}
-            mode="contained"
+            variant="default"
             disabled={loading || !isValid}
+            fullWidth
+            rounded="sm"
           >
             {loading ? "Creating..." : "Create Account"}
           </Button>

@@ -1,12 +1,25 @@
-export type Density = "compact" | "comfortable" | "spacious";
-
 export type Spacing = {
   scale: readonly number[];
-  xxs: number; xs: number; sm: number; md: number; lg: number; xl: number; "2xl": number; "3xl": number;
+  xxs: number;
+  xs: number;
+  sm: number;
+  md: number;
+  lg: number;
+  xl: number;
+  "2xl": number;
+  "3xl": number;
 };
 
 export type Radii = {
-  none: number; xs: number; sm: number; md: number; lg: number; xl: number; "2xl": number; pill: number; full: number;
+  none: number;
+  xs: number;
+  sm: number;
+  md: number;
+  lg: number;
+  xl: number;
+  "2xl": number;
+  pill: number;
+  full: number;
 };
 
 export type Sizes = {
@@ -26,11 +39,20 @@ export type Motion = {
 };
 
 export type Elevation = {
-  level0: number; level1: number; level2: number; level3: number; level4: number; level5: number;
+  level0: number;
+  level1: number;
+  level2: number;
+  level3: number;
+  level4: number;
+  level5: number;
 };
 
 export type Opacity = {
-  disabled: number; hover: number; focus: number; pressed: number; drag: number;
+  disabled: number;
+  hover: number;
+  focus: number;
+  pressed: number;
+  drag: number;
 };
 
 export type Layout = {
@@ -39,13 +61,20 @@ export type Layout = {
 };
 
 export type Typography = {
-  sizes: { xs: number; sm: number; md: number; lg: number; xl: number; "2xl": number; "3xl": number };
+  sizes: {
+    xs: number;
+    sm: number;
+    md: number;
+    lg: number;
+    xl: number;
+    "2xl": number;
+    "3xl": number;
+  };
   weights: { reg: "400"; med: "500"; semibold: "600"; bold: "700" };
   opacities: { muted: number; normal: number };
 };
 
 export type DesignTokens = {
-  density: Density;
   spacing: Spacing;
   radii: Radii;
   sizes: Sizes;
@@ -64,11 +93,12 @@ const EMPHASIZED = cubic(0.2, 0.0, 0.0, 1.0);
 const DECEL = cubic(0.0, 0.0, 0.2, 1.0);
 const ACCEL = cubic(0.4, 0.0, 1.0, 1.0);
 
-export function createDesignTokens(density: Density = "comfortable", scale = 1): DesignTokens {
-  const densityFactor = density === "compact" ? 0.9 : density === "spacious" ? 1.1 : 1.0;
-  const s = (n: number) => Math.round(n * scale * densityFactor);
+export function createDesignTokens(scale = 1): DesignTokens {
+  const s = (n: number) => Math.round(n * scale);
 
-  const base = [0, 2, 4, 6, 8, 12, 16, 20, 24, 32, 40, 48, 64].map(s) as unknown as readonly number[];
+  const base = [0, 2, 4, 6, 8, 12, 16, 20, 24, 32, 40, 48, 64].map(
+    s
+  ) as unknown as readonly number[];
 
   const typography: Typography = {
     sizes: { xs: 12, sm: 14, md: 16, lg: 20, xl: 24, "2xl": 28, "3xl": 32 },
@@ -77,7 +107,6 @@ export function createDesignTokens(density: Density = "comfortable", scale = 1):
   };
 
   return {
-    density,
     spacing: {
       scale: base,
       xxs: base[2],

@@ -1,5 +1,11 @@
 import React, { useRef, useState, useEffect } from "react";
-import { ScrollView, View, TextInput as RNInput, Animated } from "react-native";
+import {
+  ScrollView,
+  View,
+  TextInput as RNInput,
+  Animated,
+  InteractionManager,
+} from "react-native";
 import { useTheme, Text, TextInput, Divider } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDesign } from "../../contexts/designContext";
@@ -26,8 +32,10 @@ export default function SignInModal() {
   const isValid = username.trim().length > 0 && password.trim().length > 0;
 
   useEffect(() => {
-    const t = setTimeout(() => userRef.current?.focus(), 50);
-    return () => clearTimeout(t);
+    const task = InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(() => userRef.current?.focus());
+    });
+    return () => task.cancel();
   }, []);
 
   useEffect(() => {
@@ -95,7 +103,7 @@ export default function SignInModal() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -156,7 +164,6 @@ export default function SignInModal() {
               onSubmitEditing={() => passRef.current?.focus()}
               error={!!fieldErr.user}
               ref={userRef}
-              autoFocus
             />
             {fieldErr.user ? (
               <Text style={{ color: colors.error, marginTop: -8 }}>
@@ -214,8 +221,10 @@ export default function SignInModal() {
         >
           <Button
             onPress={onSubmit}
-            mode="contained"
+            variant="default"
             disabled={loading || !isValid}
+            fullWidth
+            rounded="sm"
           >
             {loading ? "Signing in..." : "Sign In"}
           </Button>

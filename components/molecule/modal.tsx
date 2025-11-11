@@ -77,7 +77,6 @@ export function ModalSheet({
       </Animated.View>
 
       <Animated.View style={{ transform: [{ translateY }] }}>
-        {/* Shadow wrapper: no paddingBottom here */}
         <View
           style={{
             width: "100%",
@@ -89,7 +88,6 @@ export function ModalSheet({
             backgroundColor: "transparent",
           }}
         >
-          {/* Inner sheet: apply safe-area padding here so it paints the same color */}
           <View
             style={{
               backgroundColor: colors.surface,

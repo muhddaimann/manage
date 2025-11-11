@@ -18,6 +18,13 @@ export function AlertDialog({
   const { tokens } = useDesign();
   if (!visible || !state) return null;
 
+  const btnVariant =
+    state.variant === "error"
+      ? "destructive"
+      : state.variant === "warning"
+      ? "secondary"
+      : "default";
+
   return (
     <View
       pointerEvents="box-none"
@@ -26,7 +33,10 @@ export function AlertDialog({
         inset: 0,
         justifyContent: "center",
         alignItems: "center",
+        zIndex: 9999,
       }}
+      accessible
+      accessibilityRole="alert"
     >
       <Pressable
         onPress={onDismiss}
@@ -56,13 +66,16 @@ export function AlertDialog({
             backgroundColor: colors.surface,
             borderRadius: tokens.radii.lg,
             overflow: "hidden",
+            borderWidth: 1,
+            borderColor: colors.outlineVariant,
           }}
         >
           {state.title ? (
             <View
               style={{
-                padding: tokens.spacing.lg,
-                paddingBottom: tokens.spacing.sm,
+                paddingHorizontal: tokens.spacing.lg,
+                paddingTop: tokens.spacing.lg,
+                paddingBottom: tokens.spacing.xs,
               }}
             >
               <Text
@@ -108,7 +121,11 @@ export function AlertDialog({
               paddingHorizontal: tokens.spacing.lg,
             }}
           >
-            <Button mode="contained" onPress={onDismiss}>
+            <Button
+              variant={btnVariant as any}
+              onPress={onDismiss}
+              rounded="sm"
+            >
               OK
             </Button>
           </View>

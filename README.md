@@ -30,11 +30,6 @@ paperNative/
 │  ├─ index.tsx
 │  └─ welcome.tsx
 ├─ assets/
-│  ├─ images/
-│  ├─ adaptive-icon.png
-│  ├─ favicon.png
-│  ├─ icon.png
-│  └─ splash-icon.png
 ├─ components/
 │  ├─ atom/
 │  │  ├─ button.tsx
@@ -42,6 +37,7 @@ paperNative/
 │  ├─ molecule/
 │  │  ├─ alert.tsx
 │  │  ├─ confirm.tsx
+│  │  ├─ fab.tsx
 │  │  ├─ modal.tsx
 │  │  └─ toast.tsx
 │  └─ shared/
@@ -56,7 +52,6 @@ paperNative/
 │  └─ themeContext.tsx
 ├─ hooks/
 │  ├─ useBlog.tsx
-│  ├─ useKeyboard.tsx
 │  ├─ useOverlay.tsx
 │  └─ useText.tsx
 ├─ .gitignore
@@ -69,3 +64,22 @@ paperNative/
 
 
 
+Klek – collect/claim/back finance app
+├─ About
+│ ├─ Mission — Turn fronts into fast reimbursements.
+│ ├─ Problem — You pay first; collecting is slow.
+│ ├─ Outcome — Cashflow kept intrack.
+├─ User Persona
+│ ├─ Primary — Young pro, fronts meals/rides.
+│ ├─ Secondary — Small teams, housemates.
+│ ├─ Pain — Forget who owes; awkward chasing.
+├─ Value Props
+│ ├─ 1-tap log; auto split.
+│ ├─ Smart reminders; nice tone.
+│ ├─ Clear “owed today” number.
+├─ Core Flows
+│ ├─ Create Expense — Add, split, assign payers.
+│ ├─ Send Link — Share claim via deep link/QR.
+│ ├─ Track Status — Unpaid/partial/paid.
+│ ├─ Settle — Mark paid; record method.
+│ ├─ Nudge — Gentle reminder with context.

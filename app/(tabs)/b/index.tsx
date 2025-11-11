@@ -1,6 +1,6 @@
 import React from "react";
 import { View, ScrollView } from "react-native";
-import { useTheme, Text, FAB } from "react-native-paper";
+import { useTheme, Text } from "react-native-paper";
 import { useThemeToggle } from "../../../contexts/themeContext";
 import { useDesign } from "../../../contexts/designContext";
 import {
@@ -21,21 +21,20 @@ import {
   PlusCircle,
   Trash2,
   LogOut,
+  PencilLine,
 } from "lucide-react-native";
 import { H2 } from "../../../components/atom/text";
+import { Fab } from "../../../components/molecule/fab";
 
 function ModalContent() {
   const { dismissModal } = useModal();
   const { tokens } = useDesign();
   const { colors } = useTheme();
   return (
-    <View style={{ padding: tokens.spacing.lg, gap: tokens.spacing.md }}>
+    <View style={{ padding: tokens.spacing.lg }}>
       <Text style={{ color: colors.onSurface, fontSize: 16 }}>
         This is the content of the modal.
       </Text>
-      <Button onPress={dismissModal} mode="contained" rounded="sm">
-        Close Modal
-      </Button>
     </View>
   );
 }
@@ -58,25 +57,6 @@ export default function Molecule() {
     </View>
   );
 
-  const Label = ({
-    children,
-    color,
-  }: {
-    children: React.ReactNode;
-    color: string;
-  }) => (
-    <Text
-      style={{
-        color,
-        fontFamily: "Inter_500Medium",
-        fontWeight: "500",
-        fontSize: 16,
-      }}
-    >
-      {children as any}
-    </Text>
-  );
-
   return (
     <View style={{ flex: 1 }}>
       <ScrollView
@@ -91,17 +71,17 @@ export default function Molecule() {
 
         <Row>
           <Button
-            mode="contained"
+            variant="default"
             IconLeft={Info}
             onPress={() =>
               alert({ title: "Heads up", message: "Simple alert." })
             }
           >
-            Alert (Primary)
+            Alert (Default)
           </Button>
 
           <Button
-            mode="contained-tonal"
+            variant="secondary"
             IconLeft={PlusCircle}
             onPress={() =>
               confirm({
@@ -115,11 +95,11 @@ export default function Molecule() {
               )
             }
           >
-            Confirm (Tonal)
+            Confirm (Secondary)
           </Button>
 
           <Button
-            mode="contained"
+            variant="destructive"
             IconLeft={Trash2}
             onPress={() =>
               confirm({
@@ -133,64 +113,59 @@ export default function Molecule() {
                 })
               )
             }
-            style={{ backgroundColor: colors.error }}
           >
-            <Label color={colors.onError}>Destructive Confirm</Label>
+            Destructive Confirm
           </Button>
 
           <Button
-            mode="elevated"
+            variant="outline"
             IconLeft={Check}
             onPress={() => modal({ content: <ModalContent /> })}
           >
-            <Label color={colors.primary}>Open Modal (Elevated)</Label>
+            Open Modal (Outline)
           </Button>
         </Row>
 
         <H2>Toasts</H2>
         <Row>
           <Button
-            mode="contained"
+            variant="default"
             IconLeft={Info}
             onPress={() => toast({ message: "Info toast", variant: "info" })}
-            style={{ backgroundColor: colors.primary }}
           >
-            <Label color={colors.onPrimary}>Info</Label>
+            Info
           </Button>
 
           <Button
-            mode="contained"
+            variant="secondary"
             IconLeft={Check}
             onPress={() =>
               toast({ message: "Success toast", variant: "success" })
             }
-            style={{ backgroundColor: colors.tertiary }}
           >
-            <Label color={colors.onTertiary}>Success</Label>
+            Success
           </Button>
 
           <Button
-            mode="contained"
+            variant="outline"
             IconLeft={AlertTriangle}
             onPress={() =>
               toast({ message: "Warning toast", variant: "warning" })
             }
-            style={{ backgroundColor: colors.secondary }}
           >
-            <Label color={colors.onSecondary}>Warning</Label>
+            Warning
           </Button>
 
           <Button
-            mode="contained"
+            variant="destructive"
             IconLeft={X}
             onPress={() => toast({ message: "Error toast", variant: "error" })}
-            style={{ backgroundColor: colors.error }}
           >
-            <Label color={colors.onError}>Error</Label>
+            Error
           </Button>
 
           <Button
-            mode="contained-tonal"
+            variant="ghost"
             onPress={() =>
               toast({
                 message: "With action",
@@ -201,110 +176,69 @@ export default function Molecule() {
                 duration: 4000,
               })
             }
-            style={{ backgroundColor: colors.primaryContainer }}
           >
-            <Label color={colors.onPrimaryContainer}>Toast w/ Action</Label>
+            Toast w/ Action
           </Button>
         </Row>
 
-        <H2>Theme Toggle & Other Buttons</H2>
+        <H2>Theme & Variants</H2>
         <Row>
           <Button
-            mode="outlined"
+            variant="secondary"
             onPress={toggle}
             IconLeft={dark ? Sun : Moon}
-            rounded="pill"
-            dense
-          >
-            <Label color={colors.primary}>
-              {dark ? "Light Mode" : "Dark Mode"}
-            </Label>
-          </Button>
-
-          <Button
-            mode="text"
-            onPress={() =>
-              alert({
-                title: "Tip",
-                message: "Use text button for inline actions.",
-              })
-            }
-            dense
-          >
-            <Label color={colors.primary}>Text Action</Label>
-          </Button>
-
-          <Button
-            mode="outlined"
-            rounded="sm"
-            dense
-            onPress={() =>
-              confirm({
-                title: "Secondary?",
-                message: "Styled outline sample.",
-              })
-            }
-            style={{ borderColor: colors.secondary }}
-          >
-            <Label color={colors.secondary}>Outline Secondary</Label>
-          </Button>
-
-          <Button
-            mode="outlined"
-            rounded="sm"
-            dense
-            onPress={() =>
-              confirm({ title: "Tertiary?", message: "Styled outline sample." })
-            }
-            style={{ borderColor: colors.tertiary }}
-          >
-            <Label color={colors.tertiary}>Outline Tertiary</Label>
-          </Button>
-
-          <Button
-            mode="outlined"
-            rounded="sm"
-            dense
-            onPress={() =>
-              confirm({ title: "Danger?", message: "Styled outline sample." })
-            }
-            style={{ borderColor: colors.error }}
-          >
-            <Label color={colors.error}>Outline Error</Label>
-          </Button>
-        </Row>
-
-        <H2>Full-Width Button</H2>
-        <Row>
-          <Button
-            mode="contained"
-            rounded="pill"
             fullWidth
-            onPress={() =>
-              toast({ message: "Full-width CTA", variant: "success" })
-            }
-            style={{ backgroundColor: colors.primary }}
+            size="md"
           >
-            <Label color={colors.onPrimary}>Full-Width Primary CTA</Label>
+            {dark ? "Light Mode" : "Dark Mode"}
           </Button>
         </Row>
       </ScrollView>
 
-      <View
-        pointerEvents="box-none"
-        style={{
-          position: "absolute",
-          right: 16,
-          bottom: 16,
-        }}
-      >
-        <FAB
-          icon={() => <LogOut size={18} color={colors.onPrimary} />}
-          onPress={signOut}
-          color={colors.onPrimary}
-          style={{ backgroundColor: colors.primary }}
-        />
-      </View>
+      <Fab
+        icon={LogOut}
+        label="Sign out"
+        variant="primary"
+        corner="br"
+        onPress={signOut}
+      />
+
+      <Fab
+        icon={PlusCircle}
+        label="New"
+        variant="secondary"
+        size="lg"
+        corner="center-bottom"
+        offset={tokens.spacing.xl}
+        onPress={() =>
+          toast({ message: "Create something new", variant: "info" })
+        }
+      />
+
+      <Fab
+        icon={Trash2}
+        variant="destructive"
+        corner="bl"
+        onPress={() =>
+          confirm({
+            title: "Delete?",
+            message: "Permanently remove item?",
+            variant: "error",
+          }).then((ok) =>
+            toast({
+              message: ok ? "Deleted" : "Cancelled",
+              variant: ok ? "error" : "warning",
+            })
+          )
+        }
+      />
+
+      <Fab
+        icon={PencilLine}
+        variant="surface"
+        corner="tr"
+        onPress={() => modal({ content: <ModalContent /> })}
+      />
     </View>
   );
 }

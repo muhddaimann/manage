@@ -71,27 +71,24 @@ export default function Atom() {
           </Text>
           <Text
             style={{
-              color: colors.primary,
+              color: colors.onBackground,
               fontSize: tokens.typography.sizes.md,
-              fontWeight: tokens.typography.weights.reg,
             }}
           >
             Body text (Paper Text)
           </Text>
           <Text
             style={{
-              color: colors.secondary,
+              color: colors.onSurfaceVariant,
               fontSize: tokens.typography.sizes.sm,
-              fontWeight: tokens.typography.weights.reg,
             }}
           >
             Small body text (Paper Text)
           </Text>
           <Text
             style={{
-              color: colors.tertiary,
+              color: colors.onSurfaceVariant,
               fontSize: tokens.typography.sizes.xs,
-              fontWeight: tokens.typography.weights.reg,
               opacity: tokens.typography.opacities.muted,
             }}
           >
@@ -99,10 +96,10 @@ export default function Atom() {
           </Text>
           <Text
             style={{
-              color: colors.error,
+              color: colors.onSurfaceVariant,
               fontSize: tokens.typography.sizes.xs,
-              fontWeight: tokens.typography.weights.med,
               opacity: tokens.typography.opacities.muted,
+              fontWeight: tokens.typography.weights.med as any,
             }}
           >
             Overline text (Paper Text)
@@ -111,64 +108,108 @@ export default function Atom() {
 
         <Divider style={{ marginVertical: tokens.spacing.md }} />
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: tokens.spacing.lg }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
+            gap: tokens.spacing.xl,
+            paddingBottom: tokens.spacing.md,
+          }}
+        >
           <View style={{ gap: tokens.spacing.md }}>
-            <H3>Primary Tone</H3>
-            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
-              <Button size="small" onPress={() => {}}>Contained</Button>
-              <Button size="medium" onPress={() => {}}>Contained</Button>
-              <Button size="large" onPress={() => {}}>Contained</Button>
-            </View>
-            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
-              <Button mode="contained-tonal" size="small" onPress={() => {}}>Contained Tonal</Button>
-              <Button mode="contained-tonal" size="medium" onPress={() => {}}>Contained Tonal</Button>
-              <Button mode="contained-tonal" size="large" onPress={() => {}}>Contained Tonal</Button>
-            </View>
-            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
-              <Button mode="outlined" size="small" onPress={() => {}}>Outlined</Button>
-              <Button mode="outlined" size="medium" onPress={() => {}}>Outlined</Button>
-              <Button mode="outlined" size="large" onPress={() => {}}>Outlined</Button>
-            </View>
-            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
-              <Button mode="elevated" size="small" onPress={() => {}}>Elevated</Button>
-              <Button mode="elevated" size="medium" onPress={() => {}}>Elevated</Button>
-              <Button mode="elevated" size="large" onPress={() => {}}>Elevated</Button>
-            </View>
-            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
-              <Button mode="text" size="small" onPress={() => {}}>Text</Button>
-              <Button mode="text" size="medium" onPress={() => {}}>Text</Button>
-              <Button mode="text" size="large" onPress={() => {}}>Text</Button>
+            <H3>Default</H3>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
+              <Button variant="default" size="sm">
+                Small
+              </Button>
+              <Button variant="default" size="md">
+                Medium
+              </Button>
+              <Button variant="default" size="lg">
+                Large
+              </Button>
             </View>
           </View>
+
           <View style={{ gap: tokens.spacing.md }}>
-            <H3>Error Tone</H3>
-            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
-              <Button tone="error" size="small" onPress={() => {}}>Contained</Button>
-              <Button tone="error" size="medium" onPress={() => {}}>Contained</Button>
-              <Button tone="error" size="large" onPress={() => {}}>Contained</Button>
+            <H3>Secondary</H3>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
+              <Button variant="secondary" size="sm">
+                Small
+              </Button>
+              <Button variant="secondary" size="md">
+                Medium
+              </Button>
+              <Button variant="secondary" size="lg">
+                Large
+              </Button>
             </View>
-            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
-              <Button tone="error" mode="contained-tonal" size="small" onPress={() => {}}>Contained Tonal</Button>
-              <Button tone="error" mode="contained-tonal" size="medium" onPress={() => {}}>Contained Tonal</Button>
-              <Button tone="error" mode="contained-tonal" size="large" onPress={() => {}}>Contained Tonal</Button>
+          </View>
+
+          <View style={{ gap: tokens.spacing.md }}>
+            <H3>Destructive</H3>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
+              <Button variant="destructive" size="sm">
+                Small
+              </Button>
+              <Button variant="destructive" size="md">
+                Medium
+              </Button>
+              <Button variant="destructive" size="lg">
+                Large
+              </Button>
             </View>
-            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
-              <Button tone="error" mode="outlined" size="small" onPress={() => {}}>Outlined</Button>
-              <Button tone="error" mode="outlined" size="medium" onPress={() => {}}>Outlined</Button>
-              <Button tone="error" mode="outlined" size="large" onPress={() => {}}>Outlined</Button>
+          </View>
+
+          <View style={{ gap: tokens.spacing.md }}>
+            <H3>Outline</H3>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
+              <Button variant="outline" size="sm">
+                Small
+              </Button>
+              <Button variant="outline" size="md">
+                Medium
+              </Button>
+              <Button variant="outline" size="lg">
+                Large
+              </Button>
             </View>
-            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
-              <Button tone="error" mode="elevated" size="small" onPress={() => {}}>Elevated</Button>
-              <Button tone="error" mode="elevated" size="medium" onPress={() => {}}>Elevated</Button>
-              <Button tone="error" mode="elevated" size="large" onPress={() => {}}>Elevated</Button>
+          </View>
+
+          <View style={{ gap: tokens.spacing.md }}>
+            <H3>Ghost & Link</H3>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
+              <Button variant="ghost" size="md">
+                Ghost
+              </Button>
+              <Button variant="link" size="md">
+                Learn more
+              </Button>
             </View>
-            <View style={{ flexDirection: "row", gap: tokens.spacing.sm, alignItems: "center" }}>
-              <Button tone="error" mode="text" size="small" onPress={() => {}}>Text</Button>
-              <Button tone="error" mode="text" size="medium" onPress={() => {}}>Text</Button>
-              <Button tone="error" mode="text" size="large" onPress={() => {}}>Text</Button>
+          </View>
+
+          <View style={{ gap: tokens.spacing.md }}>
+            <H3>States</H3>
+            <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
+              <Button variant="default" size="md" loading>
+                Loading
+              </Button>
+              <Button variant="secondary" size="md" disabled>
+                Disabled
+              </Button>
             </View>
           </View>
         </ScrollView>
+
+        <View style={{ gap: tokens.spacing.sm }}>
+          <H3>Full width</H3>
+          <Button variant="default" fullWidth rounded="sm">
+            Primary action
+          </Button>
+          <Button variant="secondary" fullWidth rounded="pill">
+            Secondary action
+          </Button>
+        </View>
       </View>
     </ScrollView>
   );

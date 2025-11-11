@@ -20,7 +20,7 @@ export function ConfirmDialog({
   const { tokens } = useDesign();
   if (!visible || !state) return null;
 
-  const okIsDestructive = state.variant === "error";
+  const okVariant = state.variant === "error" ? "destructive" : "default";
 
   return (
     <View
@@ -30,10 +30,16 @@ export function ConfirmDialog({
         inset: 0,
         justifyContent: "center",
         alignItems: "center",
+        zIndex: 9999,
       }}
+      accessible
+      accessibilityLabel={state.title ?? "Confirmation dialog"}
+      accessibilityViewIsModal
+      accessibilityLiveRegion="polite"
     >
       <Pressable
         onPress={onCancel}
+        accessible={false}
         style={{ position: "absolute", inset: 0, backgroundColor: "#00000088" }}
       />
 
@@ -60,13 +66,16 @@ export function ConfirmDialog({
             backgroundColor: colors.surface,
             borderRadius: tokens.radii.lg,
             overflow: "hidden",
+            borderWidth: 1,
+            borderColor: colors.outlineVariant,
           }}
         >
           {state.title ? (
             <View
               style={{
-                padding: tokens.spacing.lg,
-                paddingBottom: tokens.spacing.sm,
+                paddingHorizontal: tokens.spacing.lg,
+                paddingTop: tokens.spacing.lg,
+                paddingBottom: tokens.spacing.xs,
               }}
             >
               <Text
@@ -108,19 +117,15 @@ export function ConfirmDialog({
             style={{
               flexDirection: "row",
               justifyContent: "flex-end",
-              gap: tokens.spacing.xs,
+              gap: tokens.spacing.sm,
               padding: tokens.spacing.md,
               paddingHorizontal: tokens.spacing.lg,
             }}
           >
-            <Button mode="text" onPress={onCancel}>
+            <Button variant="secondary" onPress={onCancel} rounded="sm">
               {state.cancelText ?? "Cancel"}
             </Button>
-            <Button
-              mode="contained"
-              onPress={onOk}
-              tone={okIsDestructive ? "error" : "primary"}
-            >
+            <Button variant={okVariant as any} onPress={onOk} rounded="sm">
               {state.okText ?? "OK"}
             </Button>
           </View>

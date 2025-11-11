@@ -27,7 +27,7 @@ export default function ForgotPasswordModal() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <View
         style={{
           flex: 1,
@@ -117,7 +117,13 @@ export default function ForgotPasswordModal() {
             borderTopColor: colors.outlineVariant,
           }}
         >
-          <Button onPress={onSubmit} mode="contained" disabled={!valid}>
+          <Button
+            onPress={onSubmit}
+            variant="default"
+            disabled={!valid}
+            fullWidth
+            rounded="sm"
+          >
             Send reset link
           </Button>
         </View>
