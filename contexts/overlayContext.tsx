@@ -1,17 +1,12 @@
 import React, {
   createContext,
   useCallback,
+  useContext,
   useMemo,
   useRef,
   useState,
 } from "react";
 
-export type AlertAction = {
-  text: string;
-  onPress?: () => void;
-  primary?: boolean;
-  destructive?: boolean;
-};
 export type Variant = "neutral" | "info" | "success" | "warning" | "error";
 
 export type AlertOptions = {
@@ -19,6 +14,7 @@ export type AlertOptions = {
   message?: string;
   variant?: Variant;
 };
+
 export type ConfirmOptions = {
   title?: string;
   message?: string;
@@ -26,6 +22,7 @@ export type ConfirmOptions = {
   cancelText?: string;
   variant?: Variant;
 };
+
 export type ToastOptions = {
   message: string;
   duration?: number;
@@ -33,9 +30,13 @@ export type ToastOptions = {
   onAction?: () => void;
   variant?: Variant;
 };
-export type ModalOptions = { content: React.ReactNode; dismissible?: boolean };
 
-export type OverlayAPI = {
+export type ModalOptions = {
+  content: React.ReactNode;
+  dismissible?: boolean;
+};
+
+export type OverlayContextValue = {
   alert: (opts: AlertOptions) => void;
   dismissAlert: () => void;
 
@@ -44,11 +45,12 @@ export type OverlayAPI = {
   dismissConfirm: () => void;
 
   toast: (opts: ToastOptions | string) => void;
+
   modal: (opts: ModalOptions) => void;
   dismissModal: () => void;
 };
 
-export const OverlayContext = createContext<OverlayAPI | null>(null);
+export const OverlayContext = createContext<OverlayContextValue | null>(null);
 
 export function OverlayProvider({
   children,
@@ -80,26 +82,21 @@ export function OverlayProvider({
     onDismiss: () => void;
   }>;
 }) {
-  // ALERT (single button)
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertState, setAlertState] = useState<AlertOptions | null>(null);
 
-  // CONFIRM (two buttons)
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [confirmState, setConfirmState] = useState<ConfirmOptions | null>(null);
   const confirmResolver = useRef<((v: boolean) => void) | null>(null);
 
-  // TOAST
   const [toastVisible, setToastVisible] = useState(false);
-  const [toastState, setToastState] = useState<ToastOptions>({ message: "" });
+  const [toastState, setToastState] = useState<ToastOptions>({
+    message: "",
+  });
 
-  // MODAL
   const [modalVisible, setModalVisible] = useState(false);
   const [modalState, setModalState] = useState<ModalOptions | null>(null);
 
-  // --- API impls ---
-
-  // ALERT
   const alert = useCallback((opts: AlertOptions) => {
     setAlertState({
       title: opts.title ?? "Notice",
@@ -108,12 +105,12 @@ export function OverlayProvider({
     });
     setAlertVisible(true);
   }, []);
+
   const dismissAlert = useCallback(() => {
     setAlertVisible(false);
     setAlertState(null);
   }, []);
 
-  // CONFIRM
   const confirm = useCallback((opts: ConfirmOptions) => {
     return new Promise<boolean>((resolve) => {
       confirmResolver.current = resolve;
@@ -129,20 +126,18 @@ export function OverlayProvider({
   }, []);
 
   const destructiveConfirm = useCallback(
-    (opts: ConfirmOptions) => {
-      return confirm({
+    (opts: ConfirmOptions) =>
+      confirm({
         ...opts,
         variant: opts.variant ?? "error",
         okText: opts.okText ?? "Delete",
-      });
-    },
+      }),
     [confirm]
   );
 
   const dismissConfirm = useCallback(() => {
     setConfirmVisible(false);
     setConfirmState(null);
-    // don’t auto-resolve here; explicit user action should resolve
   }, []);
 
   const onConfirmOk = useCallback(() => {
@@ -152,6 +147,7 @@ export function OverlayProvider({
     setConfirmState(null);
     resolve?.(true);
   }, []);
+
   const onConfirmCancel = useCallback(() => {
     setConfirmVisible(false);
     const resolve = confirmResolver.current;
@@ -160,7 +156,6 @@ export function OverlayProvider({
     resolve?.(false);
   }, []);
 
-  // TOAST
   const toast = useCallback((opts: ToastOptions | string) => {
     const next = typeof opts === "string" ? { message: opts } : opts;
     setToastState({
@@ -173,17 +168,17 @@ export function OverlayProvider({
     setToastVisible(true);
   }, []);
 
-  // MODAL
   const modal = useCallback((opts: ModalOptions) => {
     setModalState(opts);
     setModalVisible(true);
   }, []);
+
   const dismissModal = useCallback(() => {
     setModalVisible(false);
     setModalState(null);
   }, []);
 
-  const value = useMemo<OverlayAPI>(
+  const value = useMemo<OverlayContextValue>(
     () => ({
       alert,
       dismissAlert,
@@ -210,7 +205,6 @@ export function OverlayProvider({
     <OverlayContext.Provider value={value}>
       {children}
 
-      {/* Renderers */}
       <AlertUI
         visible={alertVisible}
         state={alertState}
@@ -234,4 +228,12 @@ export function OverlayProvider({
       />
     </OverlayContext.Provider>
   );
+}
+
+export function useOverlay(): OverlayContextValue {
+  const ctx = useContext(OverlayContext);
+  if (!ctx) {
+    throw new Error("useOverlay must be used within OverlayProvider");
+  }
+  return ctx;
 }

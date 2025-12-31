@@ -7,7 +7,7 @@ import React, {
   useEffect,
 } from "react";
 import { router } from "expo-router";
-import { useOverlay } from "../hooks/useOverlay";
+import { OverlayContext } from "../contexts/overlayContext";
 
 type User = { username: string } | null;
 
@@ -38,7 +38,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [bootstrapped, setBootstrapped] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { toast, confirm } = useOverlay();
+
+  const overlay = useContext(OverlayContext);
+  if (!overlay) {
+    throw new Error("AuthProvider must be used within OverlayProvider");
+  }
+
+  const { toast, confirm } = overlay;
 
   useEffect(() => {
     setBootstrapped(true);

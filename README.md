@@ -77,3 +77,62 @@ Faith Manage — Leading teams with clarity and control
 │ ├─ No advanced performance appraisal system.
 │ ├─ No external recruitment or onboarding workflows.
 ```
+
+manage/
+├─ .expo/
+│  ├─ types/
+│  │  └─ router.d.ts
+│  ├─ web/
+│  │  └─ cache/
+│  │     └─ production/
+│  │        └─ images/
+│  │           └─ favicon/
+│  │              └─ favicon-24272cdaeff82cc5facdaccd982a6f05b60c4504704bbf94c19a6388659880bb-contain-transparent/
+│  │                 └─ favicon-48.png
+│  ├─ devices.json
+│  └─ README.md
+├─ app/
+│  ├─ (modals)/
+│  │  ├─ _layout.tsx
+│  │  ├─ forgot.tsx
+│  │  ├─ signIn.tsx
+│  │  └─ signUp.tsx
+│  ├─ (tabs)/
+│  │  ├─ a/
+│  │  │  ├─ _layout.tsx
+│  │  │  └─ index.tsx
+│  │  ├─ b/
+│  │  │  ├─ _layout.tsx
+│  │  │  └─ index.tsx
+│  │  └─ _layout.tsx
+│  ├─ _layout.tsx
+│  ├─ goodbye.tsx
+│  ├─ index.tsx
+│  └─ welcome.tsx
+├─ assets/
+├─ components/
+│  ├─ a/
+│  │  └─ header.tsx
+│  ├─ b/
+│  │  └─ header.tsx
+│  └─ shared/
+│     ├─ alert.tsx
+│     ├─ confirm.tsx
+│     ├─ header.tsx
+│     ├─ modal.tsx
+│     └─ toast.tsx
+├─ constants/
+│  ├─ design.ts
+│  └─ theme.ts
+├─ contexts/
+│  ├─ authContext.tsx
+│  ├─ designContext.tsx
+│  ├─ overlayContext.tsx
+│  └─ themeContext.tsx
+├─ hooks/
+├─ .gitignore
+├─ app.json
+├─ package-lock.json
+├─ package.json
+├─ README.md
+└─ tsconfig.json

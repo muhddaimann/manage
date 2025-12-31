@@ -1,44 +1,85 @@
-import React, { useEffect, useRef, useState } from "react";
-import { View } from "react-native";
-import { useTheme, ActivityIndicator, ProgressBar, Text } from "react-native-paper";
-import { router } from "expo-router";
+import React, { useEffect, useRef } from "react";
+import { View, ActivityIndicator, Animated, Easing } from "react-native";
+import { useTheme, Text } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDesign } from "../contexts/designContext";
-import { H1 } from "../components/atom/text";
+import { useRouter } from "expo-router";
 
 export default function Goodbye() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const [count, setCount] = useState(2);
-  const [progress, setProgress] = useState(0);
-  const iRef = useRef<NodeJS.Timeout | null>(null);
-  const pRef = useRef<NodeJS.Timeout | null>(null);
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(12)).current;
+  const scale = useRef(new Animated.Value(0.96)).current;
 
   useEffect(() => {
-    iRef.current = setInterval(() => setCount((n) => (n > 1 ? n - 1 : n)), 1000);
-    pRef.current = setInterval(() => setProgress((p) => Math.min(1, p + 0.12)), 200);
-    const to = setTimeout(() => router.replace("/"), 2000);
-    return () => {
-      if (iRef.current) clearInterval(iRef.current);
-      if (pRef.current) clearInterval(pRef.current);
-      clearTimeout(to);
-    };
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 420,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 420,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 420,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    const t = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 280,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: -8,
+          duration: 280,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start(() => router.replace("/"));
+    }, 1000);
+
+    return () => clearTimeout(t);
   }, []);
 
   return (
     <View
       style={{
         flex: 1,
-        backgroundColor: colors.surface,
-        alignItems: "center",
+        paddingTop: insets.top,
+        backgroundColor: colors.background,
         justifyContent: "center",
-        padding: tokens.spacing.lg,
-        gap: tokens.spacing.lg,
+        alignItems: "center",
       }}
     >
-      <H1 style={{ color: colors.onSurface }}>Goodbye</H1>
-      <ActivityIndicator animating />
-      <ProgressBar progress={progress} style={{ width: 280 }} />
-      <Text style={{ color: colors.onSurfaceVariant }}>Returning to start in {count}s</Text>
+      <Animated.View
+        style={{
+          alignItems: "center",
+          gap: tokens.spacing.md,
+          opacity,
+          transform: [{ translateY }, { scale }],
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
+          Signing out…
+        </Text>
+      </Animated.View>
     </View>
   );
 }
