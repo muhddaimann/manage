@@ -1,85 +1,79 @@
-# paperNative
+# 🏢 Faith Manage
 
-Learning template for **Expo + React Native Paper** with **personalized design tokens** and a simple overlay system (Alert / Confirm / Modal / Toast).
+Manager and admin system for overseeing people, approvals, and workplace operations.
 
-## Authors
-- [@muhddaimann](https://www.github.com/muhddaimann)
+---
 
-## Quick Start
+## Brand Tagline
+
+Faith Manage — Leading teams with clarity and control
+
+### Brand Colors
+
+- primary: '#5B5F97',
+- secondary: '#A14F66',
+
 ```bash
-npm install
-npm run dev - ios
 
-paperNative/
-├─ app/
-│  ├─ (modals)/
-│  │  ├─ _layout.tsx
-│  │  ├─ forgot.tsx
-│  │  ├─ signIn.tsx
-│  │  └─ signUp.tsx
-│  ├─ (tabs)/
-│  │  ├─ a/
-│  │  │  ├─ _layout.tsx
-│  │  │  └─ index.tsx
-│  │  ├─ b/
-│  │  │  ├─ _layout.tsx
-│  │  │  └─ index.tsx
-│  │  └─ _layout.tsx
-│  ├─ _layout.tsx
-│  ├─ goodbye.tsx
-│  ├─ index.tsx
-│  └─ welcome.tsx
-├─ assets/
-├─ components/
-│  ├─ atom/
-│  │  ├─ button.tsx
-│  │  └─ text.tsx
-│  ├─ molecule/
-│  │  ├─ alert.tsx
-│  │  ├─ confirm.tsx
-│  │  ├─ fab.tsx
-│  │  ├─ modal.tsx
-│  │  └─ toast.tsx
-│  └─ shared/
-│     └─ header.tsx
-├─ constants/
-│  ├─ design.ts
-│  └─ theme.ts
-├─ contexts/
-│  ├─ authContext.tsx
-│  ├─ designContext.tsx
-│  ├─ overlayContext.tsx
-│  └─ themeContext.tsx
-├─ hooks/
-│  ├─ useBlog.tsx
-│  ├─ useOverlay.tsx
-│  └─ useText.tsx
-├─ .gitignore
-├─ app.json
-├─ package-lock.json
-├─ package.json
-├─ README.md
-└─ tsconfig.json
-
-
-
-
-Klek – collect/claim/back finance app
 ├─ About
-│ ├─ Mission — Turn fronts into fast reimbursements.
-│ ├─ Problem — You pay first; collecting is slow.
-│ ├─ Outcome — Cashflow kept intrack.
+│ ├─ Mission — Enable managers and admins to efficiently oversee teams and workplace operations.
+│ ├─ Problem — Managers and HR lack a clear, centralized system to approve requests, monitor attendance, and manage resources.
+│ ├─ Outcome — Faster approvals, better oversight, and smoother people operations.
+│ ├─ Positioning — A management and approval system (not a full enterprise HR or payroll platform).
+│
 ├─ User Persona
-│ ├─ Primary — Young pro, fronts meals/rides.
-│ ├─ Secondary — Small teams, housemates.
-│ ├─ Pain — Forget who owes; awkward chasing.
-├─ Value Props
-│ ├─ 1-tap log; auto split.
-│ ├─ Smart reminders; nice tone.
-│ ├─ Clear “owed today” number.
-├─ Core Flows
-│ ├─ Create Expense — Add, split, assign payers.
-│ ├─ Send Link — Share claim via deep link/QR.
-│ ├─ Track Status — Unpaid/partial/paid.
-│ ├─ Settle — Mark paid; record method.
-│ ├─ Nudge — Gentle reminder with context.
+│ ├─ Primary — People managers approving leave and monitoring team activity.
+│ ├─ Secondary — HR and admins managing announcements and office resources.
+│ ├─ Tertiary — Operations leads overseeing workforce availability.
+│
+│ ├─ Pain
+│ │ ├─ Manual or delayed leave approvals.
+│ │ ├─ Limited visibility into team attendance.
+│ │ ├─ Announcements difficult to manage and track.
+│ │ ├─ Office room usage lacks oversight.
+│
+│ ├─ Goal
+│ │ ├─ Review and approve employee leave efficiently.
+│ │ ├─ Monitor team attendance and availability.
+│ │ ├─ Publish and manage company announcements.
+│ │ ├─ Oversee office room bookings and usage.
+│
+├─ Core Jobs-to-be-Done
+│ ├─ Approve — Review and act on employee leave requests.
+│ ├─ Monitor — Track team attendance and work status.
+│ ├─ Communicate — Create and manage announcements.
+│ ├─ Oversee — Manage office room availability and bookings.
+│
+├─ Core Features
+│ ├─ Attendance Oversight
+│ │ ├─ View team and department attendance.
+│ │ ├─ Filters by date, status, and employee.
+│
+│ ├─ Leave Approvals
+│ │ ├─ Approve or reject leave applications.
+│ │ ├─ View leave history and balances.
+│ │ ├─ Approval audit trail.
+│
+│ ├─ Announcements Management
+│ │ ├─ Create, edit, and publish announcements.
+│ │ ├─ Track read and acknowledgment status.
+│
+│ ├─ Office Room Management
+│ │ ├─ Manage room availability and time slots.
+│ │ ├─ View all bookings and resolve conflicts.
+│
+│ ├─ User & Profile Oversight
+│ │ ├─ View employee profiles and roles.
+│ │ ├─ Basic role and access visibility.
+│
+├─ Quality-of-life
+│ ├─ Dashboard-focused layout for quick decisions.
+│ ├─ Web and tablet friendly experience.
+│ ├─ Fast access to approvals and alerts.
+│ ├─ Light and dark mode support.
+│
+├─ Non-Goals (for now)
+│ ├─ No payroll, tax, or accounting modules.
+│ ├─ No advanced performance appraisal system.
+│ ├─ No external recruitment or onboarding workflows.
+```
