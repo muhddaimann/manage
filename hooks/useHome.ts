@@ -2,13 +2,6 @@ import { useMemo } from "react";
 
 type UserTag = "MANAGEMENT" | "OPERATION";
 
-type NewsFlash = {
-  id: string;
-  title: string;
-  body: string;
-  date: string;
-};
-
 type QuickStat = {
   label: string;
   value: string;
@@ -74,31 +67,46 @@ export default function useHome() {
     { label: "Attendance", value: "On Track" },
   ];
 
+  type NewsPriority = "HIGH" | "MEDIUM" | "LOW";
+
+  type NewsFlash = {
+    id: string;
+    title: string;
+    body: string;
+    date: string;
+    priority: NewsPriority;
+    byDepartment: string;
+    by: string;
+  };
+
   const newsFlash: NewsFlash[] = [
     {
       id: "nf-1",
       title: "Public Holiday Notice",
       body: "Office will be closed this Friday due to a public holiday.",
       date: "2 Oct 2026",
+      priority: "HIGH",
+      byDepartment: "Human Resources",
+      by: "HR Admin",
     },
     {
       id: "nf-2",
       title: "System Maintenance",
       body: "HR system maintenance scheduled tonight from 10 PM to 12 AM.",
       date: "1 Oct 2026",
+      priority: "MEDIUM",
+      byDepartment: "IT Department",
+      by: "IT Operations",
     },
     {
       id: "nf-3",
       title: "Policy Update",
       body: "New leave application guidelines are now effective.",
       date: "28 Sep 2026",
+      priority: "LOW",
+      byDepartment: "Human Resources",
+      by: "HR Manager",
     },
-  ];
-
-  const actions = [
-    { key: "leave", label: "Apply Leave" },
-    { key: "room", label: "Book Room" },
-    { key: "attendance", label: "Add Attendance" },
   ];
 
   return {
@@ -107,6 +115,5 @@ export default function useHome() {
     user,
     quickStats,
     newsFlash,
-    actions,
   };
 }

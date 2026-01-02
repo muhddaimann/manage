@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Pressable } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, Pressable, Animated } from "react-native";
 import {
   Home,
   ClipboardList,
@@ -15,6 +15,7 @@ import { Text, useTheme } from "react-native-paper";
 import { useDesign } from "../../contexts/designContext";
 import { useAuth } from "../../contexts/authContext";
 import { useOverlay } from "../../contexts/overlayContext";
+import { useTabs } from "../../contexts/tabContext";
 import { design } from "../../constants/design";
 
 const TAB_META: Record<
@@ -62,11 +63,7 @@ function NavButton({
       })}
       <Text
         variant={active ? "labelLarge" : "labelMedium"}
-        style={{
-          marginTop: 2,
-          color,
-          opacity: active ? 1 : 1,
-        }}
+        style={{ marginTop: 2, color }}
         numberOfLines={1}
       >
         {label}
@@ -105,6 +102,25 @@ export default function FloatingTabBar({ state, navigation }: any) {
   const { tokens } = useDesign();
   const { signOut } = useAuth();
   const { modal, dismissModal } = useOverlay();
+  const { hideTabBar } = useTabs();
+
+  const translateY = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: hideTabBar ? 120 : 0,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: hideTabBar ? 0 : 1,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [hideTabBar]);
 
   const activeIndex = state.index;
   const activeRoute = state.routes[activeIndex].name as "a" | "b" | "c";
@@ -179,7 +195,7 @@ export default function FloatingTabBar({ state, navigation }: any) {
   const danger = activeRoute === "c";
 
   return (
-    <View
+    <Animated.View
       style={{
         position: "absolute",
         left: tokens.spacing.md,
@@ -188,6 +204,8 @@ export default function FloatingTabBar({ state, navigation }: any) {
         flexDirection: "row",
         alignItems: "center",
         gap: tokens.spacing.md,
+        transform: [{ translateY }],
+        opacity,
       }}
     >
       <View
@@ -242,6 +260,6 @@ export default function FloatingTabBar({ state, navigation }: any) {
           <Plus size={28} color={colors.onPrimary} />
         )}
       </Pressable>
-    </View>
+    </Animated.View>
   );
 }
