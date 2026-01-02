@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 
+type UserTag = "MANAGEMENT" | "OPERATION";
+
 type NewsFlash = {
   id: string;
   title: string;
@@ -12,10 +14,17 @@ type QuickStat = {
   value: string;
 };
 
+type LeaveSummary = {
+  annualLeaveLeft: number;
+  pendingLeave: number;
+};
+
 type UserProfile = {
   name: string;
   role: string;
   initials: string;
+  tag: UserTag;
+  leave: LeaveSummary;
 };
 
 function formatToday() {
@@ -52,11 +61,16 @@ export default function useHome() {
     name: "Hakim",
     role: "Executive Web Developer",
     initials: getInitials("Aiman Hakim"),
+    tag: "MANAGEMENT",
+    leave: {
+      annualLeaveLeft: 12,
+      pendingLeave: 2,
+    },
   };
 
   const quickStats: QuickStat[] = [
-    { label: "Leave Balance", value: "12 days" },
-    { label: "Overtime (Month)", value: "6.5 hrs" },
+    { label: "AL Left", value: `${user.leave.annualLeaveLeft} days` },
+    { label: "Leave Pending", value: `${user.leave.pendingLeave}` },
     { label: "Attendance", value: "On Track" },
   ];
 
