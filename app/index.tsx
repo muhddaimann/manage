@@ -4,14 +4,11 @@ import { useTheme, Text, Button } from "react-native-paper";
 import { UserCircle } from "lucide-react-native";
 import { useDesign } from "../contexts/designContext";
 import { useRouter } from "expo-router";
-import { useOverlay } from "../contexts/overlayContext";
 
 export default function Index() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const router = useRouter();
-  const { alert, confirm, toast, modal } = useOverlay();
-
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.92)).current;
   const translateY = useRef(new Animated.Value(12)).current;
@@ -41,7 +38,12 @@ export default function Index() {
   }, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <Animated.View
         style={{
           flex: 1,
@@ -49,10 +51,11 @@ export default function Index() {
           paddingHorizontal: tokens.spacing.lg,
           opacity,
           transform: [{ scale }, { translateY }],
-          gap: tokens.spacing.lg,
         }}
       >
-        <View style={{ alignItems: "center" }}>
+        <View
+          style={{ alignItems: "center", marginBottom: tokens.spacing["2xl"] }}
+        >
           <View
             style={{
               width: 96,
@@ -61,109 +64,57 @@ export default function Index() {
               backgroundColor: colors.primaryContainer,
               alignItems: "center",
               justifyContent: "center",
+              shadowColor: colors.primary,
+              shadowOpacity: 0.2,
+              shadowRadius: 18,
+              shadowOffset: { width: 0, height: 8 },
+              elevation: 8,
               marginBottom: tokens.spacing.md,
             }}
           >
             <UserCircle size={42} color={colors.primary} />
           </View>
 
-          <Text variant="headlineSmall">Overlay demo</Text>
+          <Text
+            variant="headlineSmall"
+            style={{ marginBottom: tokens.spacing.xs }}
+          >
+            Welcome to Faith
+          </Text>
+
           <Text
             variant="bodyMedium"
             style={{
               color: colors.onSurfaceVariant,
               textAlign: "center",
               maxWidth: 280,
-              marginTop: tokens.spacing.xs,
             }}
           >
-            Demo for alert, confirm, toast, and modal
+            Sign in or create an account to continue
           </Text>
         </View>
 
         <View style={{ gap: tokens.spacing.sm }}>
           <Button
             mode="contained"
-            onPress={() =>
-              alert({
-                title: "Alert",
-                message: "This is a simple alert dialog",
-                variant: "error",
-              })
-            }
+            contentStyle={{ height: 48 }}
+            onPress={() => router.push("/signIn")}
           >
-            Show alert
+            Sign in
           </Button>
 
           <Button
             mode="outlined"
-            onPress={async () => {
-              const ok = await confirm({
-                variant:"error",
-                title: "Confirm action",
-                message: "Do you want to proceed?",
-                okText: "Yes",
-                cancelText: "No",
-              });
-              toast({
-                message: ok ? "Confirmed" : "Cancelled",
-                variant: ok ? "success" : "warning",
-              });
-            }}
+            contentStyle={{ height: 48 }}
+            onPress={() => router.push("/signUp")}
           >
-            Show confirm
-          </Button>
-
-          <Button
-            mode="outlined"
-            onPress={() =>
-              toast({
-                message: "This is a toast message",
-                variant: "info",
-              })
-            }
-          >
-            Show toast
-          </Button>
-
-          <Button
-            mode="outlined"
-            onPress={() =>
-              modal({
-                content: (
-                  <View
-                    style={{
-                      backgroundColor: colors.background,
-                      padding: tokens.spacing.lg,
-                      borderRadius: tokens.radii.lg,
-                      gap: tokens.spacing.md,
-                    }}
-                  >
-                    <Text variant="titleMedium">Modal content</Text>
-                    <Text
-                      variant="bodyMedium"
-                      style={{ color: colors.onSurfaceVariant }}
-                    >
-                      This modal is rendered via OverlayContext.
-                    </Text>
-                    <Button mode="contained" onPress={() => toast("Closed")}>
-                      Close
-                    </Button>
-                  </View>
-                ),
-              })
-            }
-          >
-            Show modal
+            Sign up
           </Button>
         </View>
 
-        <View style={{ marginTop: tokens.spacing.xl, gap: tokens.spacing.sm }}>
-          <Button mode="text" onPress={() => router.push("/signIn")}>
-            Go to sign in
-          </Button>
-          <Button mode="text" onPress={() => router.push("/signUp")}>
-            Go to sign up
+        <View style={{ marginTop: tokens.spacing.md, alignItems: "center" }}>
+          <Button mode="text" onPress={() => router.push("/forgot")}>
+            Forgot password?
           </Button>
         </View>
       </Animated.View>

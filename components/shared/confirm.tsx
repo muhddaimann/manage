@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Pressable, StyleSheet, Animated, Easing } from "react-native";
 import { Button, Text, useTheme } from "react-native-paper";
 import { BlurView } from "expo-blur";
@@ -37,10 +37,7 @@ const tone = (colors: any, variant: Variant) => {
     case "info":
       return { fg: colors.secondary, bg: colors.secondaryContainer };
     default:
-      return {
-        fg: colors.onSurfaceVariant,
-        bg: colors.surfaceVariant,
-      };
+      return { fg: colors.onSurfaceVariant, bg: colors.surfaceVariant };
   }
 };
 
@@ -53,6 +50,8 @@ export default function ConfirmDialog({
   const { colors } = useTheme();
   const { tokens } = useDesign();
 
+  const [rendered, setRendered] = useState(false);
+
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.92)).current;
@@ -60,6 +59,13 @@ export default function ConfirmDialog({
 
   useEffect(() => {
     if (visible && state) {
+      setRendered(true);
+
+      backdropOpacity.setValue(0);
+      opacity.setValue(0);
+      scale.setValue(0.92);
+      translateY.setValue(18);
+
       Animated.parallel([
         Animated.timing(backdropOpacity, {
           toValue: 1,
@@ -87,7 +93,7 @@ export default function ConfirmDialog({
           useNativeDriver: true,
         }),
       ]).start();
-    } else {
+    } else if (rendered) {
       Animated.parallel([
         Animated.timing(backdropOpacity, {
           toValue: 0,
@@ -113,11 +119,13 @@ export default function ConfirmDialog({
           easing: Easing.in(Easing.cubic),
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start(() => {
+        setRendered(false);
+      });
     }
   }, [visible, state]);
 
-  if (!visible || !state) return null;
+  if (!rendered || !state) return null;
 
   const variant: Variant = state.variant ?? "neutral";
   const Icon = iconMap[variant];

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, StyleSheet, Animated, Easing, Pressable } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import {
@@ -44,41 +44,58 @@ export default function ToastBar({ visible, state, onDismiss }: Props) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
 
+  const [rendered, setRendered] = useState(false);
+
   const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(32)).current;
-  const scale = useRef(new Animated.Value(0.96)).current;
+  const translateY = useRef(new Animated.Value(-100)).current;
 
   useEffect(() => {
     if (visible) {
+      setRendered(true);
+
+      opacity.setValue(0);
+      translateY.setValue(-100);
+
       Animated.parallel([
         Animated.timing(opacity, {
           toValue: 1,
-          duration: 160,
+          duration: 260,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-        Animated.spring(translateY, {
+        Animated.timing(translateY, {
           toValue: 0,
-          damping: 20,
-          stiffness: 260,
-          mass: 0.7,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scale, {
-          toValue: 1,
-          damping: 22,
-          stiffness: 240,
-          mass: 0.7,
+          duration: 260,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
       ]).start();
 
-      const t = setTimeout(onDismiss, state.duration ?? 2600);
+      const t = setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(opacity, {
+            toValue: 0,
+            duration: 220,
+            easing: Easing.in(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(translateY, {
+            toValue: -100,
+            duration: 220,
+            easing: Easing.in(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          setRendered(false);
+          onDismiss();
+        });
+      }, state.duration ?? 2600);
+
       return () => clearTimeout(t);
     }
   }, [visible]);
 
-  if (!visible) return null;
+  if (!rendered) return null;
 
   const variant: Variant = state.variant ?? "neutral";
   const Icon = iconMap[variant];
@@ -90,15 +107,14 @@ export default function ToastBar({ visible, state, onDismiss }: Props) {
       style={{
         ...StyleSheet.absoluteFillObject,
         zIndex: 220,
-        justifyContent: "flex-end",
       }}
     >
       <Animated.View
         style={{
+          marginTop: tokens.spacing["3xl"],
           marginHorizontal: tokens.spacing.lg,
-          marginBottom: tokens.spacing["3xl"],
           opacity,
-          transform: [{ translateY }, { scale }],
+          transform: [{ translateY }],
         }}
       >
         <Pressable onPress={onDismiss}>
@@ -129,10 +145,7 @@ export default function ToastBar({ visible, state, onDismiss }: Props) {
               <Text
                 variant="bodyMedium"
                 numberOfLines={2}
-                style={{
-                  color: colors.onSurface,
-                  flex: 1,
-                }}
+                style={{ color: colors.onSurface, flex: 1 }}
               >
                 {state.message}
               </Text>

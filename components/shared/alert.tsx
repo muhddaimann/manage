@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Pressable, StyleSheet, Animated, Easing } from "react-native";
 import { Button, Text, useTheme } from "react-native-paper";
 import { BlurView } from "expo-blur";
@@ -28,36 +28,23 @@ const iconMap = {
 const tone = (colors: any, variant?: AlertOptions["variant"]) => {
   switch (variant) {
     case "success":
-      return {
-        fg: colors.primary,
-        bg: colors.primaryContainer,
-      };
+      return { fg: colors.primary, bg: colors.primaryContainer };
     case "warning":
-      return {
-        fg: colors.tertiary,
-        bg: colors.tertiaryContainer,
-      };
+      return { fg: colors.tertiary, bg: colors.tertiaryContainer };
     case "error":
-      return {
-        fg: colors.error,
-        bg: colors.errorContainer,
-      };
+      return { fg: colors.error, bg: colors.errorContainer };
     case "info":
-      return {
-        fg: colors.secondary,
-        bg: colors.secondaryContainer,
-      };
+      return { fg: colors.secondary, bg: colors.secondaryContainer };
     default:
-      return {
-        fg: colors.onSurfaceVariant,
-        bg: colors.surfaceVariant,
-      };
+      return { fg: colors.onSurfaceVariant, bg: colors.surfaceVariant };
   }
 };
 
 export default function AlertDialog({ visible, state, onDismiss }: Props) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
+
+  const [rendered, setRendered] = useState(false);
 
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -66,6 +53,13 @@ export default function AlertDialog({ visible, state, onDismiss }: Props) {
 
   useEffect(() => {
     if (visible && state) {
+      setRendered(true);
+
+      backdropOpacity.setValue(0);
+      opacity.setValue(0);
+      scale.setValue(0.92);
+      translateY.setValue(18);
+
       Animated.parallel([
         Animated.timing(backdropOpacity, {
           toValue: 1,
@@ -93,7 +87,7 @@ export default function AlertDialog({ visible, state, onDismiss }: Props) {
           useNativeDriver: true,
         }),
       ]).start();
-    } else {
+    } else if (rendered) {
       Animated.parallel([
         Animated.timing(backdropOpacity, {
           toValue: 0,
@@ -119,11 +113,13 @@ export default function AlertDialog({ visible, state, onDismiss }: Props) {
           easing: Easing.in(Easing.quad),
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start(() => {
+        setRendered(false);
+      });
     }
   }, [visible, state]);
 
-  if (!visible || !state) return null;
+  if (!rendered || !state) return null;
 
   const variant = state.variant ?? "neutral";
   const Icon = iconMap[variant];
@@ -176,10 +172,7 @@ export default function AlertDialog({ visible, state, onDismiss }: Props) {
           </View>
 
           {state.title && (
-            <Text
-              variant="titleMedium"
-              style={{ textAlign: "center", marginTop: tokens.spacing.xs }}
-            >
+            <Text variant="titleMedium" style={{ textAlign: "center" }}>
               {state.title}
             </Text>
           )}
