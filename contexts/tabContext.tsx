@@ -1,4 +1,3 @@
-// contexts/tabContext.tsx
 import React, { createContext, useContext, useMemo, useState } from "react";
 
 type TabCtx = {

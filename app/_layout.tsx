@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from "react";
 import { View } from "react-native";
-import { Stack, SplashScreen } from "expo-router";
+import { Slot, SplashScreen } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -22,7 +22,6 @@ import ConfirmDialog from "../components/shared/confirm";
 import ToastBar from "../components/shared/toast";
 import ModalSheet from "../components/shared/modal";
 import { TabProvider } from "../contexts/tabContext";
-import FloatingTabBar from "../components/shared/navBar";
 
 void (async () => {
   try {
@@ -40,18 +39,8 @@ function AppShell() {
         edges={["top"]}
         style={{ backgroundColor: colors.background }}
       />
-
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.background },
-          }}
-        >
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(tabs)" />
-          <FloatingTabBar />
-        </Stack>
+      <View style={{ flex: 1 }}>
+        <Slot />
       </View>
     </>
   );
@@ -86,7 +75,7 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <SafeAreaProvider>
         <ThemeProvider>
           <TabProvider>

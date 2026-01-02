@@ -1,0 +1,98 @@
+import { useMemo } from "react";
+
+type NewsFlash = {
+  id: string;
+  title: string;
+  body: string;
+  date: string;
+};
+
+type QuickStat = {
+  label: string;
+  value: string;
+};
+
+type UserProfile = {
+  name: string;
+  role: string;
+  initials: string;
+};
+
+function formatToday() {
+  const now = new Date();
+  return now.toLocaleDateString("en-MY", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0].toUpperCase())
+    .join("");
+}
+
+export default function useHome() {
+  const today = useMemo(() => formatToday(), []);
+  const greeting = useMemo(() => getGreeting(), []);
+
+  const user: UserProfile = {
+    name: "Hakim",
+    role: "Executive Web Developer",
+    initials: getInitials("Aiman Hakim"),
+  };
+
+  const quickStats: QuickStat[] = [
+    { label: "Leave Balance", value: "12 days" },
+    { label: "Overtime (Month)", value: "6.5 hrs" },
+    { label: "Attendance", value: "On Track" },
+  ];
+
+  const newsFlash: NewsFlash[] = [
+    {
+      id: "nf-1",
+      title: "Public Holiday Notice",
+      body: "Office will be closed this Friday due to a public holiday.",
+      date: "2 Oct 2026",
+    },
+    {
+      id: "nf-2",
+      title: "System Maintenance",
+      body: "HR system maintenance scheduled tonight from 10 PM to 12 AM.",
+      date: "1 Oct 2026",
+    },
+    {
+      id: "nf-3",
+      title: "Policy Update",
+      body: "New leave application guidelines are now effective.",
+      date: "28 Sep 2026",
+    },
+  ];
+
+  const actions = [
+    { key: "leave", label: "Apply Leave" },
+    { key: "room", label: "Book Room" },
+    { key: "attendance", label: "Add Attendance" },
+  ];
+
+  return {
+    today,
+    greeting,
+    user,
+    quickStats,
+    newsFlash,
+    actions,
+  };
+}
