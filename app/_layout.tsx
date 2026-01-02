@@ -12,7 +12,7 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
-
+import { TokenProvider } from "../contexts/tokenContext";
 import { ThemeProvider } from "../contexts/themeContext";
 import { DesignProvider } from "../contexts/designContext";
 import { OverlayProvider } from "../contexts/overlayContext";
@@ -21,6 +21,8 @@ import AlertDialog from "../components/shared/alert";
 import ConfirmDialog from "../components/shared/confirm";
 import ToastBar from "../components/shared/toast";
 import ModalSheet from "../components/shared/modal";
+import { TabProvider } from "../contexts/tabContext";
+import FloatingTabBar from "../components/shared/navBar";
 
 void (async () => {
   try {
@@ -48,6 +50,7 @@ function AppShell() {
         >
           <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" />
+          <FloatingTabBar />
         </Stack>
       </View>
     </>
@@ -83,21 +86,25 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <DesignProvider>
-            <OverlayProvider
-              AlertUI={AlertDialog}
-              ConfirmUI={ConfirmDialog}
-              ToastUI={ToastBar}
-              ModalUI={ModalSheet}
-            >
-              <AuthProvider>
-                <AppShell />
-              </AuthProvider>
-            </OverlayProvider>
-          </DesignProvider>
+          <TabProvider>
+            <DesignProvider>
+              <OverlayProvider
+                AlertUI={AlertDialog}
+                ConfirmUI={ConfirmDialog}
+                ToastUI={ToastBar}
+                ModalUI={ModalSheet}
+              >
+                <TokenProvider>
+                  <AuthProvider>
+                    <AppShell />
+                  </AuthProvider>
+                </TokenProvider>
+              </OverlayProvider>
+            </DesignProvider>
+          </TabProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

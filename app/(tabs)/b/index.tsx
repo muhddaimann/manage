@@ -1,73 +1,77 @@
-import React, { useEffect, useRef } from "react";
-import { View, Animated, Easing } from "react-native";
-import { useTheme, Text, Card, Button } from "react-native-paper";
+import React, { useState } from "react";
+import { ScrollView, View } from "react-native";
+import { Text, useTheme, SegmentedButtons } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 
-export default function Settings() {
+type AppTab = "leave" | "overtime";
+
+export default function Application() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(20)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 500,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 500,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
+  const [tab, setTab] = useState<AppTab>("leave");
 
   return (
-    <View
-      style={{
-        flex: 1,
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={{
         paddingHorizontal: tokens.spacing.lg,
-        backgroundColor: colors.background,
+        paddingBottom: tokens.spacing["3xl"] * 2,
+        gap: tokens.spacing.lg,
       }}
     >
-      <Animated.View
+      <View
         style={{
-          opacity,
-          transform: [{ translateY }],
-          gap: tokens.spacing.lg,
+          flex: 1,
+          backgroundColor: colors.background,
         }}
       >
-        <Text variant="headlineSmall">Home</Text>
+        <Text variant="headlineSmall">Application</Text>
 
-        <Card>
-          <Card.Content>
-            <Text variant="titleMedium">Today</Text>
+        <SegmentedButtons
+          value={tab}
+          onValueChange={(v) => setTab(v as AppTab)}
+          buttons={[
+            { value: "leave", label: "Leave" },
+            { value: "overtime", label: "Overtime" },
+          ]}
+        />
+
+        {tab === "leave" && (
+          <View
+            style={{
+              backgroundColor: colors.surface,
+              borderRadius: tokens.radii.lg,
+              padding: tokens.spacing.lg,
+            }}
+          >
+            <Text variant="titleMedium">Leave Application</Text>
             <Text
               variant="bodyMedium"
               style={{ color: colors.onSurfaceVariant }}
             >
-              You’re all set for the day.
+              Apply and manage your leave here.
             </Text>
-          </Card.Content>
-        </Card>
+          </View>
+        )}
 
-        <Card>
-          <Card.Content>
-            <Text variant="titleMedium">Quick actions</Text>
-            <View
-              style={{ gap: tokens.spacing.sm, marginTop: tokens.spacing.sm }}
+        {tab === "overtime" && (
+          <View
+            style={{
+              backgroundColor: colors.surface,
+              borderRadius: tokens.radii.lg,
+              padding: tokens.spacing.lg,
+            }}
+          >
+            <Text variant="titleMedium">Overtime Application</Text>
+            <Text
+              variant="bodyMedium"
+              style={{ color: colors.onSurfaceVariant }}
             >
-              <Button mode="contained">Check attendance</Button>
-              <Button mode="outlined">Apply leave</Button>
-            </View>
-          </Card.Content>
-        </Card>
-      </Animated.View>
-    </View>
+              Submit and track overtime requests here.
+            </Text>
+          </View>
+        )}
+      </View>
+    </ScrollView>
   );
 }

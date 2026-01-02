@@ -17,10 +17,11 @@ export default function SignIn() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { signIn, loading } = useAuth();
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const passwordRef = useRef<TextInput>(null);
+  const focusPassword = useRef<(() => void) | null>(null);
 
   const isValid = useMemo(
     () => username.trim().length > 0 && password.length > 0,
@@ -130,17 +131,21 @@ export default function SignIn() {
                 onChangeText={setUsername}
                 autoCapitalize="none"
                 returnKeyType="next"
-                onSubmitEditing={() => passwordRef.current?.focus()}
+                onSubmitEditing={() => focusPassword.current?.()}
               />
 
               <TextInput
-                ref={passwordRef}
                 mode="outlined"
                 label="Password"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
                 returnKeyType="go"
+                ref={(
+                  instance: React.ComponentRef<typeof TextInput> | null
+                ) => {
+                  focusPassword.current = instance?.focus ?? null;
+                }}
                 onSubmitEditing={() => {
                   if (isValid && !loading) {
                     Keyboard.dismiss();

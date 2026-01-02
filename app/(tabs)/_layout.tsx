@@ -1,37 +1,29 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { useTheme } from "react-native-paper";
-import { Atom, Dna } from "lucide-react-native";
+import FloatingTabBar from "../../components/shared/navBar";
 
 export default function TabsLayout() {
-  const { colors } = useTheme();
-
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.onSurfaceVariant,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.outlineVariant,
-          borderTopWidth: 0.5,
-        },
-        tabBarLabelStyle: { fontWeight: "600" },
-      }}
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <FloatingTabBar {...props} />}
     >
       <Tabs.Screen
         name="a"
         options={{
-          title: "Atom",
-          tabBarIcon: ({ color, size }) => <Atom color={color} size={size} />,
+          title: "Home",
         }}
       />
       <Tabs.Screen
         name="b"
         options={{
-          title: "Molecule",
-          tabBarIcon: ({ color, size }) => <Dna color={color} size={size} />,
+          title: "Application",
+        }}
+      />
+      <Tabs.Screen
+        name="c"
+        options={{
+          title: "Settings",
         }}
       />
     </Tabs>
