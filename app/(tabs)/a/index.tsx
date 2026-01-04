@@ -81,6 +81,15 @@ export default function Home() {
           icon={<Bell size={28} color={colors.primary} />}
           head="News Flash"
           subHeader="Latest announcements & updates"
+          rightSlot={
+            <Button
+              mode="text"
+              compact
+              labelStyle={{ color: colors.primary, fontWeight: "600" }}
+            >
+              Read More
+            </Button>
+          }
         />
 
         <CarouselRow data={newsFlash} />

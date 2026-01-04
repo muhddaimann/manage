@@ -60,7 +60,6 @@ export default function Welcome() {
     <View
       style={{
         flex: 1,
-        paddingTop: insets.top,
         backgroundColor: colors.background,
         justifyContent: "center",
         alignItems: "center",

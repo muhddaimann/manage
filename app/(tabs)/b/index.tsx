@@ -1,17 +1,18 @@
 import React, { useState } from "react";
-import { ScrollView, View } from "react-native";
-import { Text, useTheme, SegmentedButtons } from "react-native-paper";
+import { View, ScrollView } from "react-native";
+import { useTheme } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
-
-type AppTab = "leave" | "overtime";
+import HeaderSwitcher from "../../../components/b/header";
+import ApplicationBody from "../../../components/b/applicationBody";
 
 export default function Application() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const [tab, setTab] = useState<AppTab>("leave");
+  const [mode, setMode] = useState<"LEAVE" | "OVERTIME">("LEAVE");
 
   return (
     <ScrollView
+      showsVerticalScrollIndicator={false}
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{
         paddingHorizontal: tokens.spacing.lg,
@@ -19,59 +20,26 @@ export default function Application() {
         gap: tokens.spacing.lg,
       }}
     >
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.background,
-        }}
-      >
-        <Text variant="headlineSmall">Application</Text>
-
-        <SegmentedButtons
-          value={tab}
-          onValueChange={(v) => setTab(v as AppTab)}
-          buttons={[
-            { value: "leave", label: "Leave" },
-            { value: "overtime", label: "Overtime" },
+      <View style={{ marginTop: tokens.spacing.md }}>
+        <HeaderSwitcher
+          value={mode}
+          onChange={setMode}
+          items={[
+            {
+              key: "LEAVE",
+              label: "Leave",
+              hint: "Annual, medical, emergency",
+            },
+            {
+              key: "OVERTIME",
+              label: "Overtime",
+              hint: "Extra working hours",
+            },
           ]}
         />
-
-        {tab === "leave" && (
-          <View
-            style={{
-              backgroundColor: colors.surface,
-              borderRadius: tokens.radii.lg,
-              padding: tokens.spacing.lg,
-            }}
-          >
-            <Text variant="titleMedium">Leave Application</Text>
-            <Text
-              variant="bodyMedium"
-              style={{ color: colors.onSurfaceVariant }}
-            >
-              Apply and manage your leave here.
-            </Text>
-          </View>
-        )}
-
-        {tab === "overtime" && (
-          <View
-            style={{
-              backgroundColor: colors.surface,
-              borderRadius: tokens.radii.lg,
-              padding: tokens.spacing.lg,
-            }}
-          >
-            <Text variant="titleMedium">Overtime Application</Text>
-            <Text
-              variant="bodyMedium"
-              style={{ color: colors.onSurfaceVariant }}
-            >
-              Submit and track overtime requests here.
-            </Text>
-          </View>
-        )}
       </View>
+
+      <ApplicationBody mode={mode} />
     </ScrollView>
   );
 }

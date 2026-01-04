@@ -16,7 +16,6 @@ import { useDesign } from "../../contexts/designContext";
 import { useAuth } from "../../contexts/authContext";
 import { useOverlay } from "../../contexts/overlayContext";
 import { useTabs } from "../../contexts/tabContext";
-import { design } from "../../constants/design";
 
 const TAB_META: Record<
   "a" | "b" | "c",
@@ -29,45 +28,57 @@ const TAB_META: Record<
 
 function NavButton({
   active,
-  onPress,
   icon,
   label,
   color,
-  activeBg,
+  onPress,
 }: {
   active: boolean;
-  onPress: () => void;
   icon: React.ReactNode;
   label: string;
   color: string;
-  activeBg: string;
+  onPress: () => void;
 }) {
   return (
     <Pressable
       onPress={onPress}
       style={{
         flex: 1,
-        marginVertical: 6,
-        borderRadius: design.radii.full,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: active ? activeBg : "transparent",
-        paddingVertical: 6,
-        transform: [{ scale: active ? 1.05 : 1 }],
+        paddingVertical: 8,
       }}
     >
       {React.cloneElement(icon as any, {
+        size: 22,
         color,
-        size: active ? 24 : 22,
-        strokeWidth: active ? 2.5 : 2,
+        strokeWidth: active ? 2.4 : 2,
       })}
-      <Text
-        variant={active ? "labelLarge" : "labelMedium"}
-        style={{ marginTop: 2, color }}
-        numberOfLines={1}
-      >
-        {label}
-      </Text>
+
+      {active && (
+        <Text
+          variant="labelSmall"
+          style={{
+            marginTop: 4,
+            color,
+            fontWeight: "600",
+          }}
+        >
+          {label}
+        </Text>
+      )}
+
+      {active && (
+        <View
+          style={{
+            marginTop: 4,
+            width: 20,
+            height: 3,
+            borderRadius: 2,
+            backgroundColor: color,
+          }}
+        />
+      )}
     </Pressable>
   );
 }
@@ -110,13 +121,13 @@ export default function FloatingTabBar({ state, navigation }: any) {
   useEffect(() => {
     Animated.parallel([
       Animated.timing(translateY, {
-        toValue: hideTabBar ? 120 : 0,
-        duration: 220,
+        toValue: hideTabBar ? 96 : 0,
+        duration: 260,
         useNativeDriver: true,
       }),
       Animated.timing(opacity, {
         toValue: hideTabBar ? 0 : 1,
-        duration: 180,
+        duration: 200,
         useNativeDriver: true,
       }),
     ]).start();
@@ -126,13 +137,7 @@ export default function FloatingTabBar({ state, navigation }: any) {
   const activeRoute = state.routes[activeIndex].name as "a" | "b" | "c";
 
   const onTabPress = (route: any, index: number) => {
-    const event = navigation.emit({
-      type: "tabPress",
-      target: route.key,
-      canPreventDefault: true,
-    });
-
-    if (!event.defaultPrevented && activeIndex !== index) {
+    if (index !== activeIndex) {
       navigation.navigate(route.name);
     }
   };
@@ -208,19 +213,19 @@ export default function FloatingTabBar({ state, navigation }: any) {
         opacity,
       }}
     >
+      {/* Tabs */}
       <View
         style={{
           flex: 1,
-          height: 68,
+          height: 64,
           borderRadius: tokens.radii.full,
           backgroundColor: colors.surface,
           flexDirection: "row",
-          paddingHorizontal: tokens.spacing.sm,
-          elevation: 18,
+          elevation: 14,
           shadowColor: colors.shadow,
-          shadowOpacity: 0.2,
-          shadowRadius: 28,
-          shadowOffset: { width: 0, height: 14 },
+          shadowOpacity: 0.18,
+          shadowRadius: 20,
+          shadowOffset: { width: 0, height: 10 },
         }}
       >
         {state.routes.map((route: any, index: number) => {
@@ -232,26 +237,25 @@ export default function FloatingTabBar({ state, navigation }: any) {
               key={route.key}
               active={focused}
               label={meta.label}
-              onPress={() => onTabPress(route, index)}
               icon={meta.icon}
               color={focused ? colors.primary : colors.onSurfaceVariant}
-              activeBg={colors.primaryContainer}
+              onPress={() => onTabPress(route, index)}
             />
           );
         })}
       </View>
 
+      {/* FAB */}
       <Pressable
         onPress={openActions}
         style={{
-          width: 68,
-          height: 68,
-          borderRadius: design.radii.full,
+          width: 64,
+          height: 64,
+          borderRadius: 32,
           backgroundColor: danger ? colors.error : colors.primary,
           alignItems: "center",
           justifyContent: "center",
-          elevation: 20,
-          transform: [{ scale: danger ? 1 : 1.08 }],
+          elevation: 18,
         }}
       >
         {danger ? (

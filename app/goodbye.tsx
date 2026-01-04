@@ -61,7 +61,6 @@ export default function Goodbye() {
     <View
       style={{
         flex: 1,
-        paddingTop: insets.top,
         backgroundColor: colors.background,
         justifyContent: "center",
         alignItems: "center",
