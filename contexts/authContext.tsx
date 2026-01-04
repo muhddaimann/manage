@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     throw new Error("AuthProvider must be used within OverlayProvider");
   }
 
-  const { toast, confirm } = overlay;
+  const { toast, destructiveConfirm } = overlay;
 
   const {
     token,
@@ -69,7 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         variant: "warning",
       });
 
-      router.replace("/");``
+      router.replace("/");
+      ``;
     },
     [clearToken, toast]
   );
@@ -119,13 +120,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
-    const ok = await confirm({
-      title: "Sign out?",
+    const ok = await destructiveConfirm({
+      title: "Sign out",
       message: "You’ll be logged out from this device.",
       okText: "Sign out",
       cancelText: "Cancel",
-      variant: "warning",
     });
+
     if (!ok) return;
 
     await clearToken();
@@ -134,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     toast({ message: "Signed out", variant: "info" });
     router.replace("/goodbye");
-  }, [confirm, toast, clearToken]);
+  }, [destructiveConfirm, clearToken, toast]);
 
   const value = useMemo(
     () => ({

@@ -3,7 +3,9 @@ import { View, Pressable } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { FileX2 } from "lucide-react-native";
 import { useDesign } from "../../contexts/designContext";
+import { useOverlay } from "../../contexts/overlayContext";
 import NoData from "../../components/shared/noData";
+import ApplicationModal from "./applicationModal";
 
 export type ApplicationStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type ApplicationFilter = "ALL" | "APPROVED" | "PENDING" | "CANCELLED";
@@ -31,6 +33,7 @@ const FILTERS: ApplicationFilter[] = [
 export default function ApplicationList({ data, mode }: ApplicationListProps) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
+  const { modal, dismissModal } = useOverlay();
   const [filter, setFilter] = useState<ApplicationFilter>("ALL");
 
   const activeBg = mode === "LEAVE" ? colors.secondary : colors.primary;
@@ -43,6 +46,17 @@ export default function ApplicationList({ data, mode }: ApplicationListProps) {
       return item.status === filter;
     });
   }, [data, filter]);
+
+  const openDetails = (item: ApplicationListItem) => {
+    modal({
+      dismissible: true,
+      content: (
+        <Pressable onPress={dismissModal}>
+          <ApplicationModal item={item} mode={mode} onClose={dismissModal} />
+        </Pressable>
+      ),
+    });
+  };
 
   return (
     <View style={{ gap: tokens.spacing.md }}>
@@ -81,19 +95,62 @@ export default function ApplicationList({ data, mode }: ApplicationListProps) {
           {filteredData.map((item) => (
             <Pressable
               key={item.id}
-              style={{
+              onPress={() => openDetails(item)}
+              style={({ pressed }) => ({
                 backgroundColor: colors.surface,
-                borderRadius: tokens.radii.lg,
+                borderRadius: tokens.radii.xl,
                 padding: tokens.spacing.md,
                 gap: tokens.spacing.xs,
-              }}
+                elevation: pressed ? 2 : 6,
+                shadowColor: colors.shadow,
+                shadowOpacity: pressed ? 0.12 : 0.18,
+                shadowRadius: pressed ? 6 : 10,
+                shadowOffset: { width: 0, height: pressed ? 2 : 6 },
+                transform: [{ scale: pressed ? 0.99 : 1 }],
+              })}
             >
-              <Text
-                variant="labelLarge"
-                style={{ fontWeight: "600", color: colors.onSurface }}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: tokens.spacing.sm,
+                }}
               >
-                {item.primary}
-              </Text>
+                <Text
+                  variant="labelLarge"
+                  style={{ fontWeight: "600", color: colors.onSurface }}
+                >
+                  {item.primary}
+                </Text>
+
+                {item.meta && (
+                  <View
+                    style={{
+                      paddingHorizontal: tokens.spacing.sm,
+                      paddingVertical: 4,
+                      borderRadius: tokens.radii.full,
+                      backgroundColor:
+                        mode === "LEAVE"
+                          ? colors.secondaryContainer
+                          : colors.primaryContainer,
+                    }}
+                  >
+                    <Text
+                      variant="labelSmall"
+                      style={{
+                        color:
+                          mode === "LEAVE"
+                            ? colors.onSecondaryContainer
+                            : colors.onPrimaryContainer,
+                        fontWeight: "600",
+                      }}
+                    >
+                      {item.meta}
+                    </Text>
+                  </View>
+                )}
+              </View>
 
               {item.secondary && (
                 <Text
@@ -101,18 +158,6 @@ export default function ApplicationList({ data, mode }: ApplicationListProps) {
                   style={{ color: colors.onSurfaceVariant }}
                 >
                   {item.secondary}
-                </Text>
-              )}
-
-              {item.meta && (
-                <Text
-                  variant="bodySmall"
-                  style={{
-                    color: colors.onSurfaceVariant,
-                    opacity: 0.8,
-                  }}
-                >
-                  {item.meta}
                 </Text>
               )}
             </Pressable>

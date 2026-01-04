@@ -25,7 +25,6 @@ export default function Header({
   return (
     <View
       style={{
-        paddingHorizontal: tokens.spacing.lg,
         backgroundColor: colors.background,
         flexDirection: "row",
         alignItems: "center",

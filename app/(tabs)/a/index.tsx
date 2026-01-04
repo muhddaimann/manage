@@ -11,12 +11,12 @@ import CarouselRow from "../../../components/a/carouselRow";
 import ScrollTop from "../../../components/shared/scrollTop";
 import { CalendarCheck, Bell, Clock, CalendarDays } from "lucide-react-native";
 import { useGesture } from "../../../hooks/useGesture";
+import { router } from "expo-router";
 
 export default function Home() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { greeting, user, newsFlash } = useHome();
-
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture();
 
   return (
@@ -51,6 +51,7 @@ export default function Home() {
             <Button
               mode="text"
               compact
+              onPress={() => router.push("/b")}
               labelStyle={{ color: colors.primary, fontWeight: "600" }}
             >
               View More
@@ -85,13 +86,13 @@ export default function Home() {
             <Button
               mode="text"
               compact
+              onPress={() => router.push("/a/newsflash")}
               labelStyle={{ color: colors.primary, fontWeight: "600" }}
             >
               Read More
             </Button>
           }
         />
-
         <CarouselRow data={newsFlash} />
       </ScrollView>
 

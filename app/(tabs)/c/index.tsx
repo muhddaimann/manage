@@ -13,7 +13,6 @@ export default function Settings() {
         flex: 1,
         backgroundColor: colors.background,
         paddingHorizontal: tokens.spacing.lg,
-        gap: tokens.spacing.lg,
       }}
     >
       <Text variant="headlineSmall">Settings</Text>
@@ -21,7 +20,6 @@ export default function Settings() {
       <View
         style={{
           backgroundColor: colors.surface,
-          borderRadius: tokens.radii.lg,
           overflow: "hidden",
         }}
       >
@@ -48,7 +46,6 @@ export default function Settings() {
         style={{
           backgroundColor: colors.surface,
           borderRadius: tokens.radii.lg,
-          padding: tokens.spacing.lg,
           gap: tokens.spacing.sm,
         }}
       >

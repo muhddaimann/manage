@@ -29,15 +29,40 @@ const iconMap: Record<Variant, LucideIcon> = {
 const tone = (colors: any, variant: Variant) => {
   switch (variant) {
     case "error":
-      return { fg: colors.error, bg: colors.errorContainer };
+      return {
+        fg: colors.error,
+        bg: colors.errorContainer,
+        btn: colors.error,
+        btnText: colors.onError,
+      };
     case "warning":
-      return { fg: colors.tertiary, bg: colors.tertiaryContainer };
+      return {
+        fg: colors.tertiary,
+        bg: colors.tertiaryContainer,
+        btn: colors.tertiary,
+        btnText: colors.onTertiary,
+      };
     case "success":
-      return { fg: colors.primary, bg: colors.primaryContainer };
+      return {
+        fg: colors.primary,
+        bg: colors.primaryContainer,
+        btn: colors.primary,
+        btnText: colors.onPrimary,
+      };
     case "info":
-      return { fg: colors.secondary, bg: colors.secondaryContainer };
+      return {
+        fg: colors.secondary,
+        bg: colors.secondaryContainer,
+        btn: colors.secondary,
+        btnText: colors.onSecondary,
+      };
     default:
-      return { fg: colors.onSurfaceVariant, bg: colors.surfaceVariant };
+      return {
+        fg: colors.onSurfaceVariant,
+        bg: colors.surfaceVariant,
+        btn: colors.primary,
+        btnText: colors.onPrimary,
+      };
   }
 };
 
@@ -119,9 +144,7 @@ export default function ConfirmDialog({
           easing: Easing.in(Easing.cubic),
           useNativeDriver: true,
         }),
-      ]).start(() => {
-        setRendered(false);
-      });
+      ]).start(() => setRendered(false));
     }
   }, [visible, state]);
 
@@ -129,7 +152,7 @@ export default function ConfirmDialog({
 
   const variant: Variant = state.variant ?? "neutral";
   const Icon = iconMap[variant];
-  const { fg, bg } = tone(colors, variant);
+  const { fg, bg, btn, btnText } = tone(colors, variant);
 
   return (
     <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 100 }}>
@@ -215,6 +238,8 @@ export default function ConfirmDialog({
             <Button
               mode="contained"
               onPress={onOk}
+              buttonColor={btn}
+              textColor={btnText}
               contentStyle={{ height: 46 }}
               style={{ flex: 1, borderRadius: tokens.radii.lg }}
             >
