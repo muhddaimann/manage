@@ -16,6 +16,7 @@ import { useDesign } from "../../contexts/designContext";
 import { useAuth } from "../../contexts/authContext";
 import { useOverlay } from "../../contexts/overlayContext";
 import { useTabs } from "../../contexts/tabContext";
+import { router } from "expo-router";
 
 const TAB_META: Record<
   "a" | "b" | "c",
@@ -51,7 +52,6 @@ export default function FloatingTabBar({ state, navigation }: any) {
     ]).start();
   }, [hideTabBar]);
 
-  // ✅ auto-reset when tab changes
   useEffect(() => {
     setHideTabBar(false);
   }, [state.index]);
@@ -86,34 +86,31 @@ export default function FloatingTabBar({ state, navigation }: any) {
               <ActionItem
                 label="Apply Leave"
                 icon={<CalendarPlus size={20} color={colors.primary} />}
-                onPress={dismissModal}
+                onPress={() => {
+                  dismissModal();
+                  router.push("/b/leave");
+                }}
               />
               <ActionItem
                 label="Apply Room"
                 icon={<DoorOpen size={20} color={colors.primary} />}
-                onPress={dismissModal}
-              />
-              <ActionItem
-                label="Add Attendance"
-                icon={<UserCheck size={20} color={colors.primary} />}
-                onPress={dismissModal}
+                onPress={() => {
+                  dismissModal();
+                  router.push("/a/book");
+                }}
               />
             </>
           )}
 
           {activeRoute === "b" && (
-            <>
-              <ActionItem
-                label="Apply Leave"
-                icon={<CalendarPlus size={20} color={colors.primary} />}
-                onPress={dismissModal}
-              />
-              <ActionItem
-                label="Apply Overtime"
-                icon={<Clock size={20} color={colors.primary} />}
-                onPress={dismissModal}
-              />
-            </>
+            <ActionItem
+              label="Apply Leave"
+              icon={<CalendarPlus size={20} color={colors.primary} />}
+              onPress={() => {
+                dismissModal();
+                router.push("/b/leave");
+              }}
+            />
           )}
         </View>
       ),

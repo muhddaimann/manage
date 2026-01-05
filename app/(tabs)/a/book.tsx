@@ -1,43 +1,54 @@
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   KeyboardAvoidingView,
-  Keyboard,
   Platform,
   Pressable,
+  Keyboard,
   Animated,
   Easing,
 } from "react-native";
-import { useTheme, TextInput, Button } from "react-native-paper";
+import { useTheme, Text, TextInput, Button } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
 import Header from "../../../components/shared/header";
+import useHome from "../../../hooks/useHome";
+import { useLocalSearchParams, useFocusEffect, router } from "expo-router";
 
-export default function UpdateProfile() {
+export default function RoomBook() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { setHideTabBar } = useTabs();
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("");
-  const [department, setDepartment] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const { rooms } = useHome();
+  const { roomId } = useLocalSearchParams<{ roomId?: string }>();
 
-  const isValid = useMemo(
-    () =>
-      name.trim().length > 0 &&
-      role.trim().length > 0 &&
-      email.trim().length > 0,
-    [name, role, email]
+  const room = useMemo(
+    () => rooms.find((r) => r.id === roomId),
+    [rooms, roomId]
   );
+
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [purpose, setPurpose] = useState("");
+
+  const isValid =
+    !!room &&
+    date.trim().length > 0 &&
+    startTime.trim().length > 0 &&
+    endTime.trim().length > 0 &&
+    purpose.trim().length > 0;
 
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.94)).current;
   const liftY = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
+  useFocusEffect(() => {
     setHideTabBar(true);
+    return () => setHideTabBar(false);
+  });
 
+  useEffect(() => {
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
@@ -75,7 +86,6 @@ export default function UpdateProfile() {
     });
 
     return () => {
-      setHideTabBar(false);
       show.remove();
       hide.remove();
     };
@@ -94,14 +104,12 @@ export default function UpdateProfile() {
             gap: tokens.spacing.sm,
           }}
         >
-          <Header title="Update Profile" subtitle="Complete this form" />
+          <Header
+            title="Book Room"
+            subtitle={room ? room.name : "Select a room"}
+          />
 
-          <View
-            style={{
-              flex: 1,
-              paddingTop: tokens.spacing.md,
-            }}
-          >
+          <View style={{ flex: 1, paddingTop: tokens.spacing.md }}>
             <Animated.View
               style={{
                 backgroundColor: colors.surface,
@@ -117,47 +125,55 @@ export default function UpdateProfile() {
                 elevation: 12,
               }}
             >
+              {room && (
+                <View style={{ gap: 2 }}>
+                  <Text variant="titleMedium" style={{ fontWeight: "700" }}>
+                    {room.name}
+                  </Text>
+                  <Text
+                    variant="bodySmall"
+                    style={{ color: colors.onSurfaceVariant }}
+                  >
+                    {room.location} · {room.capacity} pax · {room.type}
+                  </Text>
+                </View>
+              )}
+
               <View style={{ gap: tokens.spacing.md }}>
                 <TextInput
                   mode="outlined"
-                  label="Full name"
-                  value={name}
-                  onChangeText={setName}
+                  label="Date"
+                  placeholder="YYYY-MM-DD"
+                  value={date}
+                  onChangeText={setDate}
                   returnKeyType="next"
                 />
 
                 <TextInput
                   mode="outlined"
-                  label="Role"
-                  value={role}
-                  onChangeText={setRole}
+                  label="Start time"
+                  placeholder="HH:MM"
+                  value={startTime}
+                  onChangeText={setStartTime}
                   returnKeyType="next"
                 />
 
                 <TextInput
                   mode="outlined"
-                  label="Department"
-                  value={department}
-                  onChangeText={setDepartment}
+                  label="End time"
+                  placeholder="HH:MM"
+                  value={endTime}
+                  onChangeText={setEndTime}
                   returnKeyType="next"
                 />
 
                 <TextInput
                   mode="outlined"
-                  label="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  returnKeyType={phone ? "next" : "done"}
-                />
-
-                <TextInput
-                  mode="outlined"
-                  label="Phone (optional)"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
+                  label="Purpose"
+                  value={purpose}
+                  onChangeText={setPurpose}
+                  multiline
+                  numberOfLines={3}
                   returnKeyType="done"
                 />
               </View>
@@ -166,8 +182,9 @@ export default function UpdateProfile() {
                 mode="contained"
                 disabled={!isValid}
                 contentStyle={{ height: 48 }}
+                onPress={() => router.back()}
               >
-                Save changes
+                Confirm booking
               </Button>
             </Animated.View>
           </View>

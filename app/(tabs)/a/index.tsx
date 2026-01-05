@@ -9,7 +9,13 @@ import SectionHeader from "../../../components/shared/secHeader";
 import TwoRow from "../../../components/a/twoRow";
 import CarouselRow from "../../../components/a/newsflashCarousel";
 import ScrollTop from "../../../components/shared/scrollTop";
-import { CalendarCheck, Bell, Clock, CalendarDays } from "lucide-react-native";
+import {
+  CalendarCheck,
+  Bell,
+  Clock,
+  CalendarDays,
+  DoorOpen,
+} from "lucide-react-native";
 import { useGesture } from "../../../hooks/useGesture";
 import { router } from "expo-router";
 
@@ -65,40 +71,40 @@ export default function Home() {
         <CarouselRow data={newsFlash} />
 
         <SectionHeader
-          icon={<CalendarDays size={24} color={colors.primary} />}
-          head="Leave"
-          subHeader="Your leave overview"
+          icon={<DoorOpen size={26} color={colors.primary} />}
+          head="Room Booking"
+          subHeader="Got a meeting to plan? Check here"
           rightSlot={
             <Button
               mode="text"
               compact
-              onPress={() => router.push("/b")}
+              onPress={() => router.push("/a/room")}
               labelStyle={{
                 color: colors.primary,
                 fontWeight: "600",
               }}
             >
-              View More
+              Check Rooms
             </Button>
           }
         />
 
         <TwoRow
           left={{
-            amount: user.leave.annualLeaveLeft,
-            label: "AL remaining",
-            icon: <CalendarCheck size={24} color={colors.onSecondary} />,
-            bgColor: colors.secondary,
-            textColor: colors.onSecondary,
-            labelColor: colors.onSecondary,
+            amount: 1,
+            label: "Active booking",
+            icon: <CalendarCheck size={24} color={colors.onPrimary} />,
+            bgColor: colors.primary,
+            textColor: colors.onPrimary,
+            labelColor: colors.onPrimary,
           }}
           right={{
-            amount: user.leave.pendingLeave,
-            label: "Pending requests",
-            icon: <Clock size={24} color={colors.onSecondaryContainer} />,
-            bgColor: colors.secondaryContainer,
-            textColor: colors.onSecondaryContainer,
-            labelColor: colors.onSecondaryContainer,
+            amount: 0,
+            label: "Booking history",
+            icon: <Clock size={24} color={colors.onPrimaryContainer} />,
+            bgColor: colors.primaryContainer,
+            textColor: colors.onPrimaryContainer,
+            labelColor: colors.onPrimaryContainer,
           }}
         />
       </ScrollView>

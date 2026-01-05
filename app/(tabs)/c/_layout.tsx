@@ -6,5 +6,6 @@ export default function CLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="update" />
-    </Stack>  );
+    </Stack>
+    );
 }

@@ -7,6 +7,9 @@ export default function HomeLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="newsflash" />
       <Stack.Screen name="main" />
+      <Stack.Screen name="book" />
+      <Stack.Screen name="room" />
+      <Stack.Screen name="record" />
     </Stack>
   );
 }

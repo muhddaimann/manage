@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 
+/* ================= NEWS ================= */
+
 export type NewsPriority = "HIGH" | "MEDIUM" | "LOW";
 
 export type NewsFlash = {
@@ -11,6 +13,8 @@ export type NewsFlash = {
   byDepartment: string;
   by: string;
 };
+
+/* ================= USER / DAY ================= */
 
 type UserTag = "MANAGEMENT" | "OPERATION";
 
@@ -39,6 +43,46 @@ export type DayStatusTone =
   | "error"
   | "outline";
 
+/* ================= ROOM ================= */
+
+export type RoomType =
+  | "MEETING"
+  | "CONFERENCE"
+  | "TRAINING"
+  | "FOCUS"
+  | "PHONE_BOOTH";
+
+export type RoomStatus = "AVAILABLE" | "OCCUPIED" | "MAINTENANCE";
+
+export type RoomAmenity =
+  | "TV"
+  | "PROJECTOR"
+  | "WHITEBOARD"
+  | "VIDEO_CONF"
+  | "AIR_COND";
+
+export type Room = {
+  id: string;
+  name: string;
+  type: RoomType;
+  capacity: number;
+  amenities: RoomAmenity[];
+  status: RoomStatus;
+  location: string;
+};
+
+export type RoomBooking = {
+  id: string;
+  roomId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  purpose: string;
+  by: string;
+};
+
+/* ================= OTHER ================= */
+
 type QuickStat = {
   label: string;
   value: string;
@@ -56,6 +100,8 @@ type UserProfile = {
   tag: UserTag;
   leave: LeaveSummary;
 };
+
+/* ================= HELPERS ================= */
 
 function formatToday() {
   const now = new Date();
@@ -82,6 +128,8 @@ function getInitials(name: string) {
     .join("");
 }
 
+/* ================= HOOK ================= */
+
 export default function useHome() {
   const today = useMemo(() => formatToday(), []);
   const greeting = useMemo(() => getGreeting(), []);
@@ -96,6 +144,8 @@ export default function useHome() {
       pendingLeave: 2,
     },
   };
+
+  /* ---------- Day Status ---------- */
 
   const [dayStatus, setDayStatus] = useState<DayStatus>("WORKING");
 
@@ -112,7 +162,6 @@ export default function useHome() {
   const toggleDayStatus = () => {
     setDayStatus((prev) => {
       const idx = STATUS_FLOW.indexOf(prev);
-      if (idx === -1) return STATUS_FLOW[0];
       return STATUS_FLOW[(idx + 1) % STATUS_FLOW.length];
     });
   };
@@ -123,30 +172,15 @@ export default function useHome() {
         title: "Not checked in",
         subtitle: "Tap to start your shift",
       },
-      WORKING: {
-        title: "Working",
-        subtitle: "Actively on duty today",
-      },
-      ON_LEAVE: {
-        title: "On leave",
-        subtitle: "Approved leave for today",
-      },
-      COMPLETED: {
-        title: "Completed",
-        subtitle: "Work completed for today",
-      },
+      WORKING: { title: "Working", subtitle: "Actively on duty today" },
+      ON_LEAVE: { title: "On leave", subtitle: "Approved leave for today" },
+      COMPLETED: { title: "Completed", subtitle: "Work completed for today" },
       PUBLIC_HOLIDAY: {
         title: "Public holiday",
         subtitle: "Office closed nationwide",
       },
-      OFF_DAY: {
-        title: "Off day",
-        subtitle: "No work scheduled today",
-      },
-      REST_DAY: {
-        title: "Rest day",
-        subtitle: "Scheduled rest & recovery",
-      },
+      OFF_DAY: { title: "Off day", subtitle: "No work scheduled today" },
+      REST_DAY: { title: "Rest day", subtitle: "Scheduled rest & recovery" },
     };
 
   const dayStatusIcon: Record<DayStatus, DayStatusIcon> = {
@@ -178,6 +212,8 @@ export default function useHome() {
     },
   ];
 
+  /* ---------- News ---------- */
+
   const newsFlash: NewsFlash[] = [
     {
       id: "nf-1",
@@ -208,6 +244,95 @@ export default function useHome() {
     },
   ];
 
+  /* ---------- Rooms ---------- */
+
+  const [rooms] = useState<Room[]>([
+    {
+      id: "room-1",
+      name: "Meeting Room A",
+      type: "MEETING",
+      capacity: 6,
+      amenities: ["TV", "WHITEBOARD", "AIR_COND"],
+      status: "AVAILABLE",
+      location: "Level 3",
+    },
+    {
+      id: "room-2",
+      name: "Meeting Room B",
+      type: "MEETING",
+      capacity: 10,
+      amenities: ["TV", "VIDEO_CONF", "WHITEBOARD", "AIR_COND"],
+      status: "OCCUPIED",
+      location: "Level 3",
+    },
+    {
+      id: "room-3",
+      name: "Conference Room",
+      type: "CONFERENCE",
+      capacity: 20,
+      amenities: ["PROJECTOR", "VIDEO_CONF", "AIR_COND"],
+      status: "AVAILABLE",
+      location: "Level 5",
+    },
+    {
+      id: "room-4",
+      name: "Training Room",
+      type: "TRAINING",
+      capacity: 30,
+      amenities: ["PROJECTOR", "WHITEBOARD", "AIR_COND"],
+      status: "MAINTENANCE",
+      location: "Level 2",
+    },
+    {
+      id: "room-5",
+      name: "Focus Room",
+      type: "FOCUS",
+      capacity: 2,
+      amenities: ["AIR_COND"],
+      status: "AVAILABLE",
+      location: "Level 4",
+    },
+  ]);
+
+  const [bookings, setBookings] = useState<RoomBooking[]>([
+    {
+      id: "bk-1",
+      roomId: "room-2",
+      date: "2026-01-06",
+      startTime: "10:00",
+      endTime: "11:30",
+      purpose: "Sprint planning",
+      by: "Hakim",
+    },
+    {
+      id: "bk-2",
+      roomId: "room-3",
+      date: "2026-01-07",
+      startTime: "14:00",
+      endTime: "16:00",
+      purpose: "Client presentation",
+      by: "Sales Team",
+    },
+  ]);
+
+  const availableRooms = useMemo(
+    () => rooms.filter((r) => r.status === "AVAILABLE"),
+    [rooms]
+  );
+
+  const getRoomById = (id: string) =>
+    rooms.find((room) => room.id === id) ?? null;
+
+  const getBookingsByRoom = (roomId: string) =>
+    bookings.filter((b) => b.roomId === roomId);
+
+  const bookRoom = (payload: Omit<RoomBooking, "id">) => {
+    setBookings((prev) => [
+      ...prev,
+      { id: `bk-${prev.length + 1}`, ...payload },
+    ]);
+  };
+
   return {
     today,
     greeting,
@@ -220,5 +345,12 @@ export default function useHome() {
     toggleDayStatus,
     quickStats,
     newsFlash,
+
+    rooms,
+    availableRooms,
+    bookings,
+    getRoomById,
+    getBookingsByRoom,
+    bookRoom,
   };
 }
