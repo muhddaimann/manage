@@ -5,7 +5,7 @@ export default function HomeLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      <Stack.Screen name="newsflashPage" />
+      <Stack.Screen name="newsflash" />
     </Stack>
   );
 }

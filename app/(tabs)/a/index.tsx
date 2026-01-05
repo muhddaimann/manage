@@ -7,7 +7,7 @@ import Header from "../../../components/a/header";
 import MainCard from "../../../components/a/mainCard";
 import SectionHeader from "../../../components/shared/secHeader";
 import TwoRow from "../../../components/a/twoRow";
-import CarouselRow from "../../../components/a/carouselRow";
+import CarouselRow from "../../../components/a/newsflashCarousel";
 import ScrollTop from "../../../components/shared/scrollTop";
 import { CalendarCheck, Bell, Clock, CalendarDays } from "lucide-react-native";
 import { useGesture } from "../../../hooks/useGesture";
@@ -44,7 +44,7 @@ export default function Home() {
         <MainCard />
 
         <SectionHeader
-          icon={<CalendarDays size={28} color={colors.primary} />}
+          icon={<CalendarDays size={24} color={colors.primary} />}
           head="Leave"
           subHeader="Your leave overview"
           rightSlot={
@@ -52,7 +52,10 @@ export default function Home() {
               mode="text"
               compact
               onPress={() => router.push("/b")}
-              labelStyle={{ color: colors.primary, fontWeight: "600" }}
+              labelStyle={{
+                color: colors.primary,
+                fontWeight: "600",
+              }}
             >
               View More
             </Button>
@@ -79,7 +82,7 @@ export default function Home() {
         />
 
         <SectionHeader
-          icon={<Bell size={28} color={colors.primary} />}
+          icon={<Bell size={24} color={colors.primary} />}
           head="News Flash"
           subHeader="Latest announcements & updates"
           rightSlot={
@@ -87,12 +90,16 @@ export default function Home() {
               mode="text"
               compact
               onPress={() => router.push("/a/newsflash")}
-              labelStyle={{ color: colors.primary, fontWeight: "600" }}
+              labelStyle={{
+                color: colors.primary,
+                fontWeight: "600",
+              }}
             >
               Read More
             </Button>
           }
         />
+
         <CarouselRow data={newsFlash} />
       </ScrollView>
 

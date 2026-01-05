@@ -6,12 +6,14 @@ type UseGestureOptions = {
   hideNavOffset?: number;
   scrollTopOffset?: number;
   threshold?: number;
+  controlNav?: boolean;
 };
 
 export function useGesture({
   hideNavOffset = 100,
   scrollTopOffset = 300,
   threshold = 8,
+  controlNav = true,
 }: UseGestureOptions = {}) {
   const { setHideTabBar } = useTabs();
 
@@ -25,12 +27,14 @@ export function useGesture({
 
     setShowScrollTop(y > scrollTopOffset);
 
-    if (diff > threshold && y > hideNavOffset) {
-      setHideTabBar(true);
-    }
+    if (controlNav) {
+      if (diff > threshold && y > hideNavOffset) {
+        setHideTabBar(true);
+      }
 
-    if (diff < -threshold) {
-      setHideTabBar(false);
+      if (diff < -threshold) {
+        setHideTabBar(false);
+      }
     }
 
     lastY.current = y;

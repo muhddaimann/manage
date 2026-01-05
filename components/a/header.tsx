@@ -2,6 +2,7 @@ import React from "react";
 import { View, Pressable } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { Bell } from "lucide-react-native";
+import { router } from "expo-router";
 import { useDesign } from "../../contexts/designContext";
 
 type UserStatus = "ACTIVE" | "ON_LEAVE" | "REMOTE";
@@ -68,6 +69,7 @@ export default function Header({
 
         <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
           <Pressable
+            onPress={() => router.push("/a/newsflash")}
             style={{
               width: 44,
               height: 44,

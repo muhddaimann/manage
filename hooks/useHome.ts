@@ -1,5 +1,21 @@
 import { useMemo } from "react";
 
+/* =======================
+   Shared Types (exported)
+   ======================= */
+
+export type NewsPriority = "HIGH" | "MEDIUM" | "LOW";
+
+export type NewsFlash = {
+  id: string;
+  title: string;
+  body: string;
+  date: string;
+  priority: NewsPriority;
+  byDepartment: string;
+  by: string;
+};
+
 type UserTag = "MANAGEMENT" | "OPERATION";
 
 type QuickStat = {
@@ -19,6 +35,10 @@ type UserProfile = {
   tag: UserTag;
   leave: LeaveSummary;
 };
+
+/* =======================
+   Helpers
+   ======================= */
 
 function formatToday() {
   const now = new Date();
@@ -46,6 +66,10 @@ function getInitials(name: string) {
     .join("");
 }
 
+/* =======================
+   Hook
+   ======================= */
+
 export default function useHome() {
   const today = useMemo(() => formatToday(), []);
   const greeting = useMemo(() => getGreeting(), []);
@@ -66,18 +90,6 @@ export default function useHome() {
     { label: "Leave Pending", value: `${user.leave.pendingLeave}` },
     { label: "Attendance", value: "On Track" },
   ];
-
-  type NewsPriority = "HIGH" | "MEDIUM" | "LOW";
-
-  type NewsFlash = {
-    id: string;
-    title: string;
-    body: string;
-    date: string;
-    priority: NewsPriority;
-    byDepartment: string;
-    by: string;
-  };
 
   const newsFlash: NewsFlash[] = [
     {

@@ -2,23 +2,25 @@ import React, { useMemo, useState } from "react";
 import { ScrollView, View, Pressable } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
-import useHome from "../../../hooks/useHome";
+import useHome, { NewsFlash } from "../../../hooks/useHome";
 import Header from "../../../components/shared/header";
 import ScrollTop from "../../../components/shared/scrollTop";
 import { useGesture } from "../../../hooks/useGesture";
+import NewsflashList from "../../../components/a/newsflashList";
 
-type Priority = "ALL" | "HIGH" | "MEDIUM" | "LOW";
+type PriorityFilter = "ALL" | "HIGH" | "MEDIUM" | "LOW";
 
-const PRIORITIES: Priority[] = ["ALL", "HIGH", "MEDIUM", "LOW"];
+const PRIORITIES: PriorityFilter[] = ["ALL", "HIGH", "MEDIUM", "LOW"];
 
 export default function NewsflashPage() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { newsFlash } = useHome();
-  const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture();
-  const [priority, setPriority] = useState<Priority>("ALL");
-
-  const filtered = useMemo(() => {
+  const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture({
+    controlNav: false,
+  });
+  const [priority, setPriority] = useState<PriorityFilter>("ALL");
+  const filteredData = useMemo<NewsFlash[]>(() => {
     if (priority === "ALL") return newsFlash;
     return newsFlash.filter((n) => n.priority === priority);
   }, [newsFlash, priority]);
@@ -34,10 +36,10 @@ export default function NewsflashPage() {
         contentContainerStyle={{
           paddingHorizontal: tokens.spacing.lg,
           paddingBottom: tokens.spacing["3xl"] * 2,
-          gap: tokens.spacing.lg,
+          gap: tokens.spacing.sm,
         }}
       >
-        <Header title="News Flash" subtitle="All announcements & updates" />
+        <Header title="Newsflash" subtitle="All announcements & updates" />
 
         <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
           {PRIORITIES.map((p) => {
@@ -71,60 +73,7 @@ export default function NewsflashPage() {
           })}
         </View>
 
-        <View style={{ gap: tokens.spacing.md }}>
-          {filtered.map((item) => (
-            <View
-              key={item.id}
-              style={{
-                backgroundColor: colors.surface,
-                borderRadius: tokens.radii.xl,
-                padding: tokens.spacing.lg,
-                gap: tokens.spacing.sm,
-                elevation: 6,
-                shadowColor: colors.shadow,
-                shadowOpacity: 0.16,
-                shadowRadius: 10,
-                shadowOffset: { width: 0, height: 6 },
-              }}
-            >
-              <Text
-                variant="titleSmall"
-                style={{ color: colors.onSurface, fontWeight: "600" }}
-              >
-                {item.title}
-              </Text>
-
-              <Text
-                variant="bodySmall"
-                style={{ color: colors.onSurfaceVariant }}
-              >
-                {item.body}
-              </Text>
-
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  marginTop: tokens.spacing.xs,
-                }}
-              >
-                <Text
-                  variant="labelSmall"
-                  style={{ color: colors.onSurfaceVariant }}
-                >
-                  {item.byDepartment}
-                </Text>
-
-                <Text
-                  variant="labelSmall"
-                  style={{ color: colors.onSurfaceVariant }}
-                >
-                  {item.date}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
+        <NewsflashList data={filteredData} />
       </ScrollView>
 
       <ScrollTop visible={showScrollTop} onPress={scrollToTop} />

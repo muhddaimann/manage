@@ -1,23 +1,13 @@
 import React from "react";
-import { View, FlatList, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { useDesign } from "../../contexts/designContext";
+import { useOverlay } from "../../contexts/overlayContext";
+import { NewsFlash, NewsPriority } from "../../hooks/useHome";
+import NewsflashModal from "./newsflashModal";
 
-type NewsPriority = "HIGH" | "MEDIUM" | "LOW";
-
-type NewsFlashItem = {
-  id: string;
-  title: string;
-  body: string;
-  date: string;
-  priority: NewsPriority;
-  byDepartment: string;
-  by: string;
-};
-
-type CarouselRowProps = {
-  data: NewsFlashItem[];
-  onPress?: (item: NewsFlashItem) => void;
+type NewsflashListProps = {
+  data: NewsFlash[];
 };
 
 const PRIORITY_COLOR: Record<NewsPriority, string> = {
@@ -26,29 +16,38 @@ const PRIORITY_COLOR: Record<NewsPriority, string> = {
   LOW: "#10B981",
 };
 
-export default function CarouselRow({ data, onPress }: CarouselRowProps) {
+export default function NewsflashList({ data }: NewsflashListProps) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
+  const { modal, dismissModal } = useOverlay();
+  const openDetails = (item: NewsFlash) => {
+    modal({
+      dismissible: true,
+      content: (
+        <Pressable onPress={dismissModal}>
+          <NewsflashModal item={item} />
+        </Pressable>
+      ),
+    });
+  };
 
   return (
-    <FlatList
-      horizontal
-      data={data}
-      keyExtractor={(item) => item.id}
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{
-        gap: tokens.spacing.md,
-      }}
-      renderItem={({ item }) => (
+    <View style={{ gap: tokens.spacing.md }}>
+      {data.map((item) => (
         <Pressable
-          onPress={() => onPress?.(item)}
-          style={{
-            width: 280,
-            backgroundColor: colors.surfaceVariant,
+          key={item.id}
+          onPress={() => openDetails(item)}
+          style={({ pressed }) => ({
+            backgroundColor: colors.surface,
             borderRadius: tokens.radii.xl,
-            padding: tokens.spacing.md,
+            padding: tokens.spacing.lg,
             gap: tokens.spacing.sm,
-          }}
+            elevation: pressed ? 2 : 6,
+            shadowColor: colors.shadow,
+            shadowOpacity: pressed ? 0.12 : 0.18,
+            shadowRadius: pressed ? 6 : 10,
+            shadowOffset: { width: 0, height: pressed ? 2 : 6 },
+          })}
         >
           <View
             style={{
@@ -67,7 +66,10 @@ export default function CarouselRow({ data, onPress }: CarouselRowProps) {
             </Text>
           </View>
 
-          <Text variant="titleSmall" style={{ fontWeight: "700" }}>
+          <Text
+            variant="titleSmall"
+            style={{ fontWeight: "700", color: colors.onSurface }}
+          >
             {item.title}
           </Text>
 
@@ -100,7 +102,7 @@ export default function CarouselRow({ data, onPress }: CarouselRowProps) {
             </Text>
           </View>
         </Pressable>
-      )}
-    />
+      ))}
+    </View>
   );
 }
