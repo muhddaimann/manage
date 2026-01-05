@@ -12,7 +12,6 @@ export default function MainPage() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { user, today, dayStatus, toggleDayStatus } = useHome();
-
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture({
     controlNav: false,
   });

@@ -17,12 +17,9 @@ export default function SignIn() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { signIn, loading } = useAuth();
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
   const focusPassword = useRef<(() => void) | null>(null);
-
   const isValid = useMemo(
     () => username.trim().length > 0 && password.length > 0,
     [username, password]

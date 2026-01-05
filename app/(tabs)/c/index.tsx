@@ -1,58 +1,97 @@
-import React from "react";
-import { View } from "react-native";
-import { Text, List, Divider, useTheme } from "react-native-paper";
+import React, { useMemo, useState } from "react";
+import { View, Pressable } from "react-native";
+import { Text, Divider, Switch, useTheme } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
+import useSettings from "../../../hooks/useSettings";
+import Header from "../../../components/c/header";
 
 export default function Settings() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
+  const { user, basicInfo } = useSettings();
+  const [notifications, setNotifications] = useState(true);
+  const staffId = useMemo(() => {
+    const found = basicInfo.find((i) =>
+      i.label.toLowerCase().includes("staff")
+    );
+    return found?.value ?? "0000";
+  }, [basicInfo]);
 
   return (
     <View
       style={{
-        flex: 1,
-        backgroundColor: colors.background,
-        paddingHorizontal: tokens.spacing.lg,
+        padding: tokens.spacing.lg,
+        gap: tokens.spacing.lg,
       }}
     >
-      <Text variant="headlineSmall">Settings</Text>
+      <Header user={user} staffId={staffId} />
 
-      <View
-        style={{
-          backgroundColor: colors.surface,
-          overflow: "hidden",
-        }}
-      >
-        <List.Item
-          title="Profile"
-          description="View and update your personal details"
-          left={(props) => <List.Icon {...props} icon="account" />}
-        />
-        <Divider />
-        <List.Item
-          title="Notifications"
-          description="Manage notification preferences"
-          left={(props) => <List.Icon {...props} icon="bell" />}
-        />
-        <Divider />
-        <List.Item
-          title="Security"
-          description="Change password and security settings"
-          left={(props) => <List.Icon {...props} icon="lock" />}
-        />
-      </View>
-
-      <View
-        style={{
-          backgroundColor: colors.surface,
-          borderRadius: tokens.radii.lg,
-          gap: tokens.spacing.sm,
-        }}
-      >
-        <Text variant="titleMedium">About</Text>
-        <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
-          Staff Management App v1.0.0
+      <View>
+        <Text
+          variant="labelLarge"
+          style={{
+            marginBottom: tokens.spacing.sm,
+            color: colors.onSurfaceVariant,
+          }}
+        >
+          App
         </Text>
+
+        <View
+          style={{
+            borderRadius: tokens.radii.xl,
+            backgroundColor: colors.surface,
+            overflow: "hidden",
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingHorizontal: tokens.spacing.lg,
+              paddingVertical: tokens.spacing.md,
+              justifyContent: "space-between",
+            }}
+          >
+            <View style={{ gap: 2 }}>
+              <Text variant="labelLarge" style={{ fontWeight: "600" }}>
+                Notifications
+              </Text>
+              <Text
+                variant="bodySmall"
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                Receive app notifications
+              </Text>
+            </View>
+
+            <Switch
+              value={notifications}
+              onValueChange={setNotifications}
+              color={colors.primary}
+            />
+          </View>
+
+          <Divider />
+
+          <Pressable
+            style={({ pressed }) => ({
+              paddingHorizontal: tokens.spacing.lg,
+              paddingVertical: tokens.spacing.md,
+              opacity: pressed ? 0.85 : 1,
+            })}
+          >
+            <Text variant="labelLarge" style={{ fontWeight: "600" }}>
+              About
+            </Text>
+            <Text
+              variant="bodySmall"
+              style={{ color: colors.onSurfaceVariant }}
+            >
+              Faith 1.0.0
+            </Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
