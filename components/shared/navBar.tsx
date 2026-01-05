@@ -26,94 +26,12 @@ const TAB_META: Record<
   c: { label: "Settings", icon: <Settings /> },
 };
 
-function NavButton({
-  active,
-  icon,
-  label,
-  color,
-  onPress,
-}: {
-  active: boolean;
-  icon: React.ReactNode;
-  label: string;
-  color: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        paddingVertical: 8,
-      }}
-    >
-      {React.cloneElement(icon as any, {
-        size: 22,
-        color,
-        strokeWidth: active ? 2.4 : 2,
-      })}
-
-      {active && (
-        <Text
-          variant="labelSmall"
-          style={{
-            marginTop: 4,
-            color,
-            fontWeight: "600",
-          }}
-        >
-          {label}
-        </Text>
-      )}
-
-      {active && (
-        <View
-          style={{
-            marginTop: 4,
-            width: 20,
-            height: 3,
-            borderRadius: 2,
-            backgroundColor: color,
-          }}
-        />
-      )}
-    </Pressable>
-  );
-}
-
-function ActionItem({
-  label,
-  icon,
-  onPress,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 14,
-        paddingVertical: 10,
-      }}
-    >
-      {icon}
-      <Text variant="bodyLarge">{label}</Text>
-    </Pressable>
-  );
-}
-
 export default function FloatingTabBar({ state, navigation }: any) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { signOut } = useAuth();
   const { modal, dismissModal } = useOverlay();
-  const { hideTabBar } = useTabs();
+  const { hideTabBar, setHideTabBar } = useTabs();
 
   const translateY = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
@@ -132,6 +50,11 @@ export default function FloatingTabBar({ state, navigation }: any) {
       }),
     ]).start();
   }, [hideTabBar]);
+
+  // ✅ auto-reset when tab changes
+  useEffect(() => {
+    setHideTabBar(false);
+  }, [state.index]);
 
   const activeIndex = state.index;
   const activeRoute = state.routes[activeIndex].name as "a" | "b" | "c";
@@ -213,7 +136,6 @@ export default function FloatingTabBar({ state, navigation }: any) {
         opacity,
       }}
     >
-      {/* Tabs */}
       <View
         style={{
           flex: 1,
@@ -245,7 +167,6 @@ export default function FloatingTabBar({ state, navigation }: any) {
         })}
       </View>
 
-      {/* FAB */}
       <Pressable
         onPress={openActions}
         style={{
@@ -265,5 +186,87 @@ export default function FloatingTabBar({ state, navigation }: any) {
         )}
       </Pressable>
     </Animated.View>
+  );
+}
+
+function NavButton({
+  active,
+  icon,
+  label,
+  color,
+  onPress,
+}: {
+  active: boolean;
+  icon: React.ReactNode;
+  label: string;
+  color: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 8,
+      }}
+    >
+      {React.cloneElement(icon as any, {
+        size: 22,
+        color,
+        strokeWidth: active ? 2.4 : 2,
+      })}
+
+      {active && (
+        <Text
+          variant="labelSmall"
+          style={{
+            marginTop: 4,
+            color,
+            fontWeight: "600",
+          }}
+        >
+          {label}
+        </Text>
+      )}
+
+      {active && (
+        <View
+          style={{
+            marginTop: 4,
+            width: 20,
+            height: 3,
+            borderRadius: 2,
+            backgroundColor: color,
+          }}
+        />
+      )}
+    </Pressable>
+  );
+}
+
+function ActionItem({
+  label,
+  icon,
+  onPress,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 14,
+        paddingVertical: 10,
+      }}
+    >
+      {icon}
+      <Text variant="bodyLarge">{label}</Text>
+    </Pressable>
   );
 }

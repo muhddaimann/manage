@@ -36,8 +36,8 @@ export default function ApplicationList({ data, mode }: ApplicationListProps) {
   const { modal, dismissModal } = useOverlay();
   const [filter, setFilter] = useState<ApplicationFilter>("ALL");
 
-  const activeBg = mode === "LEAVE" ? colors.secondary : colors.primary;
-  const activeText = mode === "LEAVE" ? colors.onSecondary : colors.onPrimary;
+  const activeBg = colors.primary;
+  const activeText = colors.onPrimary;
 
   const filteredData = useMemo(() => {
     return data.filter((item) => {
@@ -119,7 +119,10 @@ export default function ApplicationList({ data, mode }: ApplicationListProps) {
               >
                 <Text
                   variant="labelLarge"
-                  style={{ fontWeight: "600", color: colors.onSurface }}
+                  style={{
+                    fontWeight: "600",
+                    color: colors.onSurface,
+                  }}
                 >
                   {item.primary}
                 </Text>
@@ -130,19 +133,13 @@ export default function ApplicationList({ data, mode }: ApplicationListProps) {
                       paddingHorizontal: tokens.spacing.sm,
                       paddingVertical: 4,
                       borderRadius: tokens.radii.full,
-                      backgroundColor:
-                        mode === "LEAVE"
-                          ? colors.secondaryContainer
-                          : colors.primaryContainer,
+                      backgroundColor: colors.primaryContainer,
                     }}
                   >
                     <Text
                       variant="labelSmall"
                       style={{
-                        color:
-                          mode === "LEAVE"
-                            ? colors.onSecondaryContainer
-                            : colors.onPrimaryContainer,
+                        color: colors.onPrimaryContainer,
                         fontWeight: "600",
                       }}
                     >

@@ -46,18 +46,18 @@ export default function ApplicationBody({ mode }: { mode: ApplicationMode }) {
             left={{
               amount: leave.annualLeaveLeft,
               label: "AL remaining",
-              icon: <CalendarCheck size={24} color={colors.onSecondary} />,
-              bgColor: colors.secondary,
-              textColor: colors.onSecondary,
-              labelColor: colors.onSecondary,
+              icon: <CalendarCheck size={24} color={colors.onPrimary} />,
+              bgColor: colors.primary,
+              textColor: colors.onPrimary,
+              labelColor: colors.onPrimary,
             }}
             right={{
               amount: leave.pending,
               label: "Pending requests",
-              icon: <Clock size={24} color={colors.onSecondaryContainer} />,
-              bgColor: colors.secondaryContainer,
-              textColor: colors.onSecondaryContainer,
-              labelColor: colors.onSecondaryContainer,
+              icon: <Clock size={24} color={colors.onPrimaryContainer} />,
+              bgColor: colors.primaryContainer,
+              textColor: colors.onPrimaryContainer,
+              labelColor: colors.onPrimaryContainer,
             }}
           />
 

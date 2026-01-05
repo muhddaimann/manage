@@ -28,7 +28,7 @@ export default function Header({
         backgroundColor: colors.background,
         flexDirection: "row",
         alignItems: "center",
-        paddingTop: tokens.spacing.lg,
+        paddingTop: tokens.spacing.md,
         gap: tokens.spacing.md,
       }}
     >

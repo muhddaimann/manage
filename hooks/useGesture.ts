@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { ScrollView, NativeScrollEvent } from "react-native";
 import { useTabs } from "../contexts/tabContext";
 
@@ -20,6 +20,13 @@ export function useGesture({
   const scrollRef = useRef<ScrollView>(null);
   const lastY = useRef(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    if (!controlNav) {
+      setHideTabBar(true);
+      return () => setHideTabBar(false);
+    }
+  }, [controlNav, setHideTabBar]);
 
   const onScroll = (e: NativeScrollEvent) => {
     const y = e.contentOffset.y;

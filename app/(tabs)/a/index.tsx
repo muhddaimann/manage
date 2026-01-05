@@ -29,7 +29,7 @@ export default function Home() {
         style={{ flex: 1, backgroundColor: colors.background }}
         contentContainerStyle={{
           paddingHorizontal: tokens.spacing.lg,
-          paddingBottom: tokens.spacing["3xl"] * 2,
+          paddingBottom: tokens.spacing["3xl"] * 2.5,
           gap: tokens.spacing.md,
         }}
       >
@@ -42,6 +42,27 @@ export default function Home() {
         />
 
         <MainCard />
+
+        <SectionHeader
+          icon={<Bell size={24} color={colors.primary} />}
+          head="Newsflash"
+          subHeader="Latest announcements & updates"
+          rightSlot={
+            <Button
+              mode="text"
+              compact
+              onPress={() => router.push("/a/newsflash")}
+              labelStyle={{
+                color: colors.primary,
+                fontWeight: "600",
+              }}
+            >
+              Read More
+            </Button>
+          }
+        />
+
+        <CarouselRow data={newsFlash} />
 
         <SectionHeader
           icon={<CalendarDays size={24} color={colors.primary} />}
@@ -80,27 +101,6 @@ export default function Home() {
             labelColor: colors.onSecondaryContainer,
           }}
         />
-
-        <SectionHeader
-          icon={<Bell size={24} color={colors.primary} />}
-          head="News Flash"
-          subHeader="Latest announcements & updates"
-          rightSlot={
-            <Button
-              mode="text"
-              compact
-              onPress={() => router.push("/a/newsflash")}
-              labelStyle={{
-                color: colors.primary,
-                fontWeight: "600",
-              }}
-            >
-              Read More
-            </Button>
-          }
-        />
-
-        <CarouselRow data={newsFlash} />
       </ScrollView>
 
       <ScrollTop visible={showScrollTop} onPress={scrollToTop} />

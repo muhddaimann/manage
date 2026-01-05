@@ -67,7 +67,6 @@ export default function CarouselRow({ data }: CarouselRowProps) {
         decelerationRate="fast"
         contentContainerStyle={{
           gap: CARD_GAP,
-          paddingBottom: tokens.spacing.sm,
         }}
         onMomentumScrollEnd={(e) => {
           const i = Math.round(e.nativeEvent.contentOffset.x / SNAP_INTERVAL);
@@ -80,7 +79,7 @@ export default function CarouselRow({ data }: CarouselRowProps) {
           >
             <View
               style={{
-                backgroundColor: colors.background,
+                backgroundColor: colors.surface,
                 borderRadius: tokens.radii.xl,
                 marginHorizontal: tokens.spacing.xxs,
                 padding: tokens.spacing.md,

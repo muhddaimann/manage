@@ -19,6 +19,7 @@ export default function NewsflashPage() {
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture({
     controlNav: false,
   });
+
   const [priority, setPriority] = useState<PriorityFilter>("ALL");
   const filteredData = useMemo<NewsFlash[]>(() => {
     if (priority === "ALL") return newsFlash;

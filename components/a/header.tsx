@@ -34,7 +34,6 @@ export default function Header({
   return (
     <View
       style={{
-        backgroundColor: colors.surface,
         paddingTop: tokens.spacing.md,
         gap: tokens.spacing.md,
       }}

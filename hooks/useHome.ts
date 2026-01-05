@@ -1,8 +1,4 @@
-import { useMemo } from "react";
-
-/* =======================
-   Shared Types (exported)
-   ======================= */
+import { useMemo, useState } from "react";
 
 export type NewsPriority = "HIGH" | "MEDIUM" | "LOW";
 
@@ -17,6 +13,31 @@ export type NewsFlash = {
 };
 
 type UserTag = "MANAGEMENT" | "OPERATION";
+
+export type DayStatus =
+  | "NOT_CHECKED_IN"
+  | "WORKING"
+  | "ON_LEAVE"
+  | "COMPLETED"
+  | "PUBLIC_HOLIDAY"
+  | "OFF_DAY"
+  | "REST_DAY";
+
+export type DayStatusIcon =
+  | "CLOCK"
+  | "BRIEFCASE"
+  | "PALM"
+  | "CHECK"
+  | "SUN"
+  | "CALENDAR"
+  | "MOON";
+
+export type DayStatusTone =
+  | "primary"
+  | "secondary"
+  | "tertiary"
+  | "error"
+  | "outline";
 
 type QuickStat = {
   label: string;
@@ -36,17 +57,12 @@ type UserProfile = {
   leave: LeaveSummary;
 };
 
-/* =======================
-   Helpers
-   ======================= */
-
 function formatToday() {
   const now = new Date();
   return now.toLocaleDateString("en-MY", {
     weekday: "long",
     day: "numeric",
-    month: "long",
-    year: "numeric",
+    month: "short",
   });
 }
 
@@ -66,10 +82,6 @@ function getInitials(name: string) {
     .join("");
 }
 
-/* =======================
-   Hook
-   ======================= */
-
 export default function useHome() {
   const today = useMemo(() => formatToday(), []);
   const greeting = useMemo(() => getGreeting(), []);
@@ -85,10 +97,85 @@ export default function useHome() {
     },
   };
 
+  const [dayStatus, setDayStatus] = useState<DayStatus>("WORKING");
+
+  const STATUS_FLOW: DayStatus[] = [
+    "NOT_CHECKED_IN",
+    "WORKING",
+    "COMPLETED",
+    "ON_LEAVE",
+    "PUBLIC_HOLIDAY",
+    "OFF_DAY",
+    "REST_DAY",
+  ];
+
+  const toggleDayStatus = () => {
+    setDayStatus((prev) => {
+      const idx = STATUS_FLOW.indexOf(prev);
+      if (idx === -1) return STATUS_FLOW[0];
+      return STATUS_FLOW[(idx + 1) % STATUS_FLOW.length];
+    });
+  };
+
+  const dayStatusLabel: Record<DayStatus, { title: string; subtitle: string }> =
+    {
+      NOT_CHECKED_IN: {
+        title: "Not checked in",
+        subtitle: "Tap to start your shift",
+      },
+      WORKING: {
+        title: "Working",
+        subtitle: "Actively on duty today",
+      },
+      ON_LEAVE: {
+        title: "On leave",
+        subtitle: "Approved leave for today",
+      },
+      COMPLETED: {
+        title: "Completed",
+        subtitle: "Work completed for today",
+      },
+      PUBLIC_HOLIDAY: {
+        title: "Public holiday",
+        subtitle: "Office closed nationwide",
+      },
+      OFF_DAY: {
+        title: "Off day",
+        subtitle: "No work scheduled today",
+      },
+      REST_DAY: {
+        title: "Rest day",
+        subtitle: "Scheduled rest & recovery",
+      },
+    };
+
+  const dayStatusIcon: Record<DayStatus, DayStatusIcon> = {
+    NOT_CHECKED_IN: "CLOCK",
+    WORKING: "BRIEFCASE",
+    ON_LEAVE: "PALM",
+    COMPLETED: "CHECK",
+    PUBLIC_HOLIDAY: "SUN",
+    OFF_DAY: "CALENDAR",
+    REST_DAY: "MOON",
+  };
+
+  const dayStatusTone: Record<DayStatus, DayStatusTone> = {
+    NOT_CHECKED_IN: "primary",
+    WORKING: "primary",
+    ON_LEAVE: "tertiary",
+    COMPLETED: "outline",
+    PUBLIC_HOLIDAY: "tertiary",
+    OFF_DAY: "outline",
+    REST_DAY: "outline",
+  };
+
   const quickStats: QuickStat[] = [
     { label: "AL Left", value: `${user.leave.annualLeaveLeft} days` },
     { label: "Leave Pending", value: `${user.leave.pendingLeave}` },
-    { label: "Attendance", value: "On Track" },
+    {
+      label: "Today Status",
+      value: `${dayStatusLabel[dayStatus].title} · ${dayStatusLabel[dayStatus].subtitle}`,
+    },
   ];
 
   const newsFlash: NewsFlash[] = [
@@ -125,6 +212,12 @@ export default function useHome() {
     today,
     greeting,
     user,
+    dayStatus,
+    dayStatusLabel,
+    dayStatusIcon,
+    dayStatusTone,
+    setDayStatus,
+    toggleDayStatus,
     quickStats,
     newsFlash,
   };
