@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { View } from "react-native";
-import { Text, Button, useTheme } from "react-native-paper";
+import { Text, Button, IconButton, useTheme } from "react-native-paper";
 import { Calendar } from "react-native-calendars";
 import { useDesign } from "../../contexts/designContext";
 
@@ -15,6 +15,14 @@ type DatePickerProps = {
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export default function DatePicker({
@@ -69,21 +77,51 @@ export default function DatePicker({
     return marks;
   }, [mode, single, range, colors]);
 
-  const confirmLabel =
-    mode === "SINGLE" ? single : `${range.start} → ${range.end}`;
+  const canConfirm =
+    mode === "SINGLE" || (range.start && range.end && range.start !== "");
+
+  const buttonLabel =
+    mode === "SINGLE"
+      ? `Confirm · ${formatDate(single)}`
+      : `Confirm · ${formatDate(range.start)} – ${formatDate(range.end)}`;
 
   return (
     <View
       style={{
         backgroundColor: colors.surface,
         borderRadius: tokens.radii["2xl"],
-        padding: tokens.spacing.xl,
-        gap: tokens.spacing.lg,
+        paddingHorizontal: tokens.spacing.xl,
+        paddingVertical: tokens.spacing.lg,
       }}
     >
-      <Text variant="titleMedium" style={{ fontWeight: "700" }}>
-        Select date
-      </Text>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <View style={{ gap: tokens.spacing.xxs }}>
+          <Text variant="titleMedium" style={{ fontWeight: "700" }}>
+            {mode === "SINGLE" ? "Select a date" : "Select a date range"}
+          </Text>
+          <Text variant="bodySmall" style={{ color: colors.onSurfaceVariant }}>
+            {mode === "SINGLE"
+              ? "Tap a day to continue"
+              : "Tap start date, then end date"}
+          </Text>
+        </View>
+
+        <IconButton
+          icon="calendar"
+          size={30}
+          iconColor={colors.primary}
+          style={{
+            margin: 0,
+            alignSelf: "center",
+          }}
+        />
+      </View>
 
       <Calendar
         markingType={mode === "RANGE" ? "period" : undefined}
@@ -92,7 +130,7 @@ export default function DatePicker({
           if (mode === "SINGLE") {
             setSingle(day.dateString);
           } else {
-            if (!range.start || (range.start && range.end !== range.start)) {
+            if (!range.start || range.start !== range.end) {
               setRange({ start: day.dateString, end: day.dateString });
             } else {
               if (day.dateString < range.start) {
@@ -106,15 +144,18 @@ export default function DatePicker({
         theme={{
           todayTextColor: colors.primary,
           arrowColor: colors.primary,
+          textDisabledColor: colors.onSurfaceDisabled,
         }}
       />
 
       <Button
         mode="contained"
+        style={{ marginTop: tokens.spacing.md }}
         contentStyle={{ height: 48 }}
+        disabled={!canConfirm}
         onPress={() => onConfirm(mode === "SINGLE" ? single : range)}
       >
-        Confirm ({confirmLabel})
+        {buttonLabel}
       </Button>
     </View>
   );
