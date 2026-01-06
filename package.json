@@ -10,6 +10,7 @@
     "-": "^0.0.1",
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo/vector-icons": "^15.0.3",
+    "axios": "^1.13.2",
     "baseline-browser-mapping": "^2.9.11",
     "expo": "~54.0.22",
     "expo-blur": "^15.0.8",

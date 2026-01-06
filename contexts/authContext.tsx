@@ -9,6 +9,7 @@ import React, {
 import { router } from "expo-router";
 import { OverlayContext } from "./overlayContext";
 import { useToken } from "./tokenContext";
+import { login } from "./api/auth";
 
 type User = { username: string } | null;
 
@@ -93,30 +94,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
-      await new Promise((r) => setTimeout(r, 250));
+      try {
+        const res = await login({ username, password });
 
-      const ok = username === "user" && password === "123";
+        if (res.status === "success" && res.token) {
+          await setToken(res.token);
+          setUser({ username });
 
-      if (ok) {
-        await setToken("jwt_like_token_here");
-        setUser({ username });
+          toast({
+            message: `Signed in as ${username}`,
+            variant: "success",
+          });
 
-        toast({
-          message: `Signed in as ${username}`,
-          variant: "success",
-        });
+          router.replace("/welcome");
+          return true;
+        }
 
-        router.replace("/welcome");
-      } else {
-        const msg = "Invalid credentials";
+        const msg =
+          res.message ||
+          (res.status === "invalid_password"
+            ? "Invalid password"
+            : res.status === "user_not_found"
+            ? "User not found"
+            : "Sign in failed");
+
         setError(msg);
         toast({ message: msg, variant: "error" });
+        return false;
+      } catch (e: any) {
+        const msg = e?.message || "Unexpected error";
+        setError(msg);
+        toast({ message: msg, variant: "error" });
+        return false;
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
-      return ok;
     },
-    [toast, setToken]
+    [setToken, toast]
   );
 
   const signOut = useCallback(async () => {
