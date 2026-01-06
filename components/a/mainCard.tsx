@@ -1,60 +1,24 @@
 import React from "react";
-import { View, Pressable } from "react-native";
+import { View } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { useDesign } from "../../contexts/designContext";
 import useHome from "../../hooks/useHome";
-import { router } from "expo-router";
-import {
-  Clock,
-  Briefcase,
-  Palmtree,
-  CheckCircle,
-  Sun,
-  Calendar,
-  Moon,
-  LogIn,
-  LogOut,
-  RefreshCcw,
-} from "lucide-react-native";
+import { Clock, LogIn, LogOut, Briefcase } from "lucide-react-native";
 import TwoRow from "../../components/a/twoRow";
-
-const ICON_MAP = {
-  CLOCK: Clock,
-  BRIEFCASE: Briefcase,
-  PALM: Palmtree,
-  CHECK: CheckCircle,
-  SUN: Sun,
-  CALENDAR: Calendar,
-  MOON: Moon,
-} as const;
 
 export default function MainCard() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const {
-    today,
-    user,
-    dayStatus,
-    dayStatusLabel,
-    dayStatusIcon,
-    dayStatusTone,
-    toggleDayStatus,
-  } = useHome();
 
-  const tone = dayStatusTone[dayStatus];
+  const { today, attendance } = useHome();
 
-  const toneColor =
-    tone === "error"
-      ? colors.error
-      : tone === "primary"
-      ? colors.primary
-      : tone === "secondary"
-      ? colors.secondary
-      : tone === "tertiary"
-      ? colors.tertiary
-      : colors.outline;
+  const isManagement = !attendance;
 
-  const StatusIcon = ICON_MAP[dayStatusIcon[dayStatus]];
+  const checkedIn =
+    attendance?.actual_login ?? attendance?.original_login ?? null;
+
+  const checkedOut =
+    attendance?.actual_logout ?? attendance?.original_logout ?? null;
 
   return (
     <View
@@ -70,147 +34,80 @@ export default function MainCard() {
         shadowOffset: { width: 0, height: 6 },
       }}
     >
-      <Pressable
-        onPress={() => router.push("/a/main")}
-        style={({ pressed }) => ({
-          flexDirection: "row",
-          justifyContent: "space-between",
-          opacity: pressed ? 0.9 : 1,
-        })}
-      >
-        <View>
-          <Text variant="headlineSmall" style={{ fontWeight: "800" }}>
-            {today}
-          </Text>
-          <Text
-            variant="labelLarge"
-            style={{
-              letterSpacing: 1.5,
-              fontWeight: "700",
-              color: colors.onSurfaceVariant,
-            }}
-          >
-            {user.tag}
-          </Text>
-        </View>
-
-        <View
+      <View style={{ gap: 4 }}>
+        <Text variant="headlineSmall" style={{ fontWeight: "800" }}>
+          {today}
+        </Text>
+        <Text
+          variant="labelLarge"
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: tokens.radii.full,
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: `${toneColor}22`,
+            letterSpacing: 1.5,
+            fontWeight: "700",
+            color: colors.onSurfaceVariant,
           }}
         >
-          <StatusIcon size={22} color={toneColor} />
-        </View>
-      </Pressable>
-
-      <View
-        style={{
-          flexDirection: "row",
-          gap: tokens.spacing.sm,
-          padding: tokens.spacing.md,
-          borderRadius: tokens.radii.lg,
-          backgroundColor: `${toneColor}14`,
-          alignItems: "center",
-        }}
-      >
-        <Clock size={16} color={toneColor} />
-        <View style={{ flex: 1 }}>
-          <Text
-            variant="labelMedium"
-            style={{ fontWeight: "700", color: toneColor }}
-          >
-            {dayStatusLabel[dayStatus].title}
-          </Text>
-          <Text variant="labelSmall" style={{ color: colors.onSurfaceVariant }}>
-            {dayStatusLabel[dayStatus].subtitle}
-          </Text>
-        </View>
+          {isManagement ? "MANAGEMENT" : "OPERATION"}
+        </Text>
       </View>
 
-      {dayStatus === "NOT_CHECKED_IN" && (
-        <Pressable
-          style={({ pressed }) => ({
-            paddingVertical: tokens.spacing.lg,
-            borderRadius: tokens.radii.xl,
-            backgroundColor: toneColor,
-            alignItems: "center",
-            opacity: pressed ? 0.9 : 1,
-            flexDirection: "row",
-            justifyContent: "center",
-            gap: tokens.spacing.sm,
-          })}
-        >
-          <LogIn size={18} color={colors.onPrimary} />
-          <Text
-            variant="labelLarge"
-            style={{ fontWeight: "800", color: colors.onPrimary }}
-          >
-            Check in now
-          </Text>
-        </Pressable>
-      )}
-
-      {dayStatus === "WORKING" && (
+      {isManagement ? (
         <TwoRow
           left={{
-            amount: "09:03",
-            label: "Checked in",
-            icon: <LogIn size={16} color={toneColor} />,
-            bgColor: `${toneColor}14`,
-            textColor: toneColor,
+            amount: "09:00",
+            label: "Shift start",
+            icon: <Clock size={16} color={colors.primary} />,
+            bgColor: `${colors.primary}14`,
+            textColor: colors.primary,
           }}
           right={{
-            amount: "—",
-            label: "Check out",
-            icon: <LogOut size={16} color={colors.onPrimary} />,
-            bgColor: toneColor,
-            textColor: colors.onPrimary,
-            labelColor: `${colors.onPrimary}CC`,
+            amount: "18:00",
+            label: "Shift end",
+            icon: <Clock size={16} color={colors.primary} />,
+            bgColor: `${colors.primary}14`,
+            textColor: colors.primary,
           }}
         />
-      )}
-
-      {dayStatus === "COMPLETED" && (
+      ) : (
         <TwoRow
           left={{
-            amount: "09:03",
-            label: "Checked in",
+            amount: checkedIn ?? "—",
+            label: checkedIn ? "Checked in" : "Not checked in",
             icon: <LogIn size={16} color={colors.primary} />,
             bgColor: `${colors.primary}14`,
             textColor: colors.primary,
           }}
           right={{
-            amount: "18:11",
+            amount: checkedOut ?? "—",
             label: "Checked out",
-            icon: <CheckCircle size={16} color={colors.tertiary} />,
+            icon: <LogOut size={16} color={colors.tertiary} />,
             bgColor: `${colors.tertiary}14`,
             textColor: colors.tertiary,
           }}
         />
       )}
 
-      {(dayStatus === "ON_LEAVE" ||
-        dayStatus === "PUBLIC_HOLIDAY" ||
-        dayStatus === "OFF_DAY" ||
-        dayStatus === "REST_DAY") && (
+      {!isManagement && !checkedIn && (
         <View
           style={{
-            paddingVertical: tokens.spacing.lg,
-            borderRadius: tokens.radii.xl,
-            backgroundColor: `${toneColor}14`,
+            marginTop: tokens.spacing.sm,
+            paddingVertical: tokens.spacing.md,
+            borderRadius: tokens.radii.lg,
+            backgroundColor: colors.primaryContainer,
+            flexDirection: "row",
             alignItems: "center",
+            justifyContent: "center",
+            gap: tokens.spacing.sm,
           }}
         >
+          <Briefcase size={18} color={colors.onPrimaryContainer} />
           <Text
-            variant="labelMedium"
-            style={{ color: colors.onSurfaceVariant }}
+            variant="labelLarge"
+            style={{
+              fontWeight: "700",
+              color: colors.onPrimaryContainer,
+            }}
           >
-            Enjoy your day 🌿
+            Ready to start your shift
           </Text>
         </View>
       )}

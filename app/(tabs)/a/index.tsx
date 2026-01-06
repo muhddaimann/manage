@@ -9,13 +9,7 @@ import SectionHeader from "../../../components/shared/secHeader";
 import TwoRow from "../../../components/a/twoRow";
 import CarouselRow from "../../../components/a/newsflashCarousel";
 import ScrollTop from "../../../components/shared/scrollTop";
-import {
-  CalendarCheck,
-  Bell,
-  Clock,
-  CalendarDays,
-  DoorOpen,
-} from "lucide-react-native";
+import { CalendarCheck, Bell, Clock, DoorOpen } from "lucide-react-native";
 import { useGesture } from "../../../hooks/useGesture";
 import { router } from "expo-router";
 
@@ -24,6 +18,7 @@ export default function Home() {
   const { tokens } = useDesign();
   const { greeting, user, newsFlash } = useHome();
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture();
+  if (!user) return null;
 
   return (
     <>
@@ -58,10 +53,7 @@ export default function Home() {
               mode="text"
               compact
               onPress={() => router.push("/a/newsflash")}
-              labelStyle={{
-                color: colors.primary,
-                fontWeight: "600",
-              }}
+              labelStyle={{ color: colors.primary, fontWeight: "600" }}
             >
               Read More
             </Button>
@@ -79,10 +71,7 @@ export default function Home() {
               mode="text"
               compact
               onPress={() => router.push("/a/room")}
-              labelStyle={{
-                color: colors.primary,
-                fontWeight: "600",
-              }}
+              labelStyle={{ color: colors.primary, fontWeight: "600" }}
             >
               Check Rooms
             </Button>

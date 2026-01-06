@@ -1,12 +1,11 @@
-// RoomLevel.tsx — total redesign (clean hierarchy, smart range, AM/PM, reusable)
-
 import React, { useState } from "react";
 import { View } from "react-native";
 import { Text, Button, useTheme } from "react-native-paper";
 import { useDesign } from "../../contexts/designContext";
 import RoomTimeSlots, { TimeSlot } from "./timeSlot";
+import { router } from "expo-router";
 
-export type Room = {
+export type UiRoom = {
   id: string;
   name: string;
   capacity: number;
@@ -15,13 +14,14 @@ export type Room = {
   slots: TimeSlot[];
 };
 
-type RoomLevelProps = {
+type Props = {
   tower: string;
   level: number;
-  rooms: Room[];
+  rooms: UiRoom[];
+  date: string;
 };
 
-export default function RoomLevel({ tower, level, rooms }: RoomLevelProps) {
+export default function RoomLevel({ tower, level, rooms, date }: Props) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
 
@@ -31,19 +31,16 @@ export default function RoomLevel({ tower, level, rooms }: RoomLevelProps) {
 
   return (
     <View style={{ gap: tokens.spacing.lg }}>
-      <View
+      <Text
+        variant="labelLarge"
         style={{
+          color: colors.onSurfaceVariant,
+          fontWeight: "600",
           paddingHorizontal: tokens.spacing.sm,
-          paddingTop: tokens.spacing.sm,
         }}
       >
-        <Text
-          variant="labelLarge"
-          style={{ color: colors.onSurfaceVariant, fontWeight: "600" }}
-        >
-          {tower} · Level {level}
-        </Text>
-      </View>
+        {tower} · Level {level}
+      </Text>
 
       {rooms.map((room) => {
         const range = ranges[room.id];
@@ -56,39 +53,38 @@ export default function RoomLevel({ tower, level, rooms }: RoomLevelProps) {
               borderRadius: tokens.radii["2xl"],
               padding: tokens.spacing.lg,
               gap: tokens.spacing.md,
-              shadowColor: colors.shadow,
-              shadowOpacity: 0.12,
-              shadowRadius: 16,
-              shadowOffset: { width: 0, height: 8 },
-              elevation: 8,
             }}
           >
-            <View style={{ gap: 2 }}>
-              <Text variant="titleMedium" style={{ fontWeight: "700" }}>
-                {room.name}
-              </Text>
-              <Text
-                variant="bodySmall"
-                style={{ color: colors.onSurfaceVariant }}
-              >
-                Capacity {room.capacity} pax
-              </Text>
-            </View>
+            <Text variant="titleMedium" style={{ fontWeight: "700" }}>
+              {room.name}
+            </Text>
+
+            <Text
+              variant="bodySmall"
+              style={{ color: colors.onSurfaceVariant }}
+            >
+              Capacity {room.capacity} pax
+            </Text>
 
             <RoomTimeSlots
               slots={room.slots}
-              onChange={(r) =>
-                setRanges((prev) => ({
-                  ...prev,
-                  [room.id]: r,
-                }))
-              }
+              onChange={(r) => setRanges((prev) => ({ ...prev, [room.id]: r }))}
             />
 
             <Button
               mode="contained"
               disabled={!range}
-              contentStyle={{ height: 44 }}
+              onPress={() =>
+                router.push({
+                  pathname: "/a/room/book",
+                  params: {
+                    roomId: room.id,
+                    date,
+                    start: range?.start,
+                    end: range?.end,
+                  },
+                })
+              }
             >
               {range
                 ? `Book ${range.start} – ${range.end}`

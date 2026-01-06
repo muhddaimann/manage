@@ -7,7 +7,7 @@ import {
   cancelBooking as cancelBookingApi,
   ErrorResponse,
   CancelBookingResponse,
-} from '@/contexts/api/room';
+} from '../api/room';
 
 interface RoomState {
   myBookings: BookingItem[];

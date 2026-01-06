@@ -4,9 +4,8 @@ import { Text, useTheme } from "react-native-paper";
 import { useDesign } from "../../contexts/designContext";
 
 export type TimeSlot = {
-  start: string;
-  end: string;
-  available: boolean;
+  time: string;
+  status: "Available" | "Booked";
 };
 
 type Props = {
@@ -14,13 +13,15 @@ type Props = {
   onChange?: (range: { start: string; end: string } | null) => void;
 };
 
-const toMinutes = (t: string) => {
-  const [h, m] = t.split(":").map(Number);
+const toMinutes = (range: string) => {
+  const [start] = range.split("-");
+  const [h, m] = start.split(":").map(Number);
   return h * 60 + m;
 };
 
-const format = (t: string) => {
-  const [h, m] = t.split(":").map(Number);
+const format = (range: string) => {
+  const [start] = range.split("-");
+  const [h, m] = start.split(":").map(Number);
   const hour = h % 12 || 12;
   return `${hour}:${m.toString().padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
 };
@@ -35,8 +36,8 @@ export default function RoomTimeSlots({ slots, onChange }: Props) {
   const ordered = useMemo(
     () =>
       [...slots]
-        .sort((a, b) => toMinutes(a.start) - toMinutes(b.start))
-        .filter((s) => toMinutes(s.start) >= nowMinutes + 30),
+        .sort((a, b) => toMinutes(a.time) - toMinutes(b.time))
+        .filter((s) => toMinutes(s.time) >= nowMinutes + 30),
     [slots, nowMinutes]
   );
 
@@ -45,16 +46,17 @@ export default function RoomTimeSlots({ slots, onChange }: Props) {
 
   const hasBlockBetween = (a: number, b: number) => {
     const [min, max] = a < b ? [a, b] : [b, a];
-    return ordered.slice(min, max + 1).some((s) => !s.available);
+    return ordered.slice(min, max + 1).some((s) => s.status === "Booked");
   };
 
   const select = (i: number) => {
-    if (!ordered[i].available) return;
+    if (ordered[i].status === "Booked") return;
 
     if (anchor === null) {
       setAnchor(i);
       setRange([i, i]);
-      onChange?.({ start: ordered[i].start, end: ordered[i].end });
+      const [start, end] = ordered[i].time.split("-");
+      onChange?.({ start, end });
       return;
     }
 
@@ -70,10 +72,9 @@ export default function RoomTimeSlots({ slots, onChange }: Props) {
     const next: [number, number] = anchor < i ? [anchor, i] : [i, anchor];
 
     setRange(next);
-    onChange?.({
-      start: ordered[next[0]].start,
-      end: ordered[next[1]].end,
-    });
+    const start = ordered[next[0]].time.split("-")[0];
+    const end = ordered[next[1]].time.split("-")[1];
+    onChange?.({ start, end });
   };
 
   return (
@@ -87,14 +88,13 @@ export default function RoomTimeSlots({ slots, onChange }: Props) {
       >
         {ordered.map((slot, i) => {
           const selected = range && i >= range[0] && i <= range[1];
-
           const disabled =
-            !slot.available ||
+            slot.status === "Booked" ||
             (anchor !== null && !selected && hasBlockBetween(anchor, i));
 
           return (
             <Pressable
-              key={`${slot.start}-${slot.end}`}
+              key={slot.time}
               disabled={disabled}
               onPress={() => select(i)}
               style={{
@@ -102,11 +102,12 @@ export default function RoomTimeSlots({ slots, onChange }: Props) {
                 paddingVertical: tokens.spacing.sm,
                 borderRadius: tokens.radii.lg,
                 alignItems: "center",
-                backgroundColor: !slot.available
-                  ? colors.surfaceDisabled
-                  : selected
-                  ? colors.primary
-                  : colors.primaryContainer,
+                backgroundColor:
+                  slot.status === "Booked"
+                    ? colors.surfaceDisabled
+                    : selected
+                    ? colors.primary
+                    : colors.primaryContainer,
                 opacity: disabled ? 0.35 : 1,
               }}
             >
@@ -114,14 +115,15 @@ export default function RoomTimeSlots({ slots, onChange }: Props) {
                 variant="labelSmall"
                 style={{
                   fontWeight: "600",
-                  color: !slot.available
-                    ? colors.onSurfaceDisabled
-                    : selected
-                    ? colors.onPrimary
-                    : colors.onPrimaryContainer,
+                  color:
+                    slot.status === "Booked"
+                      ? colors.onSurfaceDisabled
+                      : selected
+                      ? colors.onPrimary
+                      : colors.onPrimaryContainer,
                 }}
               >
-                {format(slot.start)}
+                {format(slot.time)}
               </Text>
             </Pressable>
           );
@@ -130,7 +132,8 @@ export default function RoomTimeSlots({ slots, onChange }: Props) {
 
       {range && (
         <Text variant="bodySmall" style={{ color: colors.onSurfaceVariant }}>
-          {format(ordered[range[0]].start)} – {format(ordered[range[1]].end)}
+          {ordered[range[0]].time.split("-")[0]} –{" "}
+          {ordered[range[1]].time.split("-")[1]}
         </Text>
       )}
     </View>

@@ -1,11 +1,11 @@
 import React, {
   useEffect,
+  useMemo,
   useRef,
   useState,
   useCallback,
-  useMemo,
 } from "react";
-import { View, Animated, Easing, ScrollView, Pressable } from "react-native";
+import { View, Animated, Easing, ScrollView } from "react-native";
 import { useTheme, Text, Button } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
@@ -13,11 +13,17 @@ import { useOverlay } from "../../../contexts/overlayContext";
 import Header from "../../../components/shared/header";
 import ScrollTop from "../../../components/shared/scrollTop";
 import { useGesture } from "../../../hooks/useGesture";
-import { useFocusEffect, router } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import TwoRow from "../../../components/a/twoRow";
 import DatePicker from "../../../components/shared/datePicker";
 import { CalendarCheck, Clock } from "lucide-react-native";
-import RoomLevel, { Room } from "../../../components/a/roomLevel";
+import RoomLevel, { UiRoom } from "../../../components/a/roomLevel";
+import { TimeSlot } from "../../../components/a/timeSlot";
+import {
+  getAllRooms,
+  getRoomAvailabilityByDay,
+  Room as ApiRoom,
+} from "../../../contexts/api/room";
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -32,116 +38,16 @@ function formatDate(date: string) {
   });
 }
 
-const ROOMS: Room[] = [
-  {
-    id: "r1",
-    name: "Meeting Room A",
-    capacity: 6,
-    tower: "Tower A",
-    level: 3,
-    slots: [
-      { start: "08:00", end: "08:30", available: true },
-      { start: "08:30", end: "09:00", available: true },
-
-      { start: "09:00", end: "09:30", available: true },
-      { start: "09:30", end: "10:00", available: true },
-
-      { start: "10:00", end: "10:30", available: false }, // booked
-      { start: "10:30", end: "11:00", available: false }, // booked
-
-      { start: "11:00", end: "11:30", available: true },
-      { start: "11:30", end: "12:00", available: true },
-
-      { start: "12:00", end: "12:30", available: false }, // lunch block
-      { start: "12:30", end: "13:00", available: false },
-
-      { start: "13:00", end: "13:30", available: true },
-      { start: "13:30", end: "14:00", available: true },
-
-      { start: "14:00", end: "14:30", available: true },
-      { start: "14:30", end: "15:00", available: true },
-
-      { start: "15:00", end: "15:30", available: false }, // meeting
-      { start: "15:30", end: "16:00", available: false },
-
-      { start: "16:00", end: "16:30", available: true },
-      { start: "16:30", end: "17:00", available: true },
-    ],
-  },
-
-  {
-    id: "r2",
-    name: "Meeting Room B",
-    capacity: 10,
-    tower: "Tower A",
-    level: 3,
-    slots: [
-      { start: "08:00", end: "08:30", available: false },
-      { start: "08:30", end: "09:00", available: false },
-
-      { start: "09:00", end: "09:30", available: false },
-      { start: "09:30", end: "10:00", available: false },
-
-      { start: "10:00", end: "10:30", available: true },
-      { start: "10:30", end: "11:00", available: true },
-
-      { start: "11:00", end: "11:30", available: true },
-      { start: "11:30", end: "12:00", available: false },
-
-      { start: "12:00", end: "12:30", available: false },
-      { start: "12:30", end: "13:00", available: false },
-
-      { start: "13:00", end: "13:30", available: true },
-      { start: "13:30", end: "14:00", available: true },
-
-      { start: "14:00", end: "14:30", available: false },
-      { start: "14:30", end: "15:00", available: false },
-
-      { start: "15:00", end: "15:30", available: true },
-      { start: "15:30", end: "16:00", available: true },
-    ],
-  },
-
-  {
-    id: "r3",
-    name: "Conference Room",
-    capacity: 20,
-    tower: "Tower B",
-    level: 5,
-    slots: [
-      { start: "09:00", end: "09:30", available: true },
-      { start: "09:30", end: "10:00", available: true },
-
-      { start: "10:00", end: "10:30", available: true },
-      { start: "10:30", end: "11:00", available: true },
-
-      { start: "11:00", end: "11:30", available: false },
-      { start: "11:30", end: "12:00", available: false },
-
-      { start: "12:00", end: "12:30", available: true },
-      { start: "12:30", end: "13:00", available: true },
-
-      { start: "13:00", end: "13:30", available: true },
-      { start: "13:30", end: "14:00", available: true },
-
-      { start: "14:00", end: "14:30", available: false },
-      { start: "14:30", end: "15:00", available: false },
-
-      { start: "15:00", end: "15:30", available: false },
-      { start: "15:30", end: "16:00", available: false },
-
-      { start: "16:00", end: "16:30", available: true },
-      { start: "16:30", end: "17:00", available: true },
-    ],
-  },
-];
-
 export default function RoomList() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { setHideTabBar } = useTabs();
   const { modal, dismissModal } = useOverlay();
+
   const [date, setDate] = useState(todayISO());
+  const [rooms, setRooms] = useState<UiRoom[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.96)).current;
 
@@ -174,6 +80,57 @@ export default function RoomList() {
     ]).start();
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      setLoading(true);
+      const res = await getAllRooms();
+      if (!mounted || "error" in res) return setLoading(false);
+
+      const enriched: UiRoom[] = [];
+
+      for (const r of res as ApiRoom[]) {
+        const availabilityRes = await getRoomAvailabilityByDay(r.room_id, date);
+
+        if ("error" in availabilityRes) continue;
+
+        const slots: TimeSlot[] = Object.entries(
+          availabilityRes.availability
+        ).map(([time, v]) => ({
+          time, // "HH:mm-HH:mm"
+          status: v.status,
+        }));
+
+        enriched.push({
+          id: String(r.room_id),
+          name: r.Room_Name,
+          capacity: r.Capacity,
+          tower: r.Tower,
+          level: Number(r.Level),
+          slots,
+        });
+      }
+
+      setRooms(enriched);
+      setLoading(false);
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [date]);
+
+  const groupedRooms = useMemo(
+    () =>
+      rooms.reduce<Record<string, UiRoom[]>>((acc, room) => {
+        const key = `${room.tower}-${room.level}`;
+        acc[key] = acc[key] ? [...acc[key], room] : [room];
+        return acc;
+      }, {}),
+    [rooms]
+  );
+
   const openDatePicker = () => {
     modal({
       dismissible: true,
@@ -190,14 +147,6 @@ export default function RoomList() {
     });
   };
 
-  const groupedRooms = useMemo(() => {
-    return ROOMS.reduce<Record<string, Room[]>>((acc, room) => {
-      const key = `${room.tower}-${room.level}`;
-      acc[key] = acc[key] ? [...acc[key], room] : [room];
-      return acc;
-    }, {});
-  }, []);
-
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
@@ -213,87 +162,64 @@ export default function RoomList() {
       >
         <Header title="Rooms" subtitle="Check availability & book a room" />
 
-        <Pressable
-          onPress={() => router.push("a/record")}
-          style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}
-        >
-          <TwoRow
-            left={{
-              amount: 1,
-              label: "Active booking",
-              icon: <CalendarCheck size={24} color={colors.onPrimary} />,
-              bgColor: colors.primary,
-              textColor: colors.onPrimary,
-              labelColor: colors.onPrimary,
-            }}
-            right={{
-              amount: 0,
-              label: "Booking history",
-              icon: <Clock size={24} color={colors.onPrimaryContainer} />,
-              bgColor: colors.primaryContainer,
-              textColor: colors.onPrimaryContainer,
-              labelColor: colors.onPrimaryContainer,
-            }}
-          />
-        </Pressable>
+        <TwoRow
+          left={{
+            amount: 0,
+            label: "Active booking",
+            icon: <CalendarCheck size={24} color={colors.onPrimary} />,
+            bgColor: colors.primary,
+            textColor: colors.onPrimary,
+            labelColor: colors.onPrimary,
+          }}
+          right={{
+            amount: 0,
+            label: "Booking history",
+            icon: <Clock size={24} color={colors.onPrimaryContainer} />,
+            bgColor: colors.primaryContainer,
+            textColor: colors.onPrimaryContainer,
+            labelColor: colors.onPrimaryContainer,
+          }}
+        />
 
         <View
           style={{
             backgroundColor: colors.surface,
             borderRadius: tokens.radii["2xl"],
             padding: tokens.spacing.lg,
-            shadowColor: colors.shadow,
-            shadowOpacity: 0.12,
-            shadowRadius: 14,
-            shadowOffset: { width: 0, height: 6 },
-            elevation: 6,
           }}
         >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <View>
-              <Text
-                variant="labelSmall"
-                style={{ color: colors.onSurfaceVariant }}
-              >
-                Now showing availability
-              </Text>
-              <Text variant="titleMedium" style={{ fontWeight: "700" }}>
-                {formatDate(date)}
-              </Text>
-            </View>
+          <Text variant="labelSmall" style={{ color: colors.onSurfaceVariant }}>
+            Now showing availability
+          </Text>
+          <Text variant="titleMedium" style={{ fontWeight: "700" }}>
+            {formatDate(date)}
+          </Text>
 
-            <Button
-              mode="contained"
-              onPress={openDatePicker}
-              labelStyle={{ fontWeight: "600" }}
-              contentStyle={{ flexDirection: "row-reverse" }}
-              icon="calendar"
-            >
-              Change
-            </Button>
-          </View>
+          <Button
+            mode="contained"
+            onPress={openDatePicker}
+            style={{ marginTop: tokens.spacing.sm }}
+            icon="calendar"
+          >
+            Change date
+          </Button>
         </View>
 
-        <Animated.View
-          style={{
-            opacity,
-            transform: [{ scale }],
-            gap: tokens.spacing.lg,
-          }}
-        >
-          {Object.entries(groupedRooms).map(([key, rooms]) => {
-            const { tower, level } = rooms[0];
-            return (
-              <RoomLevel key={key} tower={tower} level={level} rooms={rooms} />
-            );
-          })}
-        </Animated.View>
+        {!loading && (
+          <Animated.View
+            style={{ opacity, transform: [{ scale }], gap: tokens.spacing.lg }}
+          >
+            {Object.entries(groupedRooms).map(([key, list]) => (
+              <RoomLevel
+                key={key}
+                tower={list[0].tower}
+                level={list[0].level}
+                rooms={list}
+                date={date}
+              />
+            ))}
+          </Animated.View>
+        )}
       </ScrollView>
 
       <ScrollTop visible={showScrollTop} onPress={scrollToTop} />
