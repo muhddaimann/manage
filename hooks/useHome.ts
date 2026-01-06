@@ -111,7 +111,6 @@ export default function useHome() {
 
   const user: UserProfile | null = useMemo(() => {
     if (!staff) return null;
-
     return {
       name: staff.nick_name || staff.full_name,
       role: staff.designation_name,
@@ -131,12 +130,7 @@ export default function useHome() {
       const res = await getAttendanceDef();
       if (!alive) return;
 
-      if (Array.isArray(res) && res.length > 0) {
-        setAttendance(res[0]);
-      } else {
-        setAttendance(null);
-      }
-
+      setAttendance(Array.isArray(res) && res.length > 0 ? res[0] : null);
       setAttendanceLoading(false);
     })();
 
@@ -147,37 +141,7 @@ export default function useHome() {
 
   const dayStatus = useMemo(() => deriveDayStatus(attendance), [attendance]);
 
-  const dayStatusLabel: Record<DayStatus, string> = {
-    NOT_CHECKED_IN: "Not checked in",
-    WORKING: "Working",
-    ON_LEAVE: "On leave",
-    COMPLETED: "Completed",
-    PUBLIC_HOLIDAY: "Public holiday",
-    OFF_DAY: "Off day",
-    REST_DAY: "Rest day",
-  };
-
-  const dayStatusIcon: Record<DayStatus, DayStatusIcon> = {
-    NOT_CHECKED_IN: "CLOCK",
-    WORKING: "BRIEFCASE",
-    ON_LEAVE: "PALM",
-    COMPLETED: "CHECK",
-    PUBLIC_HOLIDAY: "SUN",
-    OFF_DAY: "CALENDAR",
-    REST_DAY: "MOON",
-  };
-
-  const dayStatusTone: Record<DayStatus, DayStatusTone> = {
-    NOT_CHECKED_IN: "primary",
-    WORKING: "primary",
-    ON_LEAVE: "tertiary",
-    COMPLETED: "outline",
-    PUBLIC_HOLIDAY: "tertiary",
-    OFF_DAY: "outline",
-    REST_DAY: "outline",
-  };
-
-  /* ---------- ROOMS ---------- */
+  /* ---------- ROOM SUMMARY ---------- */
   const { myBookings, loading: roomLoading, fetchBookings } = useRoomStore();
 
   useEffect(() => {
@@ -189,7 +153,7 @@ export default function useHome() {
     [myBookings]
   );
 
-  /* ---------- NEWS / BROADCAST ---------- */
+  /* ---------- NEWS ---------- */
   const [newsFlash, setNewsFlash] = useState<NewsFlash[]>([]);
   const [broadcastLoading, setBroadcastLoading] = useState(false);
 
@@ -226,7 +190,6 @@ export default function useHome() {
   return {
     today,
     greeting,
-
     user,
     attendance,
 
@@ -234,13 +197,8 @@ export default function useHome() {
       staffLoading || roomLoading || broadcastLoading || attendanceLoading,
 
     dayStatus,
-    dayStatusLabel,
-    dayStatusIcon,
-    dayStatusTone,
-
-    newsFlash,
     activeBookings,
-
+    newsFlash,
     NEWS_PRIORITY_COLOR,
   };
 }

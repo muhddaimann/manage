@@ -1,12 +1,12 @@
 import React, {
   useEffect,
-  useMemo,
   useRef,
   useState,
   useCallback,
+  useMemo,
 } from "react";
-import { View, Animated, Easing, ScrollView } from "react-native";
-import { useTheme, Text, Button } from "react-native-paper";
+import { View, Animated, Easing, ScrollView, Pressable } from "react-native";
+import { useTheme, Text, Button, Chip } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
 import { useOverlay } from "../../../contexts/overlayContext";
@@ -17,13 +17,10 @@ import { useFocusEffect } from "expo-router";
 import TwoRow from "../../../components/a/twoRow";
 import DatePicker from "../../../components/shared/datePicker";
 import { CalendarCheck, Clock } from "lucide-react-native";
-import RoomLevel, { UiRoom } from "../../../components/a/roomLevel";
-import { TimeSlot } from "../../../components/a/timeSlot";
-import {
-  getAllRooms,
-  getRoomAvailabilityByDay,
-  Room as ApiRoom,
-} from "../../../contexts/api/room";
+import useRooms from "../../../hooks/useRoom";
+import TimeSlot, { TimeSlotRange } from "../../../components/a/timeSlot";
+
+/* ================= HELPERS ================= */
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -38,6 +35,8 @@ function formatDate(date: string) {
   });
 }
 
+/* ================= COMPONENT ================= */
+
 export default function RoomList() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
@@ -45,8 +44,10 @@ export default function RoomList() {
   const { modal, dismissModal } = useOverlay();
 
   const [date, setDate] = useState(todayISO());
-  const [rooms, setRooms] = useState<UiRoom[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { towers, loading } = useRooms(date);
+
+  const [activeTower, setActiveTower] = useState<string | null>(null);
+  const [activeLevel, setActiveLevel] = useState<string | null>(null);
 
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.96)).current;
@@ -66,7 +67,7 @@ export default function RoomList() {
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
-        duration: 360,
+        duration: 300,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
@@ -74,62 +75,11 @@ export default function RoomList() {
         toValue: 1,
         damping: 18,
         stiffness: 160,
-        mass: 0.6,
+        mass: 0.7,
         useNativeDriver: true,
       }),
     ]).start();
   }, []);
-
-  useEffect(() => {
-    let mounted = true;
-
-    (async () => {
-      setLoading(true);
-      const res = await getAllRooms();
-      if (!mounted || "error" in res) return setLoading(false);
-
-      const enriched: UiRoom[] = [];
-
-      for (const r of res as ApiRoom[]) {
-        const availabilityRes = await getRoomAvailabilityByDay(r.room_id, date);
-
-        if ("error" in availabilityRes) continue;
-
-        const slots: TimeSlot[] = Object.entries(
-          availabilityRes.availability
-        ).map(([time, v]) => ({
-          time, // "HH:mm-HH:mm"
-          status: v.status,
-        }));
-
-        enriched.push({
-          id: String(r.room_id),
-          name: r.Room_Name,
-          capacity: r.Capacity,
-          tower: r.Tower,
-          level: Number(r.Level),
-          slots,
-        });
-      }
-
-      setRooms(enriched);
-      setLoading(false);
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, [date]);
-
-  const groupedRooms = useMemo(
-    () =>
-      rooms.reduce<Record<string, UiRoom[]>>((acc, room) => {
-        const key = `${room.tower}-${room.level}`;
-        acc[key] = acc[key] ? [...acc[key], room] : [room];
-        return acc;
-      }, {}),
-    [rooms]
-  );
 
   const openDatePicker = () => {
     modal({
@@ -147,6 +97,58 @@ export default function RoomList() {
     });
   };
 
+  const towersList = useMemo(() => towers.map((t) => t.tower), [towers]);
+
+  const levelsList = useMemo(() => {
+    if (!activeTower) return [];
+    return (
+      towers.find((t) => t.tower === activeTower)?.levels.map((l) => l.level) ??
+      []
+    );
+  }, [towers, activeTower]);
+
+  const rooms = useMemo(() => {
+    return towers
+      .filter((t) => !activeTower || t.tower === activeTower)
+      .flatMap((t) =>
+        t.levels.filter((l) => !activeLevel || l.level === activeLevel)
+      )
+      .flatMap((l) => l.rooms);
+  }, [towers, activeTower, activeLevel]);
+
+  const openTimeSlotModal = (room: any) => {
+    modal({
+      dismissible: true,
+      content: (
+        <View
+          style={{
+            backgroundColor: colors.surface,
+            borderRadius: tokens.radii["2xl"],
+            padding: tokens.spacing.lg,
+            gap: tokens.spacing.md,
+          }}
+        >
+          <Text variant="titleMedium" style={{ fontWeight: "700" }}>
+            {room.name}
+          </Text>
+
+          <Text variant="bodySmall" style={{ color: colors.onSurfaceVariant }}>
+            Select time slot
+          </Text>
+
+          <TimeSlot
+            slots={room.slots}
+            dateISO={date}
+            onConfirm={(range: TimeSlotRange) => {
+              dismissModal();
+            }}
+            onCancel={dismissModal}
+          />
+        </View>
+      ),
+    });
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
@@ -157,16 +159,16 @@ export default function RoomList() {
         contentContainerStyle={{
           paddingHorizontal: tokens.spacing.lg,
           paddingBottom: tokens.spacing["3xl"] * 3,
-          gap: tokens.spacing.md,
+          gap: tokens.spacing.lg,
         }}
       >
-        <Header title="Rooms" subtitle="Check availability & book a room" />
+        <Header title="Rooms" subtitle="Choose room, then time slot" />
 
         <TwoRow
           left={{
-            amount: 0,
+            amount: 1,
             label: "Active booking",
-            icon: <CalendarCheck size={24} color={colors.onPrimary} />,
+            icon: <CalendarCheck size={22} color={colors.onPrimary} />,
             bgColor: colors.primary,
             textColor: colors.onPrimary,
             labelColor: colors.onPrimary,
@@ -174,7 +176,7 @@ export default function RoomList() {
           right={{
             amount: 0,
             label: "Booking history",
-            icon: <Clock size={24} color={colors.onPrimaryContainer} />,
+            icon: <Clock size={22} color={colors.onPrimaryContainer} />,
             bgColor: colors.primaryContainer,
             textColor: colors.onPrimaryContainer,
             labelColor: colors.onPrimaryContainer,
@@ -186,38 +188,102 @@ export default function RoomList() {
             backgroundColor: colors.surface,
             borderRadius: tokens.radii["2xl"],
             padding: tokens.spacing.lg,
+            gap: tokens.spacing.xs,
           }}
         >
           <Text variant="labelSmall" style={{ color: colors.onSurfaceVariant }}>
-            Now showing availability
+            Availability date
           </Text>
-          <Text variant="titleMedium" style={{ fontWeight: "700" }}>
-            {formatDate(date)}
-          </Text>
-
-          <Button
-            mode="contained"
-            onPress={openDatePicker}
-            style={{ marginTop: tokens.spacing.sm }}
-            icon="calendar"
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
           >
-            Change date
-          </Button>
+            <Text variant="titleMedium" style={{ fontWeight: "700" }}>
+              {formatDate(date)}
+            </Text>
+
+            <Button mode="outlined" icon="calendar" onPress={openDatePicker}>
+              Change
+            </Button>
+          </View>
         </View>
 
         {!loading && (
           <Animated.View
-            style={{ opacity, transform: [{ scale }], gap: tokens.spacing.lg }}
+            style={{
+              opacity,
+              transform: [{ scale }],
+              gap: tokens.spacing.lg,
+            }}
           >
-            {Object.entries(groupedRooms).map(([key, list]) => (
-              <RoomLevel
-                key={key}
-                tower={list[0].tower}
-                level={list[0].level}
-                rooms={list}
-                date={date}
-              />
-            ))}
+            <View style={{ gap: tokens.spacing.sm }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  {towersList.map((t) => (
+                    <Chip
+                      key={t}
+                      selected={activeTower === t}
+                      onPress={() => {
+                        setActiveTower(t);
+                        setActiveLevel(null);
+                      }}
+                    >
+                      {t}
+                    </Chip>
+                  ))}
+                </View>
+              </ScrollView>
+
+              {activeTower && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={{ flexDirection: "row", gap: 8 }}>
+                    {levelsList.map((l) => (
+                      <Chip
+                        key={l}
+                        selected={activeLevel === l}
+                        onPress={() => setActiveLevel(l)}
+                      >
+                        Level {l}
+                      </Chip>
+                    ))}
+                  </View>
+                </ScrollView>
+              )}
+            </View>
+
+            <View style={{ gap: tokens.spacing.md }}>
+              {rooms.map((room) => (
+                <Pressable
+                  key={room.id}
+                  onPress={() => openTimeSlotModal(room)}
+                  style={({ pressed }) => ({
+                    backgroundColor: colors.surface,
+                    borderRadius: tokens.radii["2xl"],
+                    padding: tokens.spacing.lg,
+                    gap: tokens.spacing.xs,
+                    shadowColor: colors.shadow,
+                    shadowOpacity: 0.08,
+                    shadowRadius: 10,
+                    shadowOffset: { width: 0, height: 4 },
+                    elevation: 4,
+                    opacity: pressed ? 0.92 : 1,
+                  })}
+                >
+                  <Text variant="titleMedium" style={{ fontWeight: "700" }}>
+                    {room.name}
+                  </Text>
+                  <Text
+                    variant="bodySmall"
+                    style={{ color: colors.onSurfaceVariant }}
+                  >
+                    Capacity {room.capacity} pax
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
           </Animated.View>
         )}
       </ScrollView>

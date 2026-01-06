@@ -1,132 +1,167 @@
-import React, { useMemo, useState } from "react";
-import { View, Pressable } from "react-native";
-import { Text, useTheme } from "react-native-paper";
+// components/a/TimeSlot.tsx
+import React, { useMemo, useRef, useState } from "react";
+import { View, Pressable, ScrollView } from "react-native";
+import { Text, useTheme, Button } from "react-native-paper";
 import { useDesign } from "../../contexts/designContext";
 
-export type TimeSlot = {
-  time: string;
+/* ================= TYPES ================= */
+
+export type TimeSlotItem = {
+  time: string; // "09:00-09:30"
   status: "Available" | "Booked";
 };
 
-type Props = {
-  slots: TimeSlot[];
-  onChange?: (range: { start: string; end: string } | null) => void;
+export type TimeSlotRange = {
+  start: string;
+  end: string;
 };
 
-const toMinutes = (range: string) => {
-  const [start] = range.split("-");
-  const [h, m] = start.split(":").map(Number);
+type Props = {
+  slots: TimeSlotItem[];
+  dateISO: string; // yyyy-mm-dd
+  onConfirm: (range: TimeSlotRange) => void;
+  onCancel?: () => void;
+};
+
+/* ================= HELPERS ================= */
+
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
+const toMinutes = (t: string) => {
+  const [h, m] = t.split(":").map(Number);
   return h * 60 + m;
 };
 
-const format = (range: string) => {
+const formatSlot = (range: string) => {
   const [start] = range.split("-");
   const [h, m] = start.split(":").map(Number);
   const hour = h % 12 || 12;
   return `${hour}:${m.toString().padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
 };
 
-export default function RoomTimeSlots({ slots, onChange }: Props) {
+/* ================= COMPONENT ================= */
+
+export default function TimeSlot({
+  slots,
+  dateISO,
+  onConfirm,
+  onCancel,
+}: Props) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
 
   const now = new Date();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const isToday = dateISO === todayISO();
 
-  const ordered = useMemo(
-    () =>
-      [...slots]
-        .sort((a, b) => toMinutes(a.time) - toMinutes(b.time))
-        .filter((s) => toMinutes(s.time) >= nowMinutes),
-    [slots, nowMinutes]
-  );
+  const ordered = useMemo(() => {
+    return slots
+      .map((s) => ({
+        ...s,
+        startMin: toMinutes(s.time.split("-")[0]),
+      }))
+      .filter((s) => (!isToday ? true : s.startMin >= nowMinutes + 30))
+      .sort((a, b) => a.startMin - b.startMin);
+  }, [slots, isToday, nowMinutes]);
 
-  const [startIndex, setStartIndex] = useState<number | null>(null);
-  const [endIndex, setEndIndex] = useState<number | null>(null);
+  const [range, setRange] = useState<TimeSlotRange | null>(null);
+
+  const startIndex =
+    range && ordered.findIndex((s) => s.time.startsWith(range.start));
+  const endIndex =
+    range && ordered.findIndex((s) => s.time.endsWith(range.end));
 
   const hasBookedBetween = (a: number, b: number) => {
     const [min, max] = a < b ? [a, b] : [b, a];
     return ordered.slice(min, max + 1).some((s) => s.status === "Booked");
   };
 
-  const reset = () => {
-    setStartIndex(null);
-    setEndIndex(null);
-    onChange?.(null);
-  };
-
-  const select = (i: number) => {
+  const onSelect = (i: number) => {
     if (ordered[i].status === "Booked") return;
 
-    // first tap
-    if (startIndex === null) {
-      setStartIndex(i);
-      setEndIndex(i);
+    if (!range) {
       const [start, end] = ordered[i].time.split("-");
-      onChange?.({ start, end });
+      setRange({ start, end });
       return;
     }
 
-    // tap same slot → reset
-    if (startIndex === i && endIndex === i) {
-      reset();
+    if (
+      startIndex !== null &&
+      endIndex !== null &&
+      i === startIndex &&
+      i === endIndex
+    ) {
+      setRange(null);
       return;
     }
 
-    // expand or shift range
-    if (hasBookedBetween(startIndex, i)) return;
+    if (startIndex !== null && hasBookedBetween(startIndex, i)) return;
 
-    const nextStart = Math.min(startIndex, i);
-    const nextEnd = Math.max(startIndex, i);
+    const nextStart = Math.min(startIndex!, i);
+    const nextEnd = Math.max(startIndex!, i);
 
-    setStartIndex(nextStart);
-    setEndIndex(nextEnd);
-
-    const start = ordered[nextStart].time.split("-")[0];
-    const end = ordered[nextEnd].time.split("-")[1];
-
-    onChange?.({ start, end });
+    setRange({
+      start: ordered[nextStart].time.split("-")[0],
+      end: ordered[nextEnd].time.split("-")[1],
+    });
   };
 
+  if (ordered.length === 0) {
+    return (
+      <Text
+        variant="bodySmall"
+        style={{ color: colors.onSurfaceVariant, textAlign: "center" }}
+      >
+        No available time slots
+      </Text>
+    );
+  }
+
   return (
-    <View style={{ gap: tokens.spacing.sm }}>
-      <View
-        style={{
-          flexDirection: "row",
-          flexWrap: "wrap",
+    <View style={{ gap: tokens.spacing.md }}>
+      {/* Horizontal Time Rail */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{
           gap: tokens.spacing.sm,
+          paddingVertical: tokens.spacing.xs,
         }}
       >
         {ordered.map((slot, i) => {
           const selected =
+            range &&
             startIndex !== null &&
             endIndex !== null &&
             i >= startIndex &&
             i <= endIndex;
 
-          const disabled =
-            slot.status === "Booked" ||
-            (startIndex !== null &&
-              !selected &&
-              hasBookedBetween(startIndex, i));
+          const blocked =
+            range &&
+            startIndex !== null &&
+            !selected &&
+            hasBookedBetween(startIndex, i);
 
           return (
             <Pressable
               key={slot.time}
-              disabled={disabled}
-              onPress={() => select(i)}
+              onPress={() => onSelect(i)}
+              disabled={slot.status === "Booked" || blocked}
               style={{
-                width: "30%",
+                paddingHorizontal: tokens.spacing.md,
                 paddingVertical: tokens.spacing.sm,
-                borderRadius: tokens.radii.lg,
+                borderRadius: tokens.radii.xl,
                 alignItems: "center",
+                justifyContent: "center",
                 backgroundColor:
                   slot.status === "Booked"
                     ? colors.surfaceDisabled
                     : selected
                     ? colors.primary
-                    : colors.primaryContainer,
-                opacity: disabled ? 0.35 : 1,
+                    : colors.surfaceVariant,
+                opacity: slot.status === "Booked" || blocked ? 0.35 : 1,
+                borderWidth: selected ? 0 : 1,
+                borderColor: colors.outlineVariant,
               }}
             >
               <Text
@@ -138,22 +173,32 @@ export default function RoomTimeSlots({ slots, onChange }: Props) {
                       ? colors.onSurfaceDisabled
                       : selected
                       ? colors.onPrimary
-                      : colors.onPrimaryContainer,
+                      : colors.onSurface,
                 }}
               >
-                {format(slot.time)}
+                {formatSlot(slot.time)}
               </Text>
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
 
-      {startIndex !== null && endIndex !== null && (
-        <Text variant="bodySmall" style={{ color: colors.onSurfaceVariant }}>
-          {ordered[startIndex].time.split("-")[0]} –{" "}
-          {ordered[endIndex].time.split("-")[1]}
-        </Text>
-      )}
+      {/* Footer actions */}
+      <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
+        {onCancel && (
+          <Button mode="text" onPress={onCancel} style={{ flex: 1 }}>
+            Cancel
+          </Button>
+        )}
+        <Button
+          mode="contained"
+          disabled={!range}
+          onPress={() => range && onConfirm(range)}
+          style={{ flex: 1 }}
+        >
+          {range ? `${range.start} – ${range.end}` : "Select time"}
+        </Button>
+      </View>
     </View>
   );
 }
