@@ -3,106 +3,115 @@ import { View, Pressable } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { useDesign } from "../../contexts/designContext";
 import { useOverlay } from "../../contexts/overlayContext";
-import { NewsFlash, NewsPriority } from "../../hooks/useHome";
+import {
+  NewsFlash,
+  NewsPriority,
+  NEWS_PRIORITY_COLOR,
+} from "../../hooks/useHome";
 import NewsflashModal from "./newsflashModal";
 
 type NewsflashListProps = {
   data: NewsFlash[];
 };
 
-const PRIORITY_COLOR: Record<NewsPriority, string> = {
-  HIGH: "#EF4444",
-  MEDIUM: "#F59E0B",
-  LOW: "#10B981",
+const PRIORITY_LABEL: Record<NewsPriority, string> = {
+  CRITICAL: "Critical",
+  IMPORTANT: "Important",
+  NORMAL: "Normal",
 };
+
+const stripHtml = (v: string) => v.replace(/<[^>]*>/g, "").trim();
 
 export default function NewsflashList({ data }: NewsflashListProps) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const { modal, dismissModal } = useOverlay();
+  const { modal } = useOverlay();
+
   const openDetails = (item: NewsFlash) => {
     modal({
       dismissible: true,
-      content: (
-        <Pressable onPress={dismissModal}>
-          <NewsflashModal item={item} />
-        </Pressable>
-      ),
+      content: <NewsflashModal item={item} />,
     });
   };
 
   return (
     <View style={{ gap: tokens.spacing.md }}>
-      {data.map((item) => (
-        <Pressable
-          key={item.id}
-          onPress={() => openDetails(item)}
-          style={({ pressed }) => ({
-            backgroundColor: colors.surface,
-            borderRadius: tokens.radii.xl,
-            padding: tokens.spacing.lg,
-            gap: tokens.spacing.sm,
-            elevation: pressed ? 2 : 6,
-            shadowColor: colors.shadow,
-            shadowOpacity: pressed ? 0.12 : 0.18,
-            shadowRadius: pressed ? 6 : 10,
-            shadowOffset: { width: 0, height: pressed ? 2 : 6 },
-          })}
-        >
-          <View
-            style={{
-              alignSelf: "flex-start",
-              paddingHorizontal: tokens.spacing.sm,
-              paddingVertical: 4,
-              borderRadius: tokens.radii.full,
-              backgroundColor: PRIORITY_COLOR[item.priority],
-            }}
+      {data.map((item) => {
+        const color = NEWS_PRIORITY_COLOR[item.priority];
+        const label = PRIORITY_LABEL[item.priority];
+
+        return (
+          <Pressable
+            key={item.id}
+            onPress={() => openDetails(item)}
+            style={({ pressed }) => ({
+              backgroundColor: colors.surface,
+              borderRadius: tokens.radii.xl,
+              padding: tokens.spacing.lg,
+              gap: tokens.spacing.xs,
+              elevation: pressed ? 2 : 6,
+              shadowColor: colors.shadow,
+              shadowOpacity: pressed ? 0.12 : 0.18,
+              shadowRadius: pressed ? 6 : 10,
+              shadowOffset: { width: 0, height: pressed ? 2 : 6 },
+            })}
           >
-            <Text
-              variant="labelSmall"
-              style={{ color: "#fff", fontWeight: "700" }}
+            <View
+              style={{
+                alignSelf: "flex-start",
+                paddingHorizontal: tokens.spacing.sm,
+                paddingVertical: 4,
+                borderRadius: tokens.radii.full,
+                backgroundColor: color,
+              }}
             >
-              {item.priority}
-            </Text>
-          </View>
+              <Text
+                variant="labelSmall"
+                style={{ color: "#fff", fontWeight: "700" }}
+              >
+                {label}
+              </Text>
+            </View>
 
-          <Text
-            variant="titleSmall"
-            style={{ fontWeight: "700", color: colors.onSurface }}
-          >
-            {item.title}
-          </Text>
-
-          <Text
-            variant="bodySmall"
-            numberOfLines={3}
-            style={{ color: colors.onSurfaceVariant }}
-          >
-            {item.body}
-          </Text>
-
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              marginTop: tokens.spacing.xs,
-            }}
-          >
             <Text
-              variant="labelSmall"
+              variant="titleSmall"
+              style={{ fontWeight: "700", color: colors.onSurface }}
+            >
+              {item.title}
+            </Text>
+
+            <Text
+              variant="bodySmall"
+              numberOfLines={1}
+              ellipsizeMode="tail"
               style={{ color: colors.onSurfaceVariant }}
             >
-              {item.byDepartment}
+              {stripHtml(item.body)}
             </Text>
-            <Text
-              variant="labelSmall"
-              style={{ color: colors.onSurfaceVariant }}
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginTop: tokens.spacing.xs,
+              }}
             >
-              {item.date}
-            </Text>
-          </View>
-        </Pressable>
-      ))}
+              <Text
+                variant="labelSmall"
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                {item.byDepartment}
+              </Text>
+              <Text
+                variant="labelSmall"
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                {item.date}
+              </Text>
+            </View>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }

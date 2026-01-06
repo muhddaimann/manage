@@ -37,43 +37,54 @@ export default function RoomTimeSlots({ slots, onChange }: Props) {
     () =>
       [...slots]
         .sort((a, b) => toMinutes(a.time) - toMinutes(b.time))
-        .filter((s) => toMinutes(s.time) >= nowMinutes + 30),
+        .filter((s) => toMinutes(s.time) >= nowMinutes),
     [slots, nowMinutes]
   );
 
-  const [anchor, setAnchor] = useState<number | null>(null);
-  const [range, setRange] = useState<[number, number] | null>(null);
+  const [startIndex, setStartIndex] = useState<number | null>(null);
+  const [endIndex, setEndIndex] = useState<number | null>(null);
 
-  const hasBlockBetween = (a: number, b: number) => {
+  const hasBookedBetween = (a: number, b: number) => {
     const [min, max] = a < b ? [a, b] : [b, a];
     return ordered.slice(min, max + 1).some((s) => s.status === "Booked");
+  };
+
+  const reset = () => {
+    setStartIndex(null);
+    setEndIndex(null);
+    onChange?.(null);
   };
 
   const select = (i: number) => {
     if (ordered[i].status === "Booked") return;
 
-    if (anchor === null) {
-      setAnchor(i);
-      setRange([i, i]);
+    // first tap
+    if (startIndex === null) {
+      setStartIndex(i);
+      setEndIndex(i);
       const [start, end] = ordered[i].time.split("-");
       onChange?.({ start, end });
       return;
     }
 
-    if (anchor === i) {
-      setAnchor(null);
-      setRange(null);
-      onChange?.(null);
+    // tap same slot → reset
+    if (startIndex === i && endIndex === i) {
+      reset();
       return;
     }
 
-    if (hasBlockBetween(anchor, i)) return;
+    // expand or shift range
+    if (hasBookedBetween(startIndex, i)) return;
 
-    const next: [number, number] = anchor < i ? [anchor, i] : [i, anchor];
+    const nextStart = Math.min(startIndex, i);
+    const nextEnd = Math.max(startIndex, i);
 
-    setRange(next);
-    const start = ordered[next[0]].time.split("-")[0];
-    const end = ordered[next[1]].time.split("-")[1];
+    setStartIndex(nextStart);
+    setEndIndex(nextEnd);
+
+    const start = ordered[nextStart].time.split("-")[0];
+    const end = ordered[nextEnd].time.split("-")[1];
+
     onChange?.({ start, end });
   };
 
@@ -87,10 +98,17 @@ export default function RoomTimeSlots({ slots, onChange }: Props) {
         }}
       >
         {ordered.map((slot, i) => {
-          const selected = range && i >= range[0] && i <= range[1];
+          const selected =
+            startIndex !== null &&
+            endIndex !== null &&
+            i >= startIndex &&
+            i <= endIndex;
+
           const disabled =
             slot.status === "Booked" ||
-            (anchor !== null && !selected && hasBlockBetween(anchor, i));
+            (startIndex !== null &&
+              !selected &&
+              hasBookedBetween(startIndex, i));
 
           return (
             <Pressable
@@ -130,10 +148,10 @@ export default function RoomTimeSlots({ slots, onChange }: Props) {
         })}
       </View>
 
-      {range && (
+      {startIndex !== null && endIndex !== null && (
         <Text variant="bodySmall" style={{ color: colors.onSurfaceVariant }}>
-          {ordered[range[0]].time.split("-")[0]} –{" "}
-          {ordered[range[1]].time.split("-")[1]}
+          {ordered[startIndex].time.split("-")[0]} –{" "}
+          {ordered[endIndex].time.split("-")[1]}
         </Text>
       )}
     </View>

@@ -11,7 +11,7 @@ import MainCard from "../../../components/a/mainCard";
 export default function MainPage() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const { user, today, dayStatus } = useHome();
+  const { dayStatus } = useHome();
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture({
     controlNav: false,
   });

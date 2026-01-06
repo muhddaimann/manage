@@ -1,70 +1,132 @@
 import React from "react";
-import { View } from "react-native";
+import { View, useWindowDimensions } from "react-native";
 import { Text, useTheme, Divider, Button } from "react-native-paper";
+import RenderHTML from "react-native-render-html";
 import { useDesign } from "../../contexts/designContext";
-import { NewsFlash, NewsPriority } from "../../hooks/useHome";
+import {
+  NewsFlash,
+  NewsPriority,
+  NEWS_PRIORITY_COLOR,
+} from "../../hooks/useHome";
 
-const PRIORITY_COLOR: Record<NewsPriority, string> = {
-  HIGH: "#EF4444",
-  MEDIUM: "#F59E0B",
-  LOW: "#10B981",
+const PRIORITY_LABEL: Record<NewsPriority, string> = {
+  CRITICAL: "Critical",
+  IMPORTANT: "Important",
+  NORMAL: "Normal",
 };
 
 export default function NewsflashModal({ item }: { item: NewsFlash }) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
+  const { width } = useWindowDimensions();
+  const priorityColor = NEWS_PRIORITY_COLOR[item.priority];
+  const priorityLabel = PRIORITY_LABEL[item.priority];
+
+  const isHtml =
+    typeof item.body === "string" && /<\/?[a-z][\s\S]*>/i.test(item.body);
 
   return (
     <View
       style={{
         backgroundColor: colors.surface,
         borderRadius: tokens.radii.xl,
-        padding: tokens.spacing.xl,
-        gap: tokens.spacing.md,
+        paddingHorizontal: tokens.spacing.lg,
+        paddingVertical: tokens.spacing.md,
+        gap: tokens.spacing.xs,
       }}
     >
       <View
         style={{
-          alignSelf: "flex-start",
-          paddingHorizontal: tokens.spacing.md,
-          paddingVertical: 6,
-          borderRadius: tokens.radii.full,
-          backgroundColor: PRIORITY_COLOR[item.priority],
+          flexDirection: "row",
+          gap: tokens.spacing.xs,
+          flexWrap: "wrap",
+          alignItems: "center",
         }}
       >
-        <Text style={{ color: "#fff", fontWeight: "700" }}>
-          {item.priority}
-        </Text>
+        {/* Priority pill (never shrink) */}
+        <View
+          style={{
+            paddingHorizontal: tokens.spacing.md,
+            paddingVertical: 6,
+            borderRadius: tokens.radii.full,
+            backgroundColor: priorityColor,
+          }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "700" }}>
+            {priorityLabel}
+          </Text>
+        </View>
+
+        <View
+          style={{
+            maxWidth: "100%",
+            paddingHorizontal: tokens.spacing.md,
+            paddingVertical: 6,
+            borderRadius: tokens.radii.full,
+            backgroundColor: colors.surfaceVariant,
+          }}
+        >
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={{
+              color: colors.onSurfaceVariant,
+              fontWeight: "600",
+            }}
+          >
+            {item.byDepartment}
+          </Text>
+        </View>
       </View>
 
-      <Text variant="titleMedium">{item.title}</Text>
+      {/* Title */}
+      <Text variant="titleMedium" style={{ fontWeight: "700" }}>
+        {item.title}
+      </Text>
 
-      <Divider />
-
-      <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
-        {item.body}
+      {/* Meta row: author + date */}
+      <Text variant="labelSmall" style={{ color: colors.onSurfaceVariant }}>
+        {item.by} • {item.date}
       </Text>
 
       <Divider />
 
-      <View style={{ gap: 4 }}>
-        <Text variant="labelSmall" style={{ color: colors.onSurfaceVariant }}>
-          Department
+      {/* Body */}
+      {isHtml ? (
+        <RenderHTML
+          contentWidth={width - tokens.spacing.lg * 2}
+          source={{ html: item.body }}
+          baseStyle={{
+            color: colors.onSurfaceVariant,
+            fontSize: 14,
+            lineHeight: 20,
+          }}
+          tagsStyles={{
+            a: {
+              color: colors.primary,
+              textDecorationLine: "underline",
+              fontWeight: "600",
+            },
+            p: { marginVertical: 6 },
+            img: {
+              marginVertical: 10,
+              borderRadius: tokens.radii.md,
+            },
+          }}
+        />
+      ) : (
+        <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
+          {item.body}
         </Text>
-        <Text>{item.byDepartment}</Text>
-      </View>
-
-      <View style={{ gap: 4 }}>
-        <Text variant="labelSmall" style={{ color: colors.onSurfaceVariant }}>
-          Published
-        </Text>
-        <Text>{item.date}</Text>
-      </View>
+      )}
 
       <Button
         mode="contained"
         disabled
-        style={{ marginTop: tokens.spacing.sm, borderRadius: tokens.radii.lg }}
+        style={{
+          marginTop: tokens.spacing.sm,
+          borderRadius: tokens.radii.lg,
+        }}
         contentStyle={{ height: 46 }}
       >
         Acknowledged

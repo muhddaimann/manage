@@ -2,15 +2,15 @@ import React, { useMemo, useState } from "react";
 import { ScrollView, View, Pressable } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
-import useHome, { NewsFlash } from "../../../hooks/useHome";
+import useHome, { NewsFlash, NewsPriority } from "../../../hooks/useHome";
 import Header from "../../../components/shared/header";
 import ScrollTop from "../../../components/shared/scrollTop";
 import { useGesture } from "../../../hooks/useGesture";
 import NewsflashList from "../../../components/a/newsflashList";
 
-type PriorityFilter = "ALL" | "HIGH" | "MEDIUM" | "LOW";
+type PriorityFilter = "ALL" | NewsPriority;
 
-const PRIORITIES: PriorityFilter[] = ["ALL", "HIGH", "MEDIUM", "LOW"];
+const PRIORITIES: PriorityFilter[] = ["ALL", "CRITICAL", "IMPORTANT", "NORMAL"];
 
 export default function NewsflashPage() {
   const { colors } = useTheme();
@@ -21,6 +21,7 @@ export default function NewsflashPage() {
   });
 
   const [priority, setPriority] = useState<PriorityFilter>("ALL");
+
   const filteredData = useMemo<NewsFlash[]>(() => {
     if (priority === "ALL") return newsFlash;
     return newsFlash.filter((n) => n.priority === priority);

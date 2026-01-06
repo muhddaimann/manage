@@ -5,9 +5,15 @@ import { getActiveBroadcasts } from "../contexts/api/broadcast";
 import type { Broadcast } from "../contexts/api/broadcast";
 import { getAttendanceDef, type Attendance } from "../contexts/api/attendance";
 
-/* ================= TYPES ================= */
+/* ================= NEWS ================= */
 
-export type NewsPriority = "HIGH" | "MEDIUM" | "LOW";
+export type NewsPriority = "NORMAL" | "IMPORTANT" | "CRITICAL";
+
+export const NEWS_PRIORITY_COLOR: Record<NewsPriority, string> = {
+  CRITICAL: "#EF4444",
+  IMPORTANT: "#F59E0B",
+  NORMAL: "#10B981",
+};
 
 export type NewsFlash = {
   id: string;
@@ -19,7 +25,15 @@ export type NewsFlash = {
   by: string;
 };
 
-type UserTag = "MANAGEMENT" | "OPERATION";
+/* ================= USER ================= */
+
+export type UserProfile = {
+  name: string;
+  role: string;
+  initials: string;
+};
+
+/* ================= DAY STATUS ================= */
 
 export type DayStatus =
   | "NOT_CHECKED_IN"
@@ -46,24 +60,6 @@ export type DayStatusTone =
   | "error"
   | "outline";
 
-type QuickStat = {
-  label: string;
-  value: string;
-};
-
-type LeaveSummary = {
-  annualLeaveLeft: number;
-  pendingLeave: number;
-};
-
-export type UserProfile = {
-  name: string;
-  role: string;
-  initials: string;
-  tag: UserTag;
-  leave: LeaveSummary;
-};
-
 /* ================= HELPERS ================= */
 
 function formatToday() {
@@ -81,9 +77,15 @@ function getGreeting() {
   return "Good evening";
 }
 
-function mapPriority(p: string): NewsPriority {
-  if (p === "HIGH" || p === "MEDIUM" || p === "LOW") return p;
-  return "LOW";
+function mapBroadcastPriority(p: string): NewsPriority {
+  switch (p.toLowerCase()) {
+    case "critical":
+      return "CRITICAL";
+    case "important":
+      return "IMPORTANT";
+    default:
+      return "NORMAL";
+  }
 }
 
 function deriveDayStatus(att: Attendance | null): DayStatus {
@@ -110,25 +112,14 @@ export default function useHome() {
   const user: UserProfile | null = useMemo(() => {
     if (!staff) return null;
 
-    const tag: UserTag = staff.designation_name
-      .toLowerCase()
-      .includes("manager")
-      ? "MANAGEMENT"
-      : "OPERATION";
-
     return {
       name: staff.nick_name || staff.full_name,
       role: staff.designation_name,
       initials: staff.initials,
-      tag,
-      leave: {
-        annualLeaveLeft: 0,
-        pendingLeave: 0,
-      },
     };
   }, [staff]);
 
-  /* ---------- ATTENDANCE (API ONLY) ---------- */
+  /* ---------- ATTENDANCE ---------- */
   const [attendance, setAttendance] = useState<Attendance | null>(null);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
 
@@ -217,7 +208,7 @@ export default function useHome() {
             title: b.NewsName,
             body: b.Description || b.Content,
             date: b.StartDate,
-            priority: mapPriority(b.BroadcastPriority),
+            priority: mapBroadcastPriority(b.BroadcastPriority),
             byDepartment: b.BroadcastType,
             by: b.CreatedBy,
           }))
@@ -232,19 +223,11 @@ export default function useHome() {
     };
   }, []);
 
-  /* ---------- QUICK STATS ---------- */
-  const quickStats: QuickStat[] = useMemo(() => {
-    if (!user) return [];
-    return [{ label: "Active Booking", value: `${activeBookings.length}` }];
-  }, [user, activeBookings.length]);
-
   return {
     today,
     greeting,
 
     user,
-    staff,
-
     attendance,
 
     loading:
@@ -256,10 +239,8 @@ export default function useHome() {
     dayStatusTone,
 
     newsFlash,
-
-    myBookings,
     activeBookings,
 
-    quickStats,
+    NEWS_PRIORITY_COLOR,
   };
 }
