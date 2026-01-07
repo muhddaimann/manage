@@ -1,116 +1,99 @@
 import React from "react";
 import { View } from "react-native";
-import { Text, useTheme, Divider, Button } from "react-native-paper";
+import { Text, useTheme, Button } from "react-native-paper";
 import { useDesign } from "../../contexts/designContext";
-import { ApplicationListItem } from "./applicationList";
+import { LeaveListItem } from "./applicationList";
 
-export default function ApplicationModal({
+export default function LeaveModal({
   item,
-  mode,
-  onClose,
+  onWithdraw,
 }: {
-  item: ApplicationListItem;
-  mode: "LEAVE" | "OVERTIME";
+  item: LeaveListItem;
   onClose: () => void;
+  onWithdraw?: (leaveId: number) => void;
 }) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
+  const leave = item.raw;
 
-  const statusTone = {
-    PENDING: colors.secondary,
-    APPROVED: colors.tertiary,
-    REJECTED: colors.error,
-  }[item.status];
-
+  const { container: bg, onContainer: fg } = item.statusColors;
   const isPending = item.status === "PENDING";
-  const isApproved = item.status === "APPROVED";
-  const isRejected = item.status === "REJECTED";
 
   return (
     <View
       style={{
         backgroundColor: colors.surface,
         borderRadius: tokens.radii.xl,
-        padding: tokens.spacing.xl,
+        paddingHorizontal: tokens.spacing.lg,
+        paddingVertical: tokens.spacing.md,
         gap: tokens.spacing.md,
       }}
     >
-      <Text variant="titleMedium">{item.primary}</Text>
-
       <View
         style={{
-          alignSelf: "flex-start",
-          paddingHorizontal: tokens.spacing.md,
-          paddingVertical: 6,
-          borderRadius: tokens.radii.full,
-          backgroundColor: statusTone + "22",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: tokens.spacing.md,
         }}
       >
-        <Text style={{ color: statusTone, fontWeight: "700" }}>
-          {item.status}
+        <Text variant="titleLarge" style={{ fontWeight: "700", flex: 1 }}>
+          {leave.leave_name}
+        </Text>
+
+        <View
+          style={{
+            paddingHorizontal: tokens.spacing.md,
+            paddingVertical: 6,
+            borderRadius: tokens.radii.full,
+            backgroundColor: bg,
+          }}
+        >
+          <Text variant="labelMedium" style={{ color: fg, fontWeight: "700" }}>
+            {item.statusMeta.label}
+          </Text>
+        </View>
+      </View>
+
+      <View style={{ gap: 2 }}>
+        <Text variant="bodyLarge">
+          {leave.start === leave.end
+            ? leave.start
+            : `${leave.start} → ${leave.end}`}
+        </Text>
+
+        <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
+          {leave.duration_name} · {leave.leave_period}
         </Text>
       </View>
 
-      <Divider />
-
-      {item.secondary && (
-        <View style={{ gap: 4 }}>
-          <Text variant="labelSmall" style={{ color: colors.onSurfaceVariant }}>
-            Period
-          </Text>
-          <Text>{item.secondary}</Text>
-        </View>
+      {leave.reason && (
+        <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
+          “{leave.reason}”
+        </Text>
       )}
 
-      {item.meta && (
-        <View style={{ gap: 4 }}>
-          <Text variant="labelSmall" style={{ color: colors.onSurfaceVariant }}>
-            {mode === "LEAVE" ? "Duration" : "Details"}
-          </Text>
-          <Text>{item.meta}</Text>
-        </View>
+      {leave.cancellation_dt && (
+        <Text variant="labelMedium" style={{ color: colors.onSurfaceVariant }}>
+          Cancelled on {leave.cancellation_dt}
+        </Text>
       )}
 
-      <View style={{ height: tokens.spacing.sm }} />
-
-      <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
-        {isPending && (
-          <Button
-            mode="contained"
-            onPress={onClose}
-            buttonColor={colors.error}
-            textColor={colors.onError}
-            style={{ flex: 1, borderRadius: tokens.radii.lg }}
-            contentStyle={{ height: 46 }}
-          >
-            Withdraw
-          </Button>
-        )}
-
-        {isApproved && (
-          <Button
-            mode="contained"
-            disabled
-            style={{ flex: 1, borderRadius: tokens.radii.lg }}
-            contentStyle={{ height: 46 }}
-          >
-            Approved
-          </Button>
-        )}
-
-        {isRejected && (
-          <Button
-            mode="contained"
-            disabled
-            buttonColor={colors.errorContainer}
-            textColor={colors.onErrorContainer}
-            style={{ flex: 1, borderRadius: tokens.radii.lg }}
-            contentStyle={{ height: 46 }}
-          >
-            Rejected
-          </Button>
-        )}
-      </View>
+      {isPending && (
+        <Button
+          mode="outlined"
+          onPress={() => onWithdraw?.(leave.leave_id)}
+          style={{
+            marginTop: tokens.spacing.xs,
+            borderRadius: tokens.radii.lg,
+            borderColor: colors.error,
+          }}
+          textColor={colors.error}
+          contentStyle={{ height: 44 }}
+        >
+          Withdraw
+        </Button>
+      )}
     </View>
   );
 }

@@ -1,45 +1,45 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, ScrollView } from "react-native";
 import { useTheme } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
-import HeaderSwitcher from "../../../components/b/header";
-import ApplicationBody from "../../../components/b/applicationBody";
+import LeaveBody from "../../../components/b/applicationBody";
+import StaticSectionHeader from "../../../components/b/header";
+import ScrollTop from "../../../components/shared/scrollTop";
+import { CalendarCheck } from "lucide-react-native";
+import { useGesture } from "../../../hooks/useGesture";
 
-export default function Application() {
+export default function Leave() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const [mode, setMode] = useState<"LEAVE" | "OVERTIME">("LEAVE");
+  const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture();
 
   return (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={{
-        paddingHorizontal: tokens.spacing.lg,
-        paddingBottom: tokens.spacing["3xl"] * 2,
-        gap: tokens.spacing.lg,
-      }}
-    >
-      <View style={{ marginTop: tokens.spacing.md }}>
-        <HeaderSwitcher
-          value={mode}
-          onChange={setMode}
-          items={[
-            {
-              key: "LEAVE",
-              label: "Leave",
-              hint: "Annual, medical, emergency",
-            },
-            {
-              key: "OVERTIME",
-              label: "Overtime",
-              hint: "Extra working hours",
-            },
-          ]}
-        />
-      </View>
+    <>
+      <ScrollView
+        ref={scrollRef}
+        onScroll={(e) => onScroll(e.nativeEvent)}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        style={{ flex: 1, backgroundColor: colors.background }}
+        contentContainerStyle={{
+          paddingHorizontal: tokens.spacing.lg,
+          paddingBottom: tokens.spacing["3xl"] * 2,
+          gap: tokens.spacing.md,
+        }}
+      >
+        <View style={{ marginTop: tokens.spacing.md }}>
+          <StaticSectionHeader
+            title="You’re viewing"
+            label="Leave Applications"
+            hint="View and manage your leave requests"
+            icon={CalendarCheck}
+          />
+        </View>
 
-      <ApplicationBody mode={mode} />
-    </ScrollView>
+        <LeaveBody />
+      </ScrollView>
+
+      <ScrollTop visible={showScrollTop} onPress={scrollToTop} />
+    </>
   );
 }

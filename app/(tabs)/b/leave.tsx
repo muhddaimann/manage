@@ -1,9 +1,9 @@
 import React, {
   useMemo,
   useState,
+  useCallback,
   useEffect,
   useRef,
-  useCallback,
 } from "react";
 import {
   View,
@@ -18,32 +18,51 @@ import {
 import { useTheme, TextInput, Button } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
+import { useOverlay } from "../../../contexts/overlayContext";
 import Header from "../../../components/shared/header";
 import ScrollTop from "../../../components/shared/scrollTop";
+import DatePicker from "../../../components/shared/datePicker";
+import OptionPicker from "../../../components/shared/optionPicker";
+import DocumentPicker from "../../../components/shared/documentPicker";
 import { useGesture } from "../../../hooks/useGesture";
 import { useFocusEffect } from "expo-router";
+import useLeave from "../../../hooks/useApplication";
 
-export default function ApplyRoom() {
+export default function ApplyLeave() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
+  const { modal, dismissModal, alert } = useOverlay();
   const { setHideTabBar } = useTabs();
+  const { options, helpers } = useLeave();
+  const [leaveType, setLeaveType] = useState<string>();
+  const [period, setPeriod] = useState<string>();
+  const [range, setRange] = useState<{ start: string; end: string }>();
+  const [reasonType, setReasonType] = useState<string>();
+  const [remarks, setRemarks] = useState("");
+  const [attachmentName, setAttachmentName] = useState<string>();
+  const [attachmentRef, setAttachmentRef] = useState<string>();
 
-  const [leaveType, setLeaveType] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [reason, setReason] = useState("");
+  const duration = useMemo(() => {
+    if (!period || !range?.start) return 0;
+    if (period === "FULL" && range?.end) {
+      return helpers.diffDays(range.start, range.end);
+    }
+    return 0.5;
+  }, [period, range, helpers]);
 
   const isValid = useMemo(
     () =>
-      leaveType.trim().length > 0 &&
-      startDate.trim().length > 0 &&
-      endDate.trim().length > 0 &&
-      reason.trim().length > 0,
-    [leaveType, startDate, endDate, reason]
+      !!leaveType &&
+      !!period &&
+      !!range?.start &&
+      (period !== "FULL" || !!range?.end) &&
+      !!reasonType &&
+      duration > 0,
+    [leaveType, period, range, reasonType, duration]
   );
 
   const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.94)).current;
+  const scale = useRef(new Animated.Value(0.96)).current;
   const liftY = useRef(new Animated.Value(0)).current;
 
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture({
@@ -53,9 +72,15 @@ export default function ApplyRoom() {
   useFocusEffect(
     useCallback(() => {
       setHideTabBar(true);
-
       return () => {
         setHideTabBar(false);
+        setLeaveType(undefined);
+        setPeriod(undefined);
+        setRange(undefined);
+        setReasonType(undefined);
+        setRemarks("");
+        setAttachmentName(undefined);
+        setAttachmentRef(undefined);
       };
     }, [])
   );
@@ -64,7 +89,7 @@ export default function ApplyRoom() {
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
-        duration: 420,
+        duration: 360,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
@@ -79,7 +104,7 @@ export default function ApplyRoom() {
 
     const show = Keyboard.addListener("keyboardWillShow", () => {
       Animated.spring(liftY, {
-        toValue: -20,
+        toValue: -16,
         damping: 20,
         stiffness: 180,
         mass: 0.6,
@@ -103,6 +128,113 @@ export default function ApplyRoom() {
     };
   }, []);
 
+  const openLeaveType = () =>
+    modal({
+      dismissible: true,
+      content: (
+        <OptionPicker
+          title="Leave type"
+          subtitle="Tap to select leave category"
+          icon="briefcase"
+          options={options.leaveTypes}
+          initialValue={leaveType}
+          onSelect={(v) => {
+            setLeaveType(v);
+            dismissModal();
+          }}
+        />
+      ),
+    });
+
+  const openPeriod = () =>
+    modal({
+      dismissible: true,
+      content: (
+        <OptionPicker
+          title="Leave duration"
+          subtitle="Select full or half day"
+          icon="clock-outline"
+          options={options.leavePeriods}
+          initialValue={period}
+          onSelect={(v) => {
+            setPeriod(v);
+            setRange(undefined);
+            dismissModal();
+          }}
+        />
+      ),
+    });
+
+  const openDates = () => {
+    if (!period) {
+      alert({
+        title: "Select leave period",
+        message: "Please choose leave duration before selecting dates.",
+        variant: "info",
+      });
+      return;
+    }
+
+    modal({
+      dismissible: true,
+      content: (
+        <DatePicker
+          mode={period === "FULL" ? "RANGE" : "SINGLE"}
+          initialRange={period === "FULL" ? range : undefined}
+          initialDate={period !== "FULL" ? range?.start : undefined}
+          onConfirm={(v) => {
+            if (typeof v === "string") {
+              setRange({ start: v, end: v });
+            } else {
+              setRange(v);
+            }
+            dismissModal();
+          }}
+        />
+      ),
+    });
+  };
+
+  const openReason = () =>
+    modal({
+      dismissible: true,
+      content: (
+        <OptionPicker
+          title="Reason"
+          subtitle="Tap to select reason"
+          icon="comment-text-outline"
+          options={options.leaveReasons}
+          initialValue={reasonType}
+          onSelect={(v) => {
+            setReasonType(v);
+            dismissModal();
+          }}
+        />
+      ),
+    });
+
+  const openAttachment = () =>
+    modal({
+      dismissible: true,
+      content: (
+        <DocumentPicker
+          title="Attachment"
+          subtitle="Attach supporting document (optional)"
+          onDone={(payload) => {
+            if (payload) {
+              setAttachmentName(payload.name);
+              setAttachmentRef(payload.referenceNo);
+            }
+            dismissModal();
+          }}
+        />
+      ),
+    });
+
+  const dateLabel = range
+    ? helpers.buildDateRangeLabel(range.start, range.end ?? range.start)
+    : "";
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.background }}
@@ -120,59 +252,113 @@ export default function ApplyRoom() {
             gap: tokens.spacing.sm,
           }}
         >
-          <Header title="Apply Leave" subtitle="Submit your leave request" />
+          <Header title="Apply Leave" subtitle="Submit a new leave request" />
 
           <Animated.View
             style={{
               marginTop: tokens.spacing.md,
               backgroundColor: colors.surface,
               borderRadius: tokens.radii["2xl"],
-              padding: tokens.spacing.xl,
+              padding: tokens.spacing.lg,
               gap: tokens.spacing.lg,
               opacity,
               transform: [{ scale }, { translateY: liftY }],
               shadowColor: colors.shadow,
-              shadowOpacity: 0.15,
-              shadowRadius: 24,
-              shadowOffset: { width: 0, height: 12 },
-              elevation: 12,
+              shadowOpacity: 0.14,
+              shadowRadius: 20,
+              shadowOffset: { width: 0, height: 10 },
+              elevation: 10,
             }}
           >
             <View style={{ gap: tokens.spacing.md }}>
-              <TextInput
-                mode="outlined"
-                label="Leave type (Annual / Medical / Emergency)"
-                value={leaveType}
-                onChangeText={setLeaveType}
-                returnKeyType="next"
-              />
+              <Pressable onPress={openLeaveType}>
+                <View pointerEvents="none">
+                  <TextInput
+                    mode="outlined"
+                    label="Leave type"
+                    value={
+                      options.leaveTypes.find((o) => o.value === leaveType)
+                        ?.label ?? ""
+                    }
+                    editable={false}
+                  />
+                </View>
+              </Pressable>
+
+              <Pressable onPress={openPeriod}>
+                <View pointerEvents="none">
+                  <TextInput
+                    mode="outlined"
+                    label="Leave Period"
+                    value={
+                      options.leavePeriods.find((o) => o.value === period)
+                        ?.label ?? ""
+                    }
+                    editable={false}
+                  />
+                </View>
+              </Pressable>
+
+              <Pressable onPress={openDates}>
+                <View pointerEvents="none">
+                  <TextInput
+                    mode="outlined"
+                    label="Leave date(s)"
+                    value={dateLabel}
+                    editable={false}
+                  />
+                </View>
+              </Pressable>
 
               <TextInput
                 mode="outlined"
-                label="Start date"
-                value={startDate}
-                onChangeText={setStartDate}
-                placeholder="YYYY-MM-DD"
-                returnKeyType="next"
+                label="Duration"
+                value={duration ? `${duration} day(s)` : "0.0"}
+                editable={false}
               />
+
+              <Pressable onPress={openReason}>
+                <View pointerEvents="none">
+                  <TextInput
+                    mode="outlined"
+                    label="Reason"
+                    value={
+                      options.leaveReasons.find((o) => o.value === reasonType)
+                        ?.label ?? ""
+                    }
+                    editable={false}
+                  />
+                </View>
+              </Pressable>
+
+              <Pressable onPress={openAttachment}>
+                <View pointerEvents="none">
+                  <TextInput
+                    mode="outlined"
+                    label="Attachment"
+                    value={attachmentName ?? ""}
+                    placeholder="Tap to attach document"
+                    editable={false}
+                  />
+                </View>
+              </Pressable>
+
+              {attachmentRef && (
+                <TextInput
+                  mode="outlined"
+                  label="Attachment reference"
+                  value={attachmentRef}
+                  editable={false}
+                />
+              )}
 
               <TextInput
                 mode="outlined"
-                label="End date"
-                value={endDate}
-                onChangeText={setEndDate}
-                placeholder="YYYY-MM-DD"
-                returnKeyType="next"
-              />
-
-              <TextInput
-                mode="outlined"
-                label="Reason"
-                value={reason}
-                onChangeText={setReason}
+                label="Remarks (optional)"
+                value={remarks}
+                onChangeText={setRemarks}
                 multiline
                 numberOfLines={3}
-                returnKeyType="done"
               />
             </View>
 
@@ -181,7 +367,7 @@ export default function ApplyRoom() {
               disabled={!isValid}
               contentStyle={{ height: 48 }}
             >
-              Submit leave request
+              Submit request
             </Button>
           </Animated.View>
         </ScrollView>

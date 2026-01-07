@@ -33,7 +33,6 @@ export default function DatePicker({
 }: DatePickerProps) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-
   const [single, setSingle] = useState(initialDate ?? todayISO());
   const [range, setRange] = useState({
     start: initialRange?.start ?? todayISO(),
@@ -90,8 +89,8 @@ export default function DatePicker({
       style={{
         backgroundColor: colors.surface,
         borderRadius: tokens.radii["2xl"],
-        paddingHorizontal: tokens.spacing.xl,
-        paddingVertical: tokens.spacing.lg,
+        paddingVertical: tokens.spacing.md,
+        paddingHorizontal: tokens.spacing.lg,
       }}
     >
       <View
