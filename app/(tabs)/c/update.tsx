@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   KeyboardAvoidingView,
@@ -12,24 +12,18 @@ import { useTheme, TextInput, Button } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
 import Header from "../../../components/shared/header";
+import useSettings from "../../../hooks/useSettings";
+import { useOverlay } from "../../../contexts/overlayContext";
+import { router } from "expo-router";
 
 export default function UpdateProfile() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { setHideTabBar } = useTabs();
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("");
-  const [department, setDepartment] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const { toast } = useOverlay();
 
-  const isValid = useMemo(
-    () =>
-      name.trim().length > 0 &&
-      role.trim().length > 0 &&
-      email.trim().length > 0,
-    [name, role, email]
-  );
+  const { staff, form, loading, saving, updateField, saveProfile, hasChanges } =
+    useSettings();
 
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.94)).current;
@@ -81,6 +75,32 @@ export default function UpdateProfile() {
     };
   }, []);
 
+  const onSave = async () => {
+    if (!form?.email || !form.contact_no) {
+      toast({
+        message: "Email and contact number are required",
+        variant: "warning",
+      });
+      return;
+    }
+
+    try {
+      await saveProfile();
+      toast({
+        message: "Profile updated successfully",
+        variant: "success",
+      });
+      router.back();
+    } catch {
+      toast({
+        message: "Failed to update profile",
+        variant: "error",
+      });
+    }
+  };
+
+  if (loading || !staff || !form) return null;
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.background }}
@@ -94,14 +114,12 @@ export default function UpdateProfile() {
             gap: tokens.spacing.sm,
           }}
         >
-          <Header title="Update Profile" subtitle="Complete this form" />
+          <Header
+            title="Update Profile"
+            subtitle="Some fields can’t be changed"
+          />
 
-          <View
-            style={{
-              flex: 1,
-              paddingTop: tokens.spacing.md,
-            }}
-          >
+          <View style={{ flex: 1, paddingTop: tokens.spacing.md }}>
             <Animated.View
               style={{
                 backgroundColor: colors.surface,
@@ -120,52 +138,56 @@ export default function UpdateProfile() {
               <View style={{ gap: tokens.spacing.md }}>
                 <TextInput
                   mode="outlined"
-                  label="Full name"
-                  value={name}
-                  onChangeText={setName}
-                  returnKeyType="next"
-                />
-
-                <TextInput
-                  mode="outlined"
-                  label="Role"
-                  value={role}
-                  onChangeText={setRole}
-                  returnKeyType="next"
-                />
-
-                <TextInput
-                  mode="outlined"
-                  label="Department"
-                  value={department}
-                  onChangeText={setDepartment}
-                  returnKeyType="next"
+                  label="Nickname"
+                  value={form.nick_name ?? ""}
+                  onChangeText={(v) => updateField("nick_name", v)}
                 />
 
                 <TextInput
                   mode="outlined"
                   label="Email"
-                  value={email}
-                  onChangeText={setEmail}
+                  value={form.email ?? ""}
+                  onChangeText={(v) => updateField("email", v)}
                   keyboardType="email-address"
                   autoCapitalize="none"
-                  returnKeyType={phone ? "next" : "done"}
                 />
 
                 <TextInput
                   mode="outlined"
-                  label="Phone (optional)"
-                  value={phone}
-                  onChangeText={setPhone}
+                  label="Phone"
+                  value={form.contact_no ?? ""}
+                  onChangeText={(v) => updateField("contact_no", v)}
                   keyboardType="phone-pad"
-                  returnKeyType="done"
+                />
+
+                <TextInput
+                  mode="outlined"
+                  label="Address line 1"
+                  value={form.address1 ?? ""}
+                  onChangeText={(v) => updateField("address1", v)}
+                />
+
+                <TextInput
+                  mode="outlined"
+                  label="Address line 2"
+                  value={form.address2 ?? ""}
+                  onChangeText={(v) => updateField("address2", v)}
+                />
+
+                <TextInput
+                  mode="outlined"
+                  label="Address line 3"
+                  value={form.address3 ?? ""}
+                  onChangeText={(v) => updateField("address3", v)}
                 />
               </View>
 
               <Button
                 mode="contained"
-                disabled={!isValid}
+                disabled={!hasChanges || saving}
+                loading={saving}
                 contentStyle={{ height: 48 }}
+                onPress={onSave}
               >
                 Save changes
               </Button>

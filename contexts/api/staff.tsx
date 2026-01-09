@@ -1,8 +1,9 @@
-import api from './api';
-import * as SecureStore from 'expo-secure-store';
+import api from "./api";
+import * as SecureStore from "expo-secure-store";
 
 export type StaffResponse = {
   staff_id: number;
+  staff_no: string;
   first_name: string;
   last_name: string;
   nick_name: string;
@@ -22,28 +23,34 @@ export type StaffResponse = {
 };
 
 export const getStaffDetails = async (): Promise<StaffResponse> => {
-  const token = await SecureStore.getItemAsync('staffToken');
+  const token = await SecureStore.getItemAsync("staffToken");
 
   if (!token) {
-    throw new Error('No authorization token found');
+    throw new Error("No authorization token found");
   }
 
   try {
-    const response = await api.get<StaffResponse>('/staff.php');
+    const response = await api.get<StaffResponse>("/staff.php");
     return response.data;
   } catch (error: any) {
     const message =
-      error?.response?.data?.message || error?.message || 'Failed to fetch staff details.';
+      error?.response?.data?.message ||
+      error?.message ||
+      "Failed to fetch staff details.";
     throw new Error(message);
   }
 };
 
-export const updateStaffDetails = async (staffData: Partial<StaffResponse>): Promise<void> => {
+export const updateStaffDetails = async (
+  staffData: Partial<StaffResponse>
+): Promise<void> => {
   try {
-    await api.post('/staff.php', staffData);
+    await api.post("/staff.php", staffData);
   } catch (error: any) {
     const message =
-      error?.response?.data?.message || error?.message || 'Failed to update staff details.';
+      error?.response?.data?.message ||
+      error?.message ||
+      "Failed to update staff details.";
     throw new Error(message);
   }
 };

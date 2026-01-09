@@ -15,7 +15,7 @@ import {
   Easing,
   ScrollView,
 } from "react-native";
-import { useTheme, TextInput, Button } from "react-native-paper";
+import { useTheme, TextInput, Button, Text } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
 import { useOverlay } from "../../../contexts/overlayContext";
@@ -235,6 +235,24 @@ export default function ApplyLeave() {
     ? helpers.buildDateRangeLabel(range.start, range.end ?? range.start)
     : "";
 
+  const InfoRow = ({ label, value }: { label: string; value: string }) => (
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "flex-end",
+        alignItems: "center",
+        gap: 6,
+      }}
+    >
+      <Text style={{ fontWeight: "600", color: colors.onSurface }}>
+        {label}:
+      </Text>
+      <Text style={{ fontWeight: "600", color: colors.onSurface }}>
+        {value}
+      </Text>
+    </View>
+  );
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.background }}
@@ -310,12 +328,9 @@ export default function ApplyLeave() {
                 </View>
               </Pressable>
 
-              <TextInput
-                mode="outlined"
-                label="Duration"
-                value={duration ? `${duration} day(s)` : "0.0"}
-                editable={false}
-              />
+              {duration > 0 && (
+                <InfoRow label="Duration" value={`${duration} day(s)`} />
+              )}
 
               <Pressable onPress={openReason}>
                 <View pointerEvents="none">
@@ -344,12 +359,7 @@ export default function ApplyLeave() {
               </Pressable>
 
               {attachmentRef && (
-                <TextInput
-                  mode="outlined"
-                  label="Attachment reference"
-                  value={attachmentRef}
-                  editable={false}
-                />
+                <InfoRow label="Reference" value={attachmentRef} />
               )}
 
               <TextInput

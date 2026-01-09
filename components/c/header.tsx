@@ -4,20 +4,23 @@ import { Text, Avatar, Button, useTheme } from "react-native-paper";
 import { Mail, UserCog } from "lucide-react-native";
 import { useDesign } from "../../contexts/designContext";
 import { router } from "expo-router";
+import useSettings from "../../hooks/useSettings";
 
-type HeaderProps = {
-  user: {
-    name: string;
-    shortName: string;
-    role: string;
-    initials: string;
-  };
-  staffId: string;
-};
-
-export default function Header({ user, staffId }: HeaderProps) {
+export default function Header() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
+
+  const { staff, loading } = useSettings();
+
+  if (loading || !staff) return null;
+
+  const user = {
+    name: staff.full_name,
+    role: staff.designation_name,
+    initials: staff.initials,
+    shortName: staff.by_name,
+    staffNo: staff.staff_no,
+  };
 
   return (
     <View
@@ -79,7 +82,7 @@ export default function Header({ user, staffId }: HeaderProps) {
                 letterSpacing: 0.5,
               }}
             >
-              #{staffId}
+              #{user.staffNo}
             </Text>
           </View>
         </View>
