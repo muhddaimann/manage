@@ -71,23 +71,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       router.replace("/");
-      ``;
     },
-    [clearToken, toast]
+    [clearToken, toast],
   );
 
   useEffect(() => {
     if (!tokenReady) return;
 
-    if (token && !isExpired) {
-      setUser({ username: "user" });
-      router.replace("/welcome");
-    } else if (token && isExpired) {
-      forceRelogin("Session expired. Please sign in again.");
+    if (token) {
+      if (isExpired()) {
+        forceRelogin("Session expired. Please sign in again.");
+      } else {
+        setUser({ username: "user" });
+        router.replace("/welcome");
+      }
     }
-
     setBootstrapped(true);
   }, [tokenReady, token, isExpired, forceRelogin]);
+
+  useEffect(() => {
+    if (!user) return;
+    const timer = setInterval(() => {
+      if (isExpired()) {
+        forceRelogin("Session expired. Please sign in again.");
+      }
+    }, 1000 * 60); // every minute
+    return () => clearInterval(timer);
+  }, [user, isExpired, forceRelogin]);
 
   const signIn = useCallback(
     async (username: string, password: string) => {
@@ -115,8 +125,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           (res.status === "invalid_password"
             ? "Invalid password"
             : res.status === "user_not_found"
-            ? "User not found"
-            : "Sign in failed");
+              ? "User not found"
+              : "Sign in failed");
 
         setError(msg);
         toast({ message: msg, variant: "error" });
@@ -130,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
       }
     },
-    [setToken, toast]
+    [setToken, toast],
   );
 
   const signOut = useCallback(async () => {
@@ -172,7 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       forceRelogin,
       bootstrapped,
       clearError,
-    ]
+    ],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

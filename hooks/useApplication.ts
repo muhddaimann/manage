@@ -1,10 +1,13 @@
 import { useMemo, useEffect, useState } from "react";
 import { useTheme } from "react-native-paper";
 import { useLeaveStore } from "../contexts/api/leaveStore";
-import { getAllLeaveBalances } from "../contexts/api/balance";
+import { getLeaveBalance } from "../contexts/api/balance";
 import type { Leave } from "../contexts/api/leave";
+import type { LeaveTypeCode } from "../contexts/api/balance";
 
-/* ================= TYPES ================= */
+/* =======================
+   TYPES
+======================= */
 
 export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 export type LeaveStatusTone = "secondary" | "tertiary" | "error" | "neutral";
@@ -54,12 +57,14 @@ export type LeaveSummary = {
 };
 
 export type LeaveOptions = {
-  leaveTypes: LeaveOption[];
+  leaveTypes: LeaveOption<LeaveTypeCode>[];
   leavePeriods: LeaveOption[];
   leaveReasons: LeaveOption[];
 };
 
-/* ================= STATUS MAP ================= */
+/* =======================
+   CONSTANTS
+======================= */
 
 const LEAVE_STATUS_META: Record<LeaveStatus, LeaveStatusMeta> = {
   PENDING: { label: "Pending", tone: "secondary" },
@@ -68,7 +73,9 @@ const LEAVE_STATUS_META: Record<LeaveStatus, LeaveStatusMeta> = {
   CANCELLED: { label: "Cancelled", tone: "neutral" },
 };
 
-/* ================= DATE HELPERS ================= */
+/* =======================
+   HELPERS
+======================= */
 
 function formatDate(date: string) {
   const d = new Date(date);
@@ -97,27 +104,28 @@ function buildReturnLabel(endDate?: string) {
   return `Return: ${formatDate(d.toISOString())}`;
 }
 
-/* ================= STATUS RESOLVER ================= */
-
 function resolveStatus(l: Leave): LeaveStatus {
   if (
     l.cancellation_dt ||
     l.cancellation_action === "CANCELLED" ||
     l.manager_status === "Cancelled"
-  )
+  ) {
     return "CANCELLED";
+  }
 
   if (l.manager_status === "Approved") return "APPROVED";
   if (l.manager_status === "Rejected") return "REJECTED";
-
   return "PENDING";
 }
 
-/* ================= HOOK ================= */
+/* =======================
+   HOOK
+======================= */
 
 export default function useLeave() {
   const { colors } = useTheme();
   const { leaves, fetchLeaves } = useLeaveStore();
+
   const [annualLeaveLeft, setAnnualLeaveLeft] = useState(0);
 
   useEffect(() => {
@@ -126,11 +134,12 @@ export default function useLeave() {
 
   useEffect(() => {
     const fetchBalance = async () => {
-      const res = await getAllLeaveBalances();
-      if ("AL" in res && res.AL) {
-        setAnnualLeaveLeft(res.AL.Balance);
+      const res = await getLeaveBalance("AL");
+      if (!("error" in res)) {
+        setAnnualLeaveLeft(res.balance);
       }
     };
+
     fetchBalance();
   }, []);
 
@@ -157,9 +166,10 @@ export default function useLeave() {
     () => ({
       leaveTypes: [
         { value: "AL", label: "Annual Leave" },
-        { value: "MC", label: "Medical Leave" },
-        { value: "EL", label: "Emergency Leave" },
+        { value: "SL", label: "Sick Leave" },
+        { value: "RP", label: "Replacement Leave" },
         { value: "UL", label: "Unpaid Leave" },
+        { value: "MR", label: "Marriage Leave" },
       ],
       leavePeriods: [
         { value: "FULL", label: "Full Day" },
@@ -168,7 +178,6 @@ export default function useLeave() {
       ],
       leaveReasons: [
         { value: "PERSONAL", label: "Personal matters" },
-        { value: "HOMETOWN", label: "Back to hometown" },
         { value: "FAMILY", label: "Family matters" },
         { value: "MEDICAL", label: "Medical appointment" },
         { value: "EMERGENCY", label: "Emergency" },
@@ -183,6 +192,7 @@ export default function useLeave() {
       const status = resolveStatus(l);
       const days =
         l.start && l.end ? diffDays(l.start, l.end) : Number(l.duration) || 1;
+
       const statusMeta = LEAVE_STATUS_META[status];
 
       return {

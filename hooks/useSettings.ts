@@ -56,9 +56,9 @@ export default function useSettings() {
 
       await updateStaffDetails(form);
 
-      setStaff({ ...staff, ...form }); // instant UI update
+      setStaff({ ...staff, ...form });
 
-      fetchStaff(); // fire-and-forget, no await
+      fetchStaff();
     } catch (e: any) {
       setError(e.message ?? "Failed to update profile");
     } finally {

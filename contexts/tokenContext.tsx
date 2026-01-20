@@ -18,7 +18,7 @@ export type TokenCtx = {
   token: string | null;
   setToken: (token: string) => Promise<void>;
   clearToken: () => Promise<void>;
-  isExpired: boolean;
+  isExpired: () => boolean;
   bootstrapped: boolean;
 };
 
@@ -83,7 +83,7 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
     setIssuedAt(null);
   }, []);
 
-  const isExpired = useMemo(() => {
+  const isExpired = useCallback(() => {
     if (!token || !issuedAt) return true;
     const ageDays = (Date.now() - issuedAt) / (1000 * 60 * 60 * 24);
     return ageDays >= MAX_AGE_DAYS;

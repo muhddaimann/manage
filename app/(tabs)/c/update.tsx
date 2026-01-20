@@ -21,10 +21,8 @@ export default function UpdateProfile() {
   const { tokens } = useDesign();
   const { setHideTabBar } = useTabs();
   const { toast } = useOverlay();
-
   const { staff, form, loading, saving, updateField, saveProfile, hasChanges } =
     useSettings();
-
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.94)).current;
   const liftY = useRef(new Animated.Value(0)).current;

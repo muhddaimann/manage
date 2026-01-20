@@ -1,50 +1,66 @@
-import api from './api';
+import api from "./api";
 
-export interface LeaveBalanceItem {
-  Type: string;
-  TotalEntitlement: number;
-  Balance: number;
-  ReplacementLeave: number;
-}
+/* =======================
+   TYPES
+======================= */
 
 export type LeaveTypeCode =
-  | 'AL' | 'SL' | 'UL' | 'RL' | 'MR'
-  | 'PL' | 'CL' | 'ML' | 'CAL'
-  | 'HL' | 'PGL' | 'PH' | 'GL';
+  | "AL"
+  | "SL"
+  | "UL"
+  | "RP"
+  | "MR"
+  | "PL"
+  | "CL"
+  | "ML"
+  | "CML"
+  | "HL"
+  | "VACCINCE"
+  | "PH"
+  | "GL";
 
-export type LeaveBalanceMap = {
-  [type in LeaveTypeCode]?: LeaveBalanceItem;
-};
+export interface LeaveBalanceResponse {
+  leave_type: LeaveTypeCode;
+  month: string; // YYYY-MM
+  entitlement: number;
+  approved: number;
+  pending: number;
+  balance: number;
+}
 
 export interface ErrorResponse {
   error: string;
 }
 
-export const getAllLeaveBalances = async (): Promise<LeaveBalanceMap | ErrorResponse> => {
-  try {
-    const response = await api.get<LeaveBalanceMap | ErrorResponse>('/balance.php');
-    if ('error' in response.data) return { error: response.data.error };
-    return response.data;
-  } catch {
-    return { error: 'Error fetching leave balances.' };
-  }
-};
+/* =======================
+   API CALL
+======================= */
 
-export const getLeaveBalanceByType = async (
+export const getLeaveBalance = async (
   leaveType: LeaveTypeCode,
-  startDate?: string,
-  endDate?: string,
-): Promise<LeaveBalanceItem | ErrorResponse> => {
+  month?: string
+): Promise<LeaveBalanceResponse | ErrorResponse> => {
   try {
-    const params = new URLSearchParams();
-    params.append('leaveparam', leaveType);
-    if (startDate) params.append('startparam', startDate);
-    if (endDate) params.append('endparam', endDate);
+    const params: Record<string, string> = {
+      leave_type: leaveType,
+    };
 
-    const response = await api.get<LeaveBalanceItem | ErrorResponse>(`/balance.php?${params}`);
-    if ('error' in response.data) return { error: response.data.error };
+    if (month) {
+      params.month = month; // YYYY-MM
+    }
+
+    const response = await api.get<LeaveBalanceResponse | ErrorResponse>(
+      "/balance.php",
+      { params }
+    );
+
+    if ("error" in response.data) {
+      return { error: response.data.error };
+    }
+
     return response.data;
   } catch {
-    return { error: 'Error fetching specific leave balance.' };
+    return { error: "Error fetching leave balance." };
   }
 };
+``
