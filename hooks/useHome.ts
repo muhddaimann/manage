@@ -153,6 +153,11 @@ export default function useHome() {
     [myBookings]
   );
 
+  const pastBookings = useMemo(
+    () => myBookings.filter((b) => b.Tag !== "Upcoming"),
+    [myBookings]
+  );
+
   /* ---------- NEWS ---------- */
   const [newsFlash, setNewsFlash] = useState<NewsFlash[]>([]);
   const [broadcastLoading, setBroadcastLoading] = useState(false);
@@ -198,6 +203,7 @@ export default function useHome() {
 
     dayStatus,
     activeBookings,
+    pastBookings,
     newsFlash,
     NEWS_PRIORITY_COLOR,
   };

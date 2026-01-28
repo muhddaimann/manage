@@ -3,7 +3,6 @@ import { useTheme } from "react-native-paper";
 import { useLeaveStore } from "../contexts/api/leaveStore";
 import { getLeaveBalance } from "../contexts/api/balance";
 import type { Leave } from "../contexts/api/leave";
-import type { LeaveTypeCode } from "../contexts/api/balance";
 
 /* =======================
    TYPES
@@ -57,7 +56,7 @@ export type LeaveSummary = {
 };
 
 export type LeaveOptions = {
-  leaveTypes: LeaveOption<LeaveTypeCode>[];
+  leaveTypes: LeaveOption<"AL">[];
   leavePeriods: LeaveOption[];
   leaveReasons: LeaveOption[];
 };
@@ -134,7 +133,8 @@ export default function useLeave() {
 
   useEffect(() => {
     const fetchBalance = async () => {
-      const res = await getLeaveBalance("AL");
+      const month = new Date().toISOString().slice(0, 7);
+      const res = await getLeaveBalance(month);
       if (!("error" in res)) {
         setAnnualLeaveLeft(res.balance);
       }
@@ -164,13 +164,7 @@ export default function useLeave() {
 
   const options: LeaveOptions = useMemo(
     () => ({
-      leaveTypes: [
-        { value: "AL", label: "Annual Leave" },
-        { value: "SL", label: "Sick Leave" },
-        { value: "RP", label: "Replacement Leave" },
-        { value: "UL", label: "Unpaid Leave" },
-        { value: "MR", label: "Marriage Leave" },
-      ],
+      leaveTypes: [{ value: "AL", label: "Annual Leave" }],
       leavePeriods: [
         { value: "FULL", label: "Full Day" },
         { value: "HALF_AM", label: "Half Day (Morning)" },
@@ -184,7 +178,7 @@ export default function useLeave() {
         { value: "OTHER", label: "Other" },
       ],
     }),
-    []
+    [],
   );
 
   const leave = useMemo<LeaveSummary>(() => {

@@ -16,7 +16,13 @@ import { router } from "expo-router";
 export default function Home() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const { greeting, user, newsFlash } = useHome();
+  const {
+    greeting,
+    user,
+    newsFlash,
+    activeBookings,
+    pastBookings,
+  } = useHome();
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture();
   if (!user) return null;
 
@@ -80,7 +86,7 @@ export default function Home() {
 
         <TwoRow
           left={{
-            amount: 1,
+            amount: activeBookings.length,
             label: "Active booking",
             icon: <CalendarCheck size={24} color={colors.onPrimary} />,
             bgColor: colors.primary,
@@ -88,7 +94,7 @@ export default function Home() {
             labelColor: colors.onPrimary,
           }}
           right={{
-            amount: 0,
+            amount: pastBookings.length,
             label: "Booking history",
             icon: <Clock size={24} color={colors.onPrimaryContainer} />,
             bgColor: colors.primaryContainer,

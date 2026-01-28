@@ -4,27 +4,11 @@ import api from "./api";
    TYPES
 ======================= */
 
-export type LeaveTypeCode =
-  | "AL"
-  | "SL"
-  | "UL"
-  | "RP"
-  | "MR"
-  | "PL"
-  | "CL"
-  | "ML"
-  | "CML"
-  | "HL"
-  | "VACCINCE"
-  | "PH"
-  | "GL";
+export type LeaveTypeCode = "AL";
 
 export interface LeaveBalanceResponse {
-  leave_type: LeaveTypeCode;
+  leaveType: "AL";
   month: string; // YYYY-MM
-  entitlement: number;
-  approved: number;
-  pending: number;
   balance: number;
 }
 
@@ -37,21 +21,14 @@ export interface ErrorResponse {
 ======================= */
 
 export const getLeaveBalance = async (
-  leaveType: LeaveTypeCode,
-  month?: string
+  month: string,
 ): Promise<LeaveBalanceResponse | ErrorResponse> => {
   try {
-    const params: Record<string, string> = {
-      leave_type: leaveType,
-    };
-
-    if (month) {
-      params.month = month; // YYYY-MM
-    }
-
     const response = await api.get<LeaveBalanceResponse | ErrorResponse>(
       "/balance.php",
-      { params }
+      {
+        params: { month },
+      },
     );
 
     if ("error" in response.data) {
@@ -63,4 +40,3 @@ export const getLeaveBalance = async (
     return { error: "Error fetching leave balance." };
   }
 };
-``
