@@ -1,5 +1,3 @@
-// tokenContext.tsx — fixed, clean, single-source-of-truth
-
 import React, {
   createContext,
   useContext,
@@ -9,10 +7,9 @@ import React, {
   useState,
 } from "react";
 import * as SecureStore from "expo-secure-store";
+import { jwtDecode } from "jwt-decode";
 
 const TOKEN_KEY = "auth_token";
-const TOKEN_TS_KEY = "auth_token_issued_at";
-const MAX_AGE_DAYS = 30;
 
 export type TokenCtx = {
   token: string | null;
@@ -24,30 +21,20 @@ export type TokenCtx = {
 
 const Ctx = createContext<TokenCtx | null>(null);
 
-/* =========
-   Plain helpers (NON-React)
-   ========= */
 export async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync(TOKEN_KEY);
 }
 
 export async function clearStoredToken(): Promise<void> {
   await SecureStore.deleteItemAsync(TOKEN_KEY);
-  await SecureStore.deleteItemAsync(TOKEN_TS_KEY);
 }
 
 export async function setStoredToken(token: string): Promise<void> {
-  const now = Date.now();
   await SecureStore.setItemAsync(TOKEN_KEY, token);
-  await SecureStore.setItemAsync(TOKEN_TS_KEY, String(now));
 }
 
-/* =========
-   Provider
-   ========= */
 export function TokenProvider({ children }: { children: React.ReactNode }) {
   const [token, setTokenState] = useState<string | null>(null);
-  const [issuedAt, setIssuedAt] = useState<number | null>(null);
   const [bootstrapped, setBootstrapped] = useState(false);
 
   useEffect(() => {
@@ -55,12 +42,10 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
 
     (async () => {
       const t = await SecureStore.getItemAsync(TOKEN_KEY);
-      const ts = await SecureStore.getItemAsync(TOKEN_TS_KEY);
 
       if (!mounted) return;
 
       setTokenState(t);
-      setIssuedAt(ts ? Number(ts) : null);
       setBootstrapped(true);
     })();
 
@@ -70,24 +55,27 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setToken = useCallback(async (t: string) => {
-    const now = Date.now();
-    await SecureStore.setItemAsync(TOKEN_KEY, t);
-    await SecureStore.setItemAsync(TOKEN_TS_KEY, String(now));
+    await setStoredToken(t);
     setTokenState(t);
-    setIssuedAt(now);
   }, []);
 
   const clearToken = useCallback(async () => {
     await clearStoredToken();
     setTokenState(null);
-    setIssuedAt(null);
   }, []);
 
   const isExpired = useCallback(() => {
-    if (!token || !issuedAt) return true;
-    const ageDays = (Date.now() - issuedAt) / (1000 * 60 * 60 * 24);
-    return ageDays >= MAX_AGE_DAYS;
-  }, [token, issuedAt]);
+    if (!token) return true;
+    try {
+      const decoded = jwtDecode(token);
+      if (!decoded.exp) return false; // No expiration, so it's not expired
+      const expiresAt = decoded.exp * 1000;
+      return Date.now() > expiresAt;
+    } catch (e) {
+      // If there's an error decoding, the token is likely invalid.
+      return true;
+    }
+  }, [token]);
 
   const value = useMemo<TokenCtx>(
     () => ({
@@ -103,9 +91,6 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
-/* =========
-   Hook
-   ========= */
 export function useToken(): TokenCtx {
   const ctx = useContext(Ctx);
   if (!ctx) {

@@ -21,7 +21,6 @@ export default function RoomBook() {
   const { setHideTabBar } = useTabs();
   const { rooms } = useHome();
   const { roomId } = useLocalSearchParams<{ roomId?: string }>();
-
   const room = useMemo(
     () => rooms.find((r) => r.id === roomId),
     [rooms, roomId]

@@ -198,14 +198,14 @@ function NavButton({
   label: string;
   color: string;
   onPress: () => void;
-}) {
+}) {  
   return (
     <Pressable
       onPress={onPress}
       style={{
         flex: 1,
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: active ? "flex-start" : "center",
         paddingVertical: 8,
       }}
     >
@@ -215,18 +215,17 @@ function NavButton({
         strokeWidth: active ? 2.4 : 2,
       })}
 
-      {active && (
-        <Text
-          variant="labelSmall"
-          style={{
-            marginTop: 4,
-            color,
-            fontWeight: "600",
-          }}
-        >
-          {label}
-        </Text>
-      )}
+      <Text
+        variant="labelSmall"
+        style={{
+          marginTop: active ? 4 : 2,
+          color,
+          fontWeight: active ? "600" : "500",
+          opacity: active ? 1 : 0.7,
+        }}
+      >
+        {label}
+      </Text>
 
       {active && (
         <View
