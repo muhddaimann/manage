@@ -7,6 +7,7 @@ import Header from "../../../components/shared/header";
 import ScrollTop from "../../../components/shared/scrollTop";
 import { useGesture } from "../../../hooks/useGesture";
 import NewsflashList from "../../../components/a/newsflashList";
+import FullLoading from "../../../components/shared/fullLoad";
 
 type PriorityFilter = "ALL" | NewsPriority;
 
@@ -15,7 +16,7 @@ const PRIORITIES: PriorityFilter[] = ["ALL", "CRITICAL", "IMPORTANT", "NORMAL"];
 export default function NewsflashPage() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const { newsFlash } = useHome();
+  const { newsFlash, broadcastLoading } = useHome();
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture({
     controlNav: false,
   });
@@ -75,7 +76,11 @@ export default function NewsflashPage() {
           })}
         </View>
 
-        <NewsflashList data={filteredData} />
+        {broadcastLoading ? (
+          <FullLoading layout={[1, 1, 1, 1, 1]} />
+        ) : (
+          <NewsflashList data={filteredData} />
+        )}
       </ScrollView>
 
       <ScrollTop visible={showScrollTop} onPress={scrollToTop} />

@@ -6,6 +6,7 @@ import { LeaveListItem } from "./applicationList";
 
 export default function LeaveModal({
   item,
+  onClose,
   onWithdraw,
 }: {
   item: LeaveListItem;
@@ -15,8 +16,6 @@ export default function LeaveModal({
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const leave = item.raw;
-
-  const { container: bg, onContainer: fg } = item.statusColors;
   const isPending = item.status === "PENDING";
 
   return (
@@ -25,52 +24,115 @@ export default function LeaveModal({
         backgroundColor: colors.surface,
         borderRadius: tokens.radii.xl,
         paddingHorizontal: tokens.spacing.lg,
-        paddingVertical: tokens.spacing.md,
-        gap: tokens.spacing.md,
+        paddingVertical: tokens.spacing.lg,
+        gap: tokens.spacing.sm,
       }}
     >
+      <View style={{ gap: tokens.spacing.xxs }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+          }}
+        >
+          <Text variant="titleLarge" style={{ fontWeight: "700", flex: 1 }}>
+            {leave.leave_name}
+          </Text>
+
+          <View
+            style={{
+              paddingHorizontal: tokens.spacing.md,
+              paddingVertical: 6,
+              borderRadius: tokens.radii.full,
+              backgroundColor: colors.primaryContainer,
+            }}
+          >
+            <Text
+              variant="labelSmall"
+              style={{
+                color: colors.onPrimaryContainer,
+                fontWeight: "700",
+              }}
+            >
+              #{leave.leave_id}
+            </Text>
+          </View>
+        </View>
+
+        <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
+          {item.secondary}
+        </Text>
+      </View>
+
       <View
         style={{
           flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: tokens.spacing.md,
+          flexWrap: "wrap",
+          gap: tokens.spacing.sm,
         }}
       >
-        <Text variant="titleLarge" style={{ fontWeight: "700", flex: 1 }}>
-          {leave.leave_name}
-        </Text>
+        <View
+          style={{
+            paddingHorizontal: tokens.spacing.md,
+            paddingVertical: 6,
+            borderRadius: tokens.radii.full,
+            backgroundColor: item.statusColors.container,
+          }}
+        >
+          <Text
+            variant="labelSmall"
+            style={{
+              color: item.statusColors.onContainer,
+              fontWeight: "700",
+            }}
+          >
+            {item.statusMeta.label}
+          </Text>
+        </View>
 
         <View
           style={{
             paddingHorizontal: tokens.spacing.md,
             paddingVertical: 6,
             borderRadius: tokens.radii.full,
-            backgroundColor: bg,
+            backgroundColor: colors.surfaceVariant,
           }}
         >
-          <Text variant="labelMedium" style={{ color: fg, fontWeight: "700" }}>
-            {item.statusMeta.label}
+          <Text
+            variant="labelSmall"
+            style={{
+              color: colors.onSurfaceVariant,
+              fontWeight: "600",
+            }}
+          >
+            {leave.leave_period}
           </Text>
         </View>
       </View>
 
-      <View style={{ gap: 2 }}>
-        <Text variant="bodyLarge">
-          {leave.start === leave.end
-            ? leave.start
-            : `${leave.start} → ${leave.end}`}
-        </Text>
-
-        <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
-          {leave.duration_name} · {leave.leave_period}
-        </Text>
-      </View>
-
       {leave.reason && (
-        <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
-          “{leave.reason}”
-        </Text>
+        <View style={{ gap: 4 }}>
+          <Text
+            variant="labelMedium"
+            style={{ color: colors.onSurfaceVariant }}
+          >
+            Reason
+          </Text>
+          <Text variant="bodyMedium">{leave.reason}</Text>
+        </View>
+      )}
+
+      {leave.remarks && (
+        <View style={{ gap: 4 }}>
+          <Text
+            variant="labelMedium"
+            style={{ color: colors.onSurfaceVariant }}
+          >
+            Remarks
+          </Text>
+          <Text variant="bodyMedium">{leave.remarks}</Text>
+        </View>
       )}
 
       {leave.cancellation_dt && (
@@ -84,7 +146,7 @@ export default function LeaveModal({
           mode="outlined"
           onPress={() => onWithdraw?.(leave.leave_id)}
           style={{
-            marginTop: tokens.spacing.xs,
+            marginTop: tokens.spacing.sm,
             borderRadius: tokens.radii.lg,
             borderColor: colors.error,
           }}

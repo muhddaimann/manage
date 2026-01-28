@@ -77,18 +77,12 @@ const LEAVE_STATUS_META: Record<LeaveStatus, LeaveStatusMeta> = {
 ======================= */
 
 function formatDate(date: string) {
-  const d = new Date(date);
+  const d = new Date(`${date}T00:00:00`);
   return d.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
-}
-
-function diffDays(start: string, end: string) {
-  const s = new Date(start);
-  const e = new Date(end);
-  return Math.floor((e.getTime() - s.getTime()) / 86400000) + 1;
 }
 
 function buildDateRangeLabel(start: string, end: string) {
@@ -98,9 +92,9 @@ function buildDateRangeLabel(start: string, end: string) {
 
 function buildReturnLabel(endDate?: string) {
   if (!endDate) return undefined;
-  const d = new Date(endDate);
+  const d = new Date(`${endDate}T00:00:00`);
   d.setDate(d.getDate() + 1);
-  return `Return: ${formatDate(d.toISOString())}`;
+  return `Return: ${formatDate(d.toISOString().slice(0, 10))}`;
 }
 
 function resolveStatus(l: Leave): LeaveStatus {
@@ -123,9 +117,10 @@ function resolveStatus(l: Leave): LeaveStatus {
 
 export default function useLeave() {
   const { colors } = useTheme();
-  const { leaves, fetchLeaves } = useLeaveStore();
+  const { leaves, fetchLeaves, loading } = useLeaveStore();
 
   const [annualLeaveLeft, setAnnualLeaveLeft] = useState(0);
+  const [balanceLoading, setBalanceLoading] = useState(true);
 
   useEffect(() => {
     fetchLeaves();
@@ -133,10 +128,14 @@ export default function useLeave() {
 
   useEffect(() => {
     const fetchBalance = async () => {
-      const month = new Date().toISOString().slice(0, 7);
-      const res = await getLeaveBalance(month);
-      if (!("error" in res)) {
-        setAnnualLeaveLeft(res.balance);
+      try {
+        const month = new Date().toISOString().slice(0, 7);
+        const res = await getLeaveBalance(month);
+        if (!("error" in res)) {
+          setAnnualLeaveLeft(res.balance);
+        }
+      } finally {
+        setBalanceLoading(false);
       }
     };
 
@@ -157,8 +156,8 @@ export default function useLeave() {
       onContainer: colors.onErrorContainer,
     },
     neutral: {
-      container: colors.surfaceVariant,
-      onContainer: colors.onSurfaceVariant,
+      container: colors.surfaceDisabled,
+      onContainer: colors.onSurfaceDisabled,
     },
   };
 
@@ -182,11 +181,17 @@ export default function useLeave() {
   );
 
   const leave = useMemo<LeaveSummary>(() => {
+    if (loading) {
+      return {
+        annualLeaveLeft,
+        pending: 0,
+        history: [],
+      };
+    }
+
     const history: LeaveItem[] = leaves.map((l: Leave) => {
       const status = resolveStatus(l);
-      const days =
-        l.start && l.end ? diffDays(l.start, l.end) : Number(l.duration) || 1;
-
+      const days = Number(l.duration) || 1;
       const statusMeta = LEAVE_STATUS_META[status];
 
       return {
@@ -198,9 +203,9 @@ export default function useLeave() {
         statusColors: toneColors[statusMeta.tone],
 
         periodLabel: l.leave_period,
-        dateLabel: formatDate(l.date || l.start),
-        dateRangeLabel: buildDateRangeLabel(l.start, l.end),
-        durationLabel: `${days} day${days > 1 ? "s" : ""}`,
+        dateLabel: formatDate(l.start_date),
+        dateRangeLabel: buildDateRangeLabel(l.start_date, l.end_date),
+        durationLabel: `${days} day${days !== 1 ? "s" : ""}`,
         returnLabel:
           status !== "CANCELLED" && days >= 1
             ? buildReturnLabel(l.end_date)
@@ -220,15 +225,11 @@ export default function useLeave() {
       pending: history.filter((l) => l.isPending).length,
       history,
     };
-  }, [leaves, annualLeaveLeft, colors]);
+  }, [leaves, annualLeaveLeft, loading, colors]);
 
   return {
     leave,
+    loading: loading || balanceLoading,
     options,
-    helpers: {
-      diffDays,
-      formatDate,
-      buildDateRangeLabel,
-    },
   };
 }

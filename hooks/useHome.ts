@@ -198,8 +198,10 @@ export default function useHome() {
     user,
     attendance,
 
-    loading:
-      staffLoading || roomLoading || broadcastLoading || attendanceLoading,
+    staffLoading,
+    attendanceLoading,
+    roomLoading,
+    broadcastLoading,
 
     dayStatus,
     activeBookings,

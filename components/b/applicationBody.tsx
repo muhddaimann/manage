@@ -1,3 +1,4 @@
+import FullLoading from "../../components/shared/fullLoad";
 import React, { useMemo } from "react";
 import { View } from "react-native";
 import { useTheme } from "react-native-paper";
@@ -10,7 +11,7 @@ import LeaveList, { LeaveListItem } from "./applicationList";
 export default function LeaveBody() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const { leave } = useLeave();
+  const { leave, loading } = useLeave();
 
   const leaveList = useMemo<LeaveListItem[]>(
     () =>
@@ -24,8 +25,12 @@ export default function LeaveBody() {
         statusColors: l.statusColors,
         raw: l.raw,
       })),
-    [leave.history]
+    [leave.history],
   );
+
+  if (loading) {
+    return <FullLoading layout={[2, 1, 1, 1]} />;
+  }
 
   return (
     <View style={{ gap: tokens.spacing.md }}>
