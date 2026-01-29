@@ -6,7 +6,6 @@ import { LeaveListItem } from "./applicationList";
 
 export default function LeaveModal({
   item,
-  onClose,
   onWithdraw,
 }: {
   item: LeaveListItem;

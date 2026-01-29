@@ -1,5 +1,5 @@
 // hooks/useRooms.ts
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   getAllRooms,
   getRoomAvailabilityByDay,
@@ -16,7 +16,7 @@ export type RoomUi = {
   id: string;
   name: string;
   capacity: number;
-  slots: TimeSlot[];
+  slots?: TimeSlot[];
 };
 
 export type LevelGroup = {
@@ -34,7 +34,10 @@ export default function useRooms(date: string) {
   const [availability, setAvailability] = useState<
     Record<string, Availability>
   >({});
-  const [loading, setLoading] = useState(true);
+  const [roomsLoading, setRoomsLoading] = useState(true);
+  const [availabilityLoading, setAvailabilityLoading] = useState<
+    Record<string, boolean>
+  >({});
 
   /* ---------- ROOMS ---------- */
   useEffect(() => {
@@ -43,10 +46,11 @@ export default function useRooms(date: string) {
     (async () => {
       const res = await getAllRooms();
       if (!alive || "error" in res) {
-        setLoading(false);
+        setRoomsLoading(false);
         return;
       }
       setRooms(res);
+      setRoomsLoading(false);
     })();
 
     return () => {
@@ -54,31 +58,27 @@ export default function useRooms(date: string) {
     };
   }, []);
 
-  /* ---------- AVAILABILITY ---------- */
-  useEffect(() => {
-    if (!rooms.length) {
-      setLoading(false);
-      return;
-    }
+  /* ---------- AVAILABILITY (ON-DEMAND) ---------- */
+  const fetchAvailability = useCallback(
+    async (roomId: number) => {
+      const key = `${roomId}_${date}`;
+      if (availability[key] || availabilityLoading[key]) return;
 
-    let pending = rooms.length;
+      setAvailabilityLoading((p) => ({ ...p, [key]: true }));
 
-    rooms.forEach(async (r) => {
-      const res = await getRoomAvailabilityByDay(r.room_id, date);
+      const res = await getRoomAvailabilityByDay(roomId, date);
 
       if (!("error" in res)) {
-        setAvailability((prev) => ({
-          ...prev,
-          [String(r.room_id)]: res.availability,
+        setAvailability((p) => ({
+          ...p,
+          [key]: res.availability,
         }));
       }
 
-      pending -= 1;
-      if (pending === 0) {
-        setLoading(false);
-      }
-    });
-  }, [rooms, date]);
+      setAvailabilityLoading((p) => ({ ...p, [key]: false }));
+    },
+    [date, availability, availabilityLoading],
+  );
 
   /* ---------- GROUPING ---------- */
   const towers = useMemo<TowerGroup[]>(() => {
@@ -87,21 +87,20 @@ export default function useRooms(date: string) {
     rooms.forEach((r) => {
       const tower = r.Tower;
       const level = r.Level;
-      const roomKey = String(r.room_id);
-
-      if (!map.has(tower)) map.set(tower, new Map());
-      const levelMap = map.get(tower)!;
-      if (!levelMap.has(level)) levelMap.set(level, []);
-
+      const roomKey = `${r.room_id}_${date}`;
       const slots = availability[roomKey]
         ? Object.entries(availability[roomKey]).map(([time, v]) => ({
             time,
             status: v.status,
           }))
-        : [];
+        : undefined;
+
+      if (!map.has(tower)) map.set(tower, new Map());
+      const levelMap = map.get(tower)!;
+      if (!levelMap.has(level)) levelMap.set(level, []);
 
       levelMap.get(level)!.push({
-        id: roomKey,
+        id: String(r.room_id),
         name: r.Room_Name,
         capacity: r.Capacity,
         slots,
@@ -115,7 +114,12 @@ export default function useRooms(date: string) {
         rooms,
       })),
     }));
-  }, [rooms, availability]);
+  }, [rooms, availability, date]);
 
-  return { towers, loading };
+  return {
+    towers,
+    roomsLoading,
+    availabilityLoading,
+    fetchAvailability,
+  };
 }

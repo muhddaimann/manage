@@ -1,294 +1,326 @@
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-  useMemo,
-} from "react";
-import { View, Animated, Easing, ScrollView, Pressable } from "react-native";
-import { useTheme, Text, Button, Chip } from "react-native-paper";
+import React, { useMemo, useState } from "react";
+import { ScrollView, View, Pressable } from "react-native";
+import { Text, useTheme, Divider } from "react-native-paper";
+import {
+  ChevronRight,
+  ChevronDown,
+  Building2,
+  Layers,
+  Users,
+  DoorOpen,
+  CalendarClock,
+  CalendarCheck,
+  Clock,
+} from "lucide-react-native";
 import { useDesign } from "../../../contexts/designContext";
-import { useTabs } from "../../../contexts/tabContext";
-import { useOverlay } from "../../../contexts/overlayContext";
 import Header from "../../../components/shared/header";
 import ScrollTop from "../../../components/shared/scrollTop";
-import { useGesture } from "../../../hooks/useGesture";
-import { useFocusEffect } from "expo-router";
+import FullLoading from "../../../components/shared/fullLoad";
 import TwoRow from "../../../components/a/twoRow";
-import DatePicker from "../../../components/shared/datePicker";
-import { CalendarCheck, Clock } from "lucide-react-native";
+import { useGesture } from "../../../hooks/useGesture";
 import useRooms from "../../../hooks/useRoom";
-import TimeSlot, { TimeSlotRange } from "../../../components/a/timeSlot";
+import RoomModal from "../../../components/a/roomModal";
+import { useOverlay } from "../../../contexts/overlayContext";
 
-/* ================= HELPERS ================= */
+type DateFilter = "TODAY";
+const DATES: DateFilter[] = ["TODAY"];
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-MY", {
-    weekday: "long",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-/* ================= COMPONENT ================= */
-
-export default function RoomList() {
+export default function RoomPage() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const { setHideTabBar } = useTabs();
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const { towers, roomsLoading } = useRooms(today);
   const { modal, dismissModal } = useOverlay();
-
-  const [date, setDate] = useState(todayISO());
-  const { towers, loading } = useRooms(date);
-
-  const [activeTower, setActiveTower] = useState<string | null>(null);
-  const [activeLevel, setActiveLevel] = useState<string | null>(null);
-
-  const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.96)).current;
 
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture({
     controlNav: false,
   });
 
-  useFocusEffect(
-    useCallback(() => {
-      setHideTabBar(true);
-      return () => setHideTabBar(false);
-    }, [])
-  );
+  const [date] = useState<DateFilter>("TODAY");
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 300,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.spring(scale, {
-        toValue: 1,
-        damping: 18,
-        stiffness: 160,
-        mass: 0.7,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
-  const openDatePicker = () => {
-    modal({
-      dismissible: true,
-      content: (
-        <DatePicker
-          mode="SINGLE"
-          initialDate={date}
-          onConfirm={(value) => {
-            setDate(value as string);
-            dismissModal();
-          }}
-        />
-      ),
-    });
+  const toggleTower = (tower: string) => {
+    setCollapsed((p) => ({ ...p, [tower]: !p[tower] }));
   };
 
-  const towersList = useMemo(() => towers.map((t) => t.tower), [towers]);
+  const totalRooms = useMemo(
+    () =>
+      towers.reduce(
+        (acc, t) => acc + t.levels.reduce((a, l) => a + l.rooms.length, 0),
+        0,
+      ),
+    [towers],
+  );
 
-  const levelsList = useMemo(() => {
-    if (!activeTower) return [];
-    return (
-      towers.find((t) => t.tower === activeTower)?.levels.map((l) => l.level) ??
-      []
-    );
-  }, [towers, activeTower]);
+  const totalTowers = towers.length;
 
-  const rooms = useMemo(() => {
-    return towers
-      .filter((t) => !activeTower || t.tower === activeTower)
-      .flatMap((t) =>
-        t.levels.filter((l) => !activeLevel || l.level === activeLevel)
-      )
-      .flatMap((l) => l.rooms);
-  }, [towers, activeTower, activeLevel]);
-
-  const openTimeSlotModal = (room: any) => {
+  const openRoom = (room: { id: string; name: string; capacity: number }) => {
     modal({
       dismissible: true,
       content: (
-        <View
-          style={{
-            backgroundColor: colors.surface,
-            borderRadius: tokens.radii["2xl"],
-            padding: tokens.spacing.lg,
-            gap: tokens.spacing.md,
-          }}
-        >
-          <Text variant="titleMedium" style={{ fontWeight: "700" }}>
-            {room.name}
-          </Text>
-
-          <Text variant="bodySmall" style={{ color: colors.onSurfaceVariant }}>
-            Select time slot
-          </Text>
-
-          <TimeSlot
-            slots={room.slots}
-            dateISO={date}
-            onConfirm={(range: TimeSlotRange) => {
-              dismissModal();
-            }}
-            onCancel={dismissModal}
-          />
-        </View>
+        <RoomModal
+          roomId={Number(room.id)}
+          roomName={room.name}
+          capacity={room.capacity}
+          date={today}
+        />
       ),
     });
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <>
       <ScrollView
         ref={scrollRef}
         onScroll={(e) => onScroll(e.nativeEvent)}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
+        style={{ flex: 1, backgroundColor: colors.background }}
         contentContainerStyle={{
           paddingHorizontal: tokens.spacing.lg,
-          paddingBottom: tokens.spacing["3xl"] * 3,
+          paddingBottom: tokens.spacing["3xl"] * 2,
           gap: tokens.spacing.lg,
         }}
       >
-        <Header title="Rooms" subtitle="Choose room, then time slot" />
+        <Header title="Rooms" subtitle="Availability for today" />
 
-        <TwoRow
-          left={{
-            amount: 1,
-            label: "Active booking",
-            icon: <CalendarCheck size={22} color={colors.onPrimary} />,
-            bgColor: colors.primary,
-            textColor: colors.onPrimary,
-            labelColor: colors.onPrimary,
-          }}
-          right={{
-            amount: 0,
-            label: "Booking history",
-            icon: <Clock size={22} color={colors.onPrimaryContainer} />,
-            bgColor: colors.primaryContainer,
-            textColor: colors.onPrimaryContainer,
-            labelColor: colors.onPrimaryContainer,
-          }}
-        />
-
-        <View
-          style={{
-            backgroundColor: colors.surface,
-            borderRadius: tokens.radii["2xl"],
-            padding: tokens.spacing.lg,
-            gap: tokens.spacing.xs,
-          }}
-        >
-          <Text variant="labelSmall" style={{ color: colors.onSurfaceVariant }}>
-            Availability date
-          </Text>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
+        {roomsLoading ? (
+          <FullLoading layout={[2]} />
+        ) : (
+          <TwoRow
+            left={{
+              amount: totalRooms,
+              label: "Total rooms",
+              icon: <CalendarCheck size={24} color={colors.onPrimary} />,
+              bgColor: colors.primary,
+              textColor: colors.onPrimary,
+              labelColor: colors.onPrimary,
             }}
-          >
-            <Text variant="titleMedium" style={{ fontWeight: "700" }}>
-              {formatDate(date)}
-            </Text>
+            right={{
+              amount: totalTowers,
+              label: "Towers",
+              icon: <Clock size={24} color={colors.onPrimaryContainer} />,
+              bgColor: colors.primaryContainer,
+              textColor: colors.onPrimaryContainer,
+              labelColor: colors.onPrimaryContainer,
+            }}
+          />
+        )}
 
-            <Button mode="outlined" icon="calendar" onPress={openDatePicker}>
-              Change
-            </Button>
-          </View>
+        <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
+          {DATES.map((d) => {
+            const active = d === date;
+            return (
+              <Pressable
+                key={d}
+                onPress={() => {}}
+                style={({ pressed }) => ({
+                  paddingHorizontal: tokens.spacing.md,
+                  paddingVertical: tokens.spacing.sm,
+                  borderRadius: tokens.radii.full,
+                  backgroundColor: active
+                    ? colors.primary
+                    : colors.surfaceVariant,
+                  opacity: pressed ? 0.9 : 1,
+                })}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <CalendarClock
+                    size={14}
+                    color={active ? colors.onPrimary : colors.onSurfaceVariant}
+                  />
+                  <Text
+                    variant="labelMedium"
+                    style={{
+                      color: active
+                        ? colors.onPrimary
+                        : colors.onSurfaceVariant,
+                      fontWeight: active ? "700" : "500",
+                    }}
+                  >
+                    {d}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
         </View>
 
-        {!loading && (
-          <Animated.View
-            style={{
-              opacity,
-              transform: [{ scale }],
-              gap: tokens.spacing.lg,
-            }}
-          >
-            <View style={{ gap: tokens.spacing.sm }}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  {towersList.map((t) => (
-                    <Chip
-                      key={t}
-                      selected={activeTower === t}
-                      onPress={() => {
-                        setActiveTower(t);
-                        setActiveLevel(null);
+        {roomsLoading ? (
+          <FullLoading layout={[1, 1, 1, 1, 1]} />
+        ) : (
+          <View style={{ gap: tokens.spacing.lg }}>
+            {towers.map((tower) => {
+              const isCollapsed = collapsed[tower.tower] ?? false;
+              const roomCount = tower.levels.reduce(
+                (acc, l) => acc + l.rooms.length,
+                0,
+              );
+
+              return (
+                <View
+                  key={tower.tower}
+                  style={{
+                    backgroundColor: colors.surface,
+                    borderRadius: tokens.radii.xl,
+                    padding: tokens.spacing.md,
+                    gap: tokens.spacing.md,
+                    elevation: 2,
+                    shadowColor: colors.shadow,
+                    shadowOpacity: 0.12,
+                    shadowRadius: 8,
+                    shadowOffset: { width: 0, height: 4 },
+                  }}
+                >
+                  <Pressable
+                    onPress={() => toggleTower(tower.tower)}
+                    style={({ pressed }) => ({
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      opacity: pressed ? 0.85 : 1,
+                    })}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 10,
                       }}
                     >
-                      {t}
-                    </Chip>
-                  ))}
-                </View>
-              </ScrollView>
+                      <Building2 size={20} color={colors.primary} />
+                      <View>
+                        <Text
+                          variant="titleMedium"
+                          style={{ fontWeight: "700" }}
+                        >
+                          {tower.tower}
+                        </Text>
+                        <Text
+                          variant="bodySmall"
+                          style={{
+                            color: colors.onSurfaceVariant,
+                          }}
+                        >
+                          {roomCount} rooms
+                        </Text>
+                      </View>
+                    </View>
 
-              {activeTower && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <View style={{ flexDirection: "row", gap: 8 }}>
-                    {levelsList.map((l) => (
-                      <Chip
-                        key={l}
-                        selected={activeLevel === l}
-                        onPress={() => setActiveLevel(l)}
+                    {isCollapsed ? (
+                      <ChevronRight size={22} color={colors.onSurfaceVariant} />
+                    ) : (
+                      <ChevronDown size={22} color={colors.onSurfaceVariant} />
+                    )}
+                  </Pressable>
+
+                  {!isCollapsed &&
+                    tower.levels.map((level) => (
+                      <View
+                        key={level.level}
+                        style={{ gap: tokens.spacing.sm }}
                       >
-                        Level {l}
-                      </Chip>
-                    ))}
-                  </View>
-                </ScrollView>
-              )}
-            </View>
+                        <Divider />
 
-            <View style={{ gap: tokens.spacing.md }}>
-              {rooms.map((room) => (
-                <Pressable
-                  key={room.id}
-                  onPress={() => openTimeSlotModal(room)}
-                  style={({ pressed }) => ({
-                    backgroundColor: colors.surface,
-                    borderRadius: tokens.radii["2xl"],
-                    padding: tokens.spacing.lg,
-                    gap: tokens.spacing.xs,
-                    shadowColor: colors.shadow,
-                    shadowOpacity: 0.08,
-                    shadowRadius: 10,
-                    shadowOffset: { width: 0, height: 4 },
-                    elevation: 4,
-                    opacity: pressed ? 0.92 : 1,
-                  })}
-                >
-                  <Text variant="titleMedium" style={{ fontWeight: "700" }}>
-                    {room.name}
-                  </Text>
-                  <Text
-                    variant="bodySmall"
-                    style={{ color: colors.onSurfaceVariant }}
-                  >
-                    Capacity {room.capacity} pax
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </Animated.View>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <Layers size={16} color={colors.onSurfaceVariant} />
+                          <Text
+                            variant="labelLarge"
+                            style={{
+                              color: colors.onSurfaceVariant,
+                            }}
+                          >
+                            {level.level}
+                          </Text>
+                        </View>
+
+                        <View style={{ gap: tokens.spacing.sm }}>
+                          {level.rooms.map((room) => (
+                            <Pressable
+                              key={room.id}
+                              onPress={() =>
+                                openRoom({
+                                  id: room.id,
+                                  name: room.name,
+                                  capacity: room.capacity,
+                                })
+                              }
+                              style={({ pressed }) => ({
+                                backgroundColor: colors.background,
+                                borderRadius: tokens.radii.lg,
+                                padding: tokens.spacing.md,
+                                flexDirection: "row",
+                                alignItems: "center",
+                                gap: tokens.spacing.md,
+                                borderWidth: 1,
+                                borderColor: colors.outlineVariant,
+                                opacity: pressed ? 0.95 : 1,
+                              })}
+                            >
+                              <DoorOpen
+                                size={20}
+                                color={colors.onSurfaceVariant}
+                              />
+
+                              <View style={{ flex: 1, gap: 4 }}>
+                                <Text
+                                  variant="labelLarge"
+                                  style={{ fontWeight: "600" }}
+                                >
+                                  {room.name}
+                                </Text>
+
+                                <View
+                                  style={{
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    gap: 6,
+                                  }}
+                                >
+                                  <Users
+                                    size={14}
+                                    color={colors.onSurfaceVariant}
+                                  />
+                                  <Text
+                                    variant="bodySmall"
+                                    style={{
+                                      color: colors.onSurfaceVariant,
+                                    }}
+                                  >
+                                    Capacity {room.capacity}
+                                  </Text>
+                                </View>
+                              </View>
+
+                              <ChevronRight
+                                size={20}
+                                color={colors.onSurfaceVariant}
+                              />
+                            </Pressable>
+                          ))}
+                        </View>
+                      </View>
+                    ))}
+                </View>
+              );
+            })}
+          </View>
         )}
       </ScrollView>
 
       <ScrollTop visible={showScrollTop} onPress={scrollToTop} />
-    </View>
+    </>
   );
 }
