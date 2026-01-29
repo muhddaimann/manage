@@ -1,15 +1,11 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { View, ScrollView, Dimensions } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { CalendarClock, Users, Building, Layers } from "lucide-react-native";
 import { useDesign } from "../../contexts/designContext";
-import {
-  getRoomAvailabilityByDay,
-  type Availability,
-  type Room,
-} from "../../contexts/api/room";
 import FullLoading from "../shared/fullLoad";
 import NoData from "../shared/noData";
+import useRoom from "../../hooks/useRoom";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -20,60 +16,30 @@ export default function RoomModal({
 }: {
   roomId: number;
   roomName: string;
-  capacity: number;
   date: string;
 }) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const [availability, setAvailability] = useState<Availability | null>(null);
-  const [roomDetails, setRoomDetails] = useState<Room | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  const {
+    towers,
+    roomsLoading,
+    availabilityLoading,
+    fetchAvailability,
+    getTimeSlotRows,
+    roomDetails,
+    error,
+  } = useRoom(date);
+
+  const key = `${roomId}_${date}`;
 
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      setLoading(true);
-      setError(null);
-      const res = await getRoomAvailabilityByDay(roomId, date);
-      if (!alive) return;
-      if ("error" in res) {
-        setError(res.error);
-      } else {
-        setAvailability(res.availability);
-        setRoomDetails(res.room_details);
-      }
-      setLoading(false);
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [roomId, date]);
+    fetchAvailability(roomId);
+  }, [roomId, fetchAvailability]);
 
-  const toMinutes = (label: string) => {
-    const [start] = label.split(" - ");
-    const [time, meridiem] = start.split(" ");
-    let [h, m] = time.split(":").map(Number);
-    if (meridiem === "PM" && h !== 12) h += 12;
-    if (meridiem === "AM" && h === 12) h = 0;
-    return h * 60 + m;
-  };
-
-  const ordered = useMemo(
-    () =>
-      Object.entries(availability || {}).sort(
-        ([a], [b]) => toMinutes(a) - toMinutes(b),
-      ),
-    [availability],
-  );
-
-  const rows = useMemo(() => {
-    const out: (typeof ordered)[] = [];
-    for (let i = 0; i < ordered.length; i += 2) {
-      out.push(ordered.slice(i, i + 2));
-    }
-    return out;
-  }, [ordered]);
+  const details = roomDetails[key];
+  const timeSlotRows = getTimeSlotRows(roomId);
+  const loading = roomsLoading || availabilityLoading[key];
 
   return (
     <View
@@ -87,32 +53,62 @@ export default function RoomModal({
         gap: tokens.spacing.lg,
       }}
     >
-      {/* Header */}
       <View style={{ gap: 6 }}>
         <Text variant="titleLarge" style={{ fontWeight: "700" }}>
           {roomName}
         </Text>
 
         {loading ? (
-          <View style={{ height: 32, width: '60%', backgroundColor: colors.surfaceVariant, borderRadius: tokens.radii.sm }} />
-        ) : roomDetails ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.md, flexWrap: 'wrap' }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <View
+            style={{
+              height: 28,
+              width: "65%",
+              backgroundColor: colors.surfaceVariant,
+              borderRadius: tokens.radii.sm,
+            }}
+          />
+        ) : details ? (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: tokens.spacing.md,
+              flexWrap: "wrap",
+            }}
+          >
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+            >
               <Building size={14} color={colors.onSurfaceVariant} />
-              <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
-                {roomDetails.Tower}
+              <Text
+                variant="bodyMedium"
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                {details.Tower}
               </Text>
             </View>
-             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+            >
               <Layers size={14} color={colors.onSurfaceVariant} />
-              <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
-                {roomDetails.Level}
+              <Text
+                variant="bodyMedium"
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                {details.Level}
               </Text>
             </View>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+            >
               <Users size={14} color={colors.onSurfaceVariant} />
-              <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
-                Capacity {roomDetails.Capacity}
+              <Text
+                variant="bodyMedium"
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                Capacity {details.Capacity}
               </Text>
             </View>
           </View>
@@ -182,10 +178,10 @@ export default function RoomModal({
         <FullLoading layout={[2, 2, 2, 2]} />
       ) : error ? (
         <NoData title="Error" subtitle={error} icon="alert-circle" />
-      ) : rows.length ? (
+      ) : timeSlotRows.length > 0 ? (
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={{ gap: tokens.spacing.sm }}>
-            {rows.map((row, rIdx) => (
+            {timeSlotRows.map((row, rIdx) => (
               <View
                 key={rIdx}
                 style={{

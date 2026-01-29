@@ -30,7 +30,7 @@ export default function RoomPage() {
   const { tokens } = useDesign();
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const { towers, roomsLoading } = useRooms(today);
-  const { modal, dismissModal } = useOverlay();
+  const { modal } = useOverlay();
 
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture({
     controlNav: false,
@@ -54,14 +54,13 @@ export default function RoomPage() {
 
   const totalTowers = towers.length;
 
-  const openRoom = (room: { id: string; name: string; capacity: number }) => {
+  const openRoom = (room: { id: string; name: string }) => {
     modal({
       dismissible: true,
       content: (
         <RoomModal
           roomId={Number(room.id)}
           roomName={room.name}
-          capacity={room.capacity}
           date={today}
         />
       ),
@@ -254,7 +253,7 @@ export default function RoomPage() {
                                 openRoom({
                                   id: room.id,
                                   name: room.name,
-                                  capacity: room.capacity,
+                                  // capacity is now fetched by useRoomDetails hook
                                 })
                               }
                               style={({ pressed }) => ({
