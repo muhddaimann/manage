@@ -18,25 +18,32 @@ import ScrollTop from "../../../components/shared/scrollTop";
 import FullLoading from "../../../components/shared/fullLoad";
 import TwoRow from "../../../components/a/twoRow";
 import { useGesture } from "../../../hooks/useGesture";
-import useRooms from "../../../hooks/useRoom";
+import useRoom from "../../../hooks/useRoom";
 import RoomModal from "../../../components/a/roomModal";
+import DatePicker from "../../../components/shared/datePicker";
 import { useOverlay } from "../../../contexts/overlayContext";
 
-type DateFilter = "TODAY";
-const DATES: DateFilter[] = ["TODAY"];
+const isPastDate = (date: string) => {
+  const t = new Date();
+  t.setHours(0, 0, 0, 0);
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d < t;
+};
 
 export default function RoomPage() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
+  const { modal, dismissModal, toast } = useOverlay();
+
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const { towers, roomsLoading } = useRooms(today);
-  const { modal } = useOverlay();
+  const [selectedDate, setSelectedDate] = useState(today);
+  const { towers, roomsLoading, formattedDate } = useRoom(selectedDate);
 
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture({
     controlNav: false,
   });
 
-  const [date] = useState<DateFilter>("TODAY");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const toggleTower = (tower: string) => {
@@ -61,7 +68,33 @@ export default function RoomPage() {
         <RoomModal
           roomId={Number(room.id)}
           roomName={room.name}
-          date={today}
+          date={selectedDate}
+        />
+      ),
+    });
+  };
+
+  const openDatePicker = () => {
+    modal({
+      dismissible: true,
+      content: (
+        <DatePicker
+          mode="SINGLE"
+          initialDate={selectedDate}
+          onConfirm={(value) => {
+            if (typeof value === "string") {
+              if (isPastDate(value)) {
+                toast({
+                  message: "You can’t book rooms for past dates",
+                  variant: "warning",
+                });
+                setSelectedDate(today);
+              } else {
+                setSelectedDate(value);
+              }
+            }
+            dismissModal();
+          }}
         />
       ),
     });
@@ -81,7 +114,53 @@ export default function RoomPage() {
           gap: tokens.spacing.lg,
         }}
       >
-        <Header title="Rooms" subtitle="Availability for today" />
+        <Header
+          title="Room Booking"
+          subtitle={
+            selectedDate === today
+              ? "Tap to change date"
+              : `Availability for ${formattedDate}`
+          }
+          rightSlot={
+            <Pressable
+              onPress={openDatePicker}
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                paddingHorizontal: tokens.spacing.md,
+                paddingVertical: tokens.spacing.sm,
+                borderRadius: tokens.radii.full,
+                backgroundColor:
+                  selectedDate === today
+                    ? colors.primary
+                    : colors.surfaceVariant,
+                opacity: pressed ? 0.9 : 1,
+              })}
+            >
+              <CalendarClock
+                size={14}
+                color={
+                  selectedDate === today
+                    ? colors.onPrimary
+                    : colors.onSurfaceVariant
+                }
+              />
+              <Text
+                variant="labelMedium"
+                style={{
+                  fontWeight: "700",
+                  color:
+                    selectedDate === today
+                      ? colors.onPrimary
+                      : colors.onSurfaceVariant,
+                }}
+              >
+                {selectedDate === today ? "Today" : "Date"}
+              </Text>
+            </Pressable>
+          }
+        />
 
         {roomsLoading ? (
           <FullLoading layout={[2]} />
@@ -106,53 +185,8 @@ export default function RoomPage() {
           />
         )}
 
-        <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
-          {DATES.map((d) => {
-            const active = d === date;
-            return (
-              <Pressable
-                key={d}
-                onPress={() => {}}
-                style={({ pressed }) => ({
-                  paddingHorizontal: tokens.spacing.md,
-                  paddingVertical: tokens.spacing.sm,
-                  borderRadius: tokens.radii.full,
-                  backgroundColor: active
-                    ? colors.primary
-                    : colors.surfaceVariant,
-                  opacity: pressed ? 0.9 : 1,
-                })}
-              >
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                >
-                  <CalendarClock
-                    size={14}
-                    color={active ? colors.onPrimary : colors.onSurfaceVariant}
-                  />
-                  <Text
-                    variant="labelMedium"
-                    style={{
-                      color: active
-                        ? colors.onPrimary
-                        : colors.onSurfaceVariant,
-                      fontWeight: active ? "700" : "500",
-                    }}
-                  >
-                    {d}
-                  </Text>
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
-
         {roomsLoading ? (
-          <FullLoading layout={[1, 1, 1, 1, 1]} />
+          <FullLoading layout={[1, 1, 1, 1]} />
         ) : (
           <View style={{ gap: tokens.spacing.lg }}>
             {towers.map((tower) => {
@@ -170,29 +204,17 @@ export default function RoomPage() {
                     borderRadius: tokens.radii.xl,
                     padding: tokens.spacing.md,
                     gap: tokens.spacing.md,
-                    elevation: 2,
-                    shadowColor: colors.shadow,
-                    shadowOpacity: 0.12,
-                    shadowRadius: 8,
-                    shadowOffset: { width: 0, height: 4 },
                   }}
                 >
                   <Pressable
                     onPress={() => toggleTower(tower.tower)}
-                    style={({ pressed }) => ({
+                    style={{
                       flexDirection: "row",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      opacity: pressed ? 0.85 : 1,
-                    })}
+                    }}
                   >
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 10,
-                      }}
-                    >
+                    <View style={{ flexDirection: "row", gap: 10 }}>
                       <Building2 size={20} color={colors.primary} />
                       <View>
                         <Text
@@ -203,9 +225,7 @@ export default function RoomPage() {
                         </Text>
                         <Text
                           variant="bodySmall"
-                          style={{
-                            color: colors.onSurfaceVariant,
-                          }}
+                          style={{ color: colors.onSurfaceVariant }}
                         >
                           {roomCount} rooms
                         </Text>
@@ -237,9 +257,7 @@ export default function RoomPage() {
                           <Layers size={16} color={colors.onSurfaceVariant} />
                           <Text
                             variant="labelLarge"
-                            style={{
-                              color: colors.onSurfaceVariant,
-                            }}
+                            style={{ color: colors.onSurfaceVariant }}
                           >
                             {level.level}
                           </Text>
@@ -250,13 +268,9 @@ export default function RoomPage() {
                             <Pressable
                               key={room.id}
                               onPress={() =>
-                                openRoom({
-                                  id: room.id,
-                                  name: room.name,
-                                  // capacity is now fetched by useRoomDetails hook
-                                })
+                                openRoom({ id: room.id, name: room.name })
                               }
-                              style={({ pressed }) => ({
+                              style={{
                                 backgroundColor: colors.background,
                                 borderRadius: tokens.radii.lg,
                                 padding: tokens.spacing.md,
@@ -265,8 +279,7 @@ export default function RoomPage() {
                                 gap: tokens.spacing.md,
                                 borderWidth: 1,
                                 borderColor: colors.outlineVariant,
-                                opacity: pressed ? 0.95 : 1,
-                              })}
+                              }}
                             >
                               <DoorOpen
                                 size={20}

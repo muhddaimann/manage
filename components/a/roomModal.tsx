@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import { View, ScrollView, Dimensions } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { CalendarClock, Users, Building, Layers } from "lucide-react-native";
@@ -22,12 +22,12 @@ export default function RoomModal({
   const { tokens } = useDesign();
 
   const {
-    towers,
     roomsLoading,
     availabilityLoading,
     fetchAvailability,
     getTimeSlotRows,
     roomDetails,
+    formattedDate,
     error,
   } = useRoom(date);
 
@@ -128,7 +128,7 @@ export default function RoomModal({
               variant="bodySmall"
               style={{ color: colors.onSurfaceVariant }}
             >
-              {date}
+              {formattedDate}
             </Text>
           </View>
 
@@ -227,7 +227,7 @@ export default function RoomModal({
       ) : (
         <NoData
           title="No Slots"
-          subtitle="This room has no available slots for today."
+          subtitle="This room has no available slots for the selected date."
           icon="calendar-remove"
         />
       )}

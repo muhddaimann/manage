@@ -5,6 +5,7 @@ import {
   type Room,
   type Availability,
 } from "../contexts/api/room";
+import { useOverlay } from "../contexts/overlayContext";
 
 export type TimeSlot = {
   time: string;
@@ -37,17 +38,36 @@ const toMinutes = (label: string) => {
   return h * 60 + m;
 };
 
-const getCutoffMinutes = (date: string) => {
+const isPastDate = (date: string) => {
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const target = new Date(date);
-
-  if (today.toDateString() !== target.toDateString()) return null;
-
-  const nowMinutes = today.getHours() * 60 + today.getMinutes();
-  return Math.ceil(nowMinutes / 60) * 60;
+  target.setHours(0, 0, 0, 0);
+  return target < today;
 };
 
+const getCutoffMinutes = (date: string) => {
+  const now = new Date();
+  const target = new Date(date);
+
+  if (now.toDateString() !== target.toDateString()) return null;
+
+  const mins = now.getHours() * 60 + now.getMinutes();
+  return Math.ceil(mins / 60) * 60;
+};
+
+const formatDateUI = (date: string) => {
+  const d = new Date(date);
+  return d.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+  });
+};
+
+
 export default function useRoom(date: string) {
+  const { toast } = useOverlay();
+
   const [rooms, setRooms] = useState<Room[]>([]);
   const [availability, setAvailability] = useState<
     Record<string, Availability>
@@ -61,6 +81,17 @@ export default function useRoom(date: string) {
 
   const cutoffMinutes = useMemo(() => getCutoffMinutes(date), [date]);
 
+  const formattedDate = useMemo(() => formatDateUI(date), [date]);
+
+  useEffect(() => {
+    if (isPastDate(date)) {
+      toast({
+        message: "You can’t book rooms for past dates",
+        variant: "warning",
+      });
+    }
+  }, [date, toast]);
+
   useEffect(() => {
     let alive = true;
 
@@ -68,11 +99,9 @@ export default function useRoom(date: string) {
       const res = await getAllRooms();
       if (!alive) return;
 
-      if ("error" in res) {
-        setError(res.error);
-      } else {
-        setRooms(res);
-      }
+      if ("error" in res) setError(res.error);
+      else setRooms(res);
+
       setRoomsLoading(false);
     })();
 
@@ -83,6 +112,8 @@ export default function useRoom(date: string) {
 
   const fetchAvailability = useCallback(
     async (roomId: number) => {
+      if (isPastDate(date)) return;
+
       const key = `${roomId}_${date}`;
       if (availability[key] || availabilityLoading[key]) return;
 
@@ -94,14 +125,8 @@ export default function useRoom(date: string) {
       if ("error" in res) {
         setError(res.error);
       } else {
-        setAvailability((p) => ({
-          ...p,
-          [key]: res.availability,
-        }));
-        setRoomDetails((p) => ({
-          ...p,
-          [key]: res.room_details,
-        }));
+        setAvailability((p) => ({ ...p, [key]: res.availability }));
+        setRoomDetails((p) => ({ ...p, [key]: res.room_details }));
       }
 
       setAvailabilityLoading((p) => ({ ...p, [key]: false }));
@@ -110,6 +135,8 @@ export default function useRoom(date: string) {
   );
 
   const towers = useMemo<TowerGroup[]>(() => {
+    if (isPastDate(date)) return [];
+
     const map = new Map<string, Map<string, RoomUi[]>>();
 
     rooms.forEach((r) => {
@@ -152,6 +179,8 @@ export default function useRoom(date: string) {
 
   const getTimeSlotRows = useCallback(
     (roomId: number) => {
+      if (isPastDate(date)) return [];
+
       const key = `${roomId}_${date}`;
       const data = availability[key];
       if (!data) return [];
@@ -178,6 +207,7 @@ export default function useRoom(date: string) {
     fetchAvailability,
     getTimeSlotRows,
     roomDetails,
+    formattedDate,
     error,
   };
 }
