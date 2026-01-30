@@ -29,6 +29,19 @@ export type TowerGroup = {
   levels: LevelGroup[];
 };
 
+export type SelectedSlot = {
+  roomId: number;
+  startLabel: string;
+  endLabel: string;
+  startTime: string;
+  endTime: string;
+};
+
+const parseSlot = (label: string) => {
+  const [start, end] = label.split(" - ");
+  return { start, end };
+};
+
 const toMinutes = (label: string) => {
   const [start] = label.split(" - ");
   const [time, meridiem] = start.split(" ");
@@ -49,21 +62,15 @@ const isPastDate = (date: string) => {
 const getCutoffMinutes = (date: string) => {
   const now = new Date();
   const target = new Date(date);
-
   if (now.toDateString() !== target.toDateString()) return null;
-
   const mins = now.getHours() * 60 + now.getMinutes();
   return Math.ceil(mins / 60) * 60;
 };
 
 const formatDateUI = (date: string) => {
   const d = new Date(date);
-  return d.toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-  });
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 };
-
 
 export default function useRoom(date: string) {
   const { toast } = useOverlay();
@@ -79,8 +86,10 @@ export default function useRoom(date: string) {
   const [roomDetails, setRoomDetails] = useState<Record<string, Room>>({});
   const [error, setError] = useState<string | null>(null);
 
-  const cutoffMinutes = useMemo(() => getCutoffMinutes(date), [date]);
+  const [selection, setSelection] = useState<SelectedSlot | null>(null);
+  const [selectingRoom, setSelectingRoom] = useState<number | null>(null);
 
+  const cutoffMinutes = useMemo(() => getCutoffMinutes(date), [date]);
   const formattedDate = useMemo(() => formatDateUI(date), [date]);
 
   useEffect(() => {
@@ -133,6 +142,132 @@ export default function useRoom(date: string) {
     },
     [date, availability, availabilityLoading],
   );
+
+  const onSelectSlot = useCallback(
+    (roomId: number, label: string, status: "Available" | "Booked") => {
+      if (status !== "Available") return;
+
+      const { start, end } = parseSlot(label);
+      const tappedMin = toMinutes(label);
+
+      if (!selection || selectingRoom !== roomId) {
+        setSelection({
+          roomId,
+          startLabel: label,
+          endLabel: label,
+          startTime: start,
+          endTime: end,
+        });
+        setSelectingRoom(roomId);
+        return;
+      }
+
+      const startMin = toMinutes(selection.startLabel);
+      const endMin = toMinutes(selection.endLabel);
+
+      if (tappedMin >= startMin && tappedMin <= endMin) {
+        // Tapped a selected slot
+        if (tappedMin === startMin) {
+          // Tapped the first slot, clear selection
+          setSelection(null);
+          setSelectingRoom(null);
+        } else {
+          // Tapped a slot in the middle or end, "unselect slot and slot onward"
+          const key = `${roomId}_${date}`;
+          const roomAvailability = availability[key];
+          if (!roomAvailability) return;
+
+          const allSlots = Object.keys(roomAvailability).sort(
+            (a, b) => toMinutes(a) - toMinutes(b),
+          );
+          const tappedIndex = allSlots.findIndex((l) => l === label);
+
+          if (tappedIndex > 0) {
+            const newEndLabel = allSlots[tappedIndex - 1];
+            const { end: newEndTime } = parseSlot(newEndLabel);
+            setSelection({
+              ...selection,
+              endLabel: newEndLabel,
+              endTime: newEndTime,
+            });
+          } else {
+            setSelection(null);
+            setSelectingRoom(null);
+          }
+        }
+        return;
+      }
+
+      // Tapped an unselected slot, extend the selection
+      if (tappedMin < startMin) {
+        setSelection({
+          roomId,
+          startLabel: label,
+          endLabel: selection.endLabel,
+          startTime: start,
+          endTime: selection.endTime,
+        });
+        return;
+      }
+
+      // Check for continuity before extending forward
+      const key = `${roomId}_${date}`;
+      const roomAvailability = availability[key];
+      if (!roomAvailability) return;
+
+      const allSlots = Object.keys(roomAvailability).sort(
+        (a, b) => toMinutes(a) - toMinutes(b),
+      );
+
+      const slotsInBetween = allSlots.filter((slotLabel) => {
+        const min = toMinutes(slotLabel);
+        return min > endMin && min < tappedMin;
+      });
+
+      const isContiguous = slotsInBetween.every(
+        (slotLabel) => roomAvailability[slotLabel].status === "Available",
+      );
+
+      if (isContiguous) {
+        setSelection({
+          ...selection,
+          endLabel: label,
+          endTime: end,
+        });
+      } else {
+        toast({
+          message: "You can only select a contiguous block of time.",
+          variant: "warning",
+        });
+        // Start a new selection from the tapped slot
+        setSelection({
+          roomId,
+          startLabel: label,
+          endLabel: label,
+          startTime: start,
+          endTime: end,
+        });
+      }
+    },
+    [selection, selectingRoom, date, availability, toast],
+  );
+
+  const isSlotSelected = useCallback(
+    (roomId: number, label: string) => {
+      if (!selection || selection.roomId !== roomId) return false;
+      const t = toMinutes(label);
+      return (
+        t >= toMinutes(selection.startLabel) &&
+        t <= toMinutes(selection.endLabel)
+      );
+    },
+    [selection],
+  );
+
+  const clearSelection = useCallback(() => {
+    setSelection(null);
+    setSelectingRoom(null);
+  }, []);
 
   const towers = useMemo<TowerGroup[]>(() => {
     if (isPastDate(date)) return [];
@@ -209,5 +344,9 @@ export default function useRoom(date: string) {
     roomDetails,
     formattedDate,
     error,
+    selection,
+    onSelectSlot,
+    isSlotSelected,
+    clearSelection,
   };
 }
