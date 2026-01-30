@@ -3,7 +3,7 @@ import { View, ScrollView, Dimensions } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { CalendarClock, Users, Building, Layers } from "lucide-react-native";
 import { useDesign } from "../../contexts/designContext";
-import FullLoading from "../shared/fullLoad";
+import BlockSkeleton from "../shared/blockSkeleton";
 import NoData from "../shared/noData";
 import useRoom from "../../hooks/useRoom";
 
@@ -59,14 +59,7 @@ export default function RoomModal({
         </Text>
 
         {loading ? (
-          <View
-            style={{
-              height: 28,
-              width: "65%",
-              backgroundColor: colors.surfaceVariant,
-              borderRadius: tokens.radii.sm,
-            }}
-          />
+          <BlockSkeleton width="65%" height={20} />
         ) : details ? (
           <View
             style={{
@@ -124,12 +117,16 @@ export default function RoomModal({
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             <CalendarClock size={14} color={colors.onSurfaceVariant} />
-            <Text
-              variant="bodySmall"
-              style={{ color: colors.onSurfaceVariant }}
-            >
-              {formattedDate}
-            </Text>
+            {loading ? (
+              <BlockSkeleton width={110} height={12} />
+            ) : (
+              <Text
+                variant="bodySmall"
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                {formattedDate}
+              </Text>
+            )}
           </View>
 
           <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
@@ -143,10 +140,7 @@ export default function RoomModal({
             >
               <Text
                 variant="labelSmall"
-                style={{
-                  fontWeight: "600",
-                  color: colors.onTertiaryContainer,
-                }}
+                style={{ fontWeight: "600", color: colors.onTertiaryContainer }}
               >
                 Available
               </Text>
@@ -162,10 +156,7 @@ export default function RoomModal({
             >
               <Text
                 variant="labelSmall"
-                style={{
-                  fontWeight: "600",
-                  color: colors.onSurfaceVariant,
-                }}
+                style={{ fontWeight: "600", color: colors.onSurfaceVariant }}
               >
                 Booked
               </Text>
@@ -175,7 +166,16 @@ export default function RoomModal({
       </View>
 
       {loading ? (
-        <FullLoading layout={[2, 2, 2, 2]} />
+        <View style={{ gap: tokens.spacing.sm }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <View
+              key={i}
+              style={{ flexDirection: "row", gap: tokens.spacing.sm }}
+            >
+              <BlockSkeleton height={44} radius={tokens.radii.lg} />
+            </View>
+          ))}
+        </View>
       ) : error ? (
         <NoData title="Error" subtitle={error} icon="alert-circle" />
       ) : timeSlotRows.length > 0 ? (
