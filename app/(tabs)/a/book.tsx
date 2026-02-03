@@ -199,19 +199,7 @@ export default function RoomBook() {
                   editable={false}
                 />
 
-                <TextInput
-                  mode="outlined"
-                  label="PIC (Person In Charge)"
-                  value={pic}
-                  editable={false}
-                />
 
-                <TextInput
-                  mode="outlined"
-                  label="Email"
-                  value={email}
-                  editable={false}
-                />
 
                 <TextInput
                   mode="outlined"
