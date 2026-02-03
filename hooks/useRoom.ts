@@ -11,6 +11,8 @@ import { useOverlay } from "../contexts/overlayContext";
 export type TimeSlot = {
   time: string;
   status: "Available" | "Booked";
+  purpose: string | null;
+  pic: string | null;
 };
 
 export type RoomUi = {
@@ -99,6 +101,9 @@ export default function useRoom(date: string) {
 
   const [selection, setSelection] = useState<SelectedSlot | null>(null);
   const [selectingRoom, setSelectingRoom] = useState<number | null>(null);
+  const [viewedBookingPurpose, setViewedBookingPurpose] = useState<string | null>(
+    null,
+  );
 
   const cutoffMinutes = useMemo(() => getCutoffMinutes(date), [date]);
   const formattedDate = useMemo(() => formatDateUI(date), [date]);
@@ -155,8 +160,15 @@ export default function useRoom(date: string) {
   );
 
   const onSelectSlot = useCallback(
-    (roomId: number, label: string, status: "Available" | "Booked") => {
-      if (status !== "Available") return;
+    (roomId: number, label: string, slot: TimeSlot) => {
+      if (slot.status === "Booked") {
+        setViewedBookingPurpose(slot.purpose || "No purpose specified");
+        setSelection(null);
+        setSelectingRoom(null);
+        return;
+      }
+
+      setViewedBookingPurpose(null);
 
       const { start, end } = parseSlot(label);
       const tappedMin = toMinutes(label);
@@ -340,7 +352,12 @@ export default function useRoom(date: string) {
                   : toMinutes(time) >= cutoffMinutes,
               )
               .sort(([a], [b]) => toMinutes(a) - toMinutes(b))
-              .map(([time, v]) => ({ time, status: v.status }))
+            .map(([time, v]) => ({
+              time,
+              status: v.status,
+              purpose: v.event_name,
+              pic: v.PIC,
+            }))
           : undefined;
 
         if (!map.has(r.Tower)) map.set(r.Tower, new Map());
@@ -380,7 +397,13 @@ export default function useRoom(date: string) {
           .filter(([time]) =>
             cutoffMinutes === null ? true : toMinutes(time) >= cutoffMinutes,
           )
-          .sort(([a], [b]) => toMinutes(a) - toMinutes(b));
+          .sort(([a], [b]) => toMinutes(a) - toMinutes(b))
+          .map(([time, v]) => ({
+            time,
+            status: v.status,
+            purpose: v.event_name,
+            pic: v.PIC,
+          }));
 
         const rows: (typeof ordered)[] = [];
         for (let i = 0; i < ordered.length; i += 2) {
@@ -398,5 +421,6 @@ export default function useRoom(date: string) {
     isSlotSelected,
     clearSelection,
     submitBooking,
+    viewedBookingPurpose,
   };
 }

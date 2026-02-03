@@ -35,6 +35,7 @@ export default function RoomModal({
     selection,
     onSelectSlot,
     isSlotSelected,
+    viewedBookingPurpose,
   } = useRoom(date);
 
   const key = `${roomId}_${date}`;
@@ -44,16 +45,22 @@ export default function RoomModal({
   }, [roomId, fetchAvailability]);
 
   const details = roomDetails[key];
-  const timeSlotRows = getTimeSlotRows(roomId);
+  const timeSlotRows = useMemo(
+    () => getTimeSlotRows(roomId),
+    [getTimeSlotRows, roomId],
+  );
   const loading = roomsLoading || availabilityLoading[key];
 
   const confirmLabel = useMemo(() => {
+    if (viewedBookingPurpose) {
+      return viewedBookingPurpose;
+    }
     if (!selection) return "Select time slot";
     if (selection.startTime === selection.endTime) {
       return `Confirm ${selection.startTime}`;
     }
     return `Confirm ${selection.startTime} - ${selection.endTime}`;
-  }, [selection]);
+  }, [selection, viewedBookingPurpose]);
 
   return (
     <View
@@ -63,7 +70,7 @@ export default function RoomModal({
         borderRadius: tokens.radii.xl,
         padding: tokens.spacing.lg,
         width: SCREEN_WIDTH * 0.9,
-        maxHeight: SCREEN_HEIGHT * 0.8,
+        maxHeight: SCREEN_HEIGHT * 0.7,
         gap: tokens.spacing.md,
       }}
     >
@@ -200,17 +207,15 @@ export default function RoomModal({
                   key={rIdx}
                   style={{ flexDirection: "row", gap: tokens.spacing.sm }}
                 >
-                  {row.map(([time, slot]) => {
-                    const available = slot.status === "Available";
+                  {row.map((slot) => {
+                    const { time, status, purpose } = slot;
+                    const available = status === "Available";
                     const selected = isSlotSelected(roomId, time);
 
                     return (
                       <Pressable
                         key={time}
-                        disabled={!available}
-                        onPress={() =>
-                          onSelectSlot(roomId, time, slot.status)
-                        }
+                        onPress={() => onSelectSlot(roomId, time, slot)}
                         style={{
                           flex: 1,
                           paddingVertical: tokens.spacing.md,
@@ -225,6 +230,8 @@ export default function RoomModal({
                       >
                         <Text
                           variant="bodyMedium"
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
                           style={{
                             fontWeight: "700",
                             color: selected
@@ -246,7 +253,7 @@ export default function RoomModal({
           </ScrollView>
 
           <Pressable
-            disabled={!selection || !details}
+            disabled={!selection || !!viewedBookingPurpose || !details}
             onPress={() => {
               if (selection && details) {
                 onConfirm(selection, details);
@@ -256,18 +263,22 @@ export default function RoomModal({
               paddingVertical: tokens.spacing.md,
               borderRadius: tokens.radii.lg,
               alignItems: "center",
-              backgroundColor: selection
-                ? colors.primary
-                : colors.surfaceVariant,
+              backgroundColor:
+                selection && !viewedBookingPurpose
+                  ? colors.primary
+                  : colors.surfaceVariant,
             }}
           >
             <Text
               variant="labelLarge"
+              numberOfLines={1}
+              ellipsizeMode="tail"
               style={{
                 fontWeight: "700",
-                color: selection
-                  ? colors.onPrimary
-                  : colors.onSurfaceVariant,
+                color:
+                  selection && !viewedBookingPurpose
+                    ? colors.onPrimary
+                    : colors.onSurfaceVariant,
               }}
             >
               {confirmLabel}
