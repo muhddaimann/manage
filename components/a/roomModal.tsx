@@ -5,7 +5,8 @@ import { CalendarClock, Users, Building, Layers } from "lucide-react-native";
 import { useDesign } from "../../contexts/designContext";
 import BlockSkeleton from "../shared/blockSkeleton";
 import NoData from "../shared/noData";
-import useRoom from "../../hooks/useRoom";
+import useRoom, { type SelectedSlot } from "../../hooks/useRoom";
+import type { Room } from "../../contexts/api/room";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -13,10 +14,12 @@ export default function RoomModal({
   roomId,
   roomName,
   date,
+  onConfirm,
 }: {
   roomId: number;
   roomName: string;
   date: string;
+  onConfirm: (selection: SelectedSlot, details: Room) => void;
 }) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
@@ -243,7 +246,12 @@ export default function RoomModal({
           </ScrollView>
 
           <Pressable
-            disabled={!selection}
+            disabled={!selection || !details}
+            onPress={() => {
+              if (selection && details) {
+                onConfirm(selection, details);
+              }
+            }}
             style={{
               paddingVertical: tokens.spacing.md,
               borderRadius: tokens.radii.lg,

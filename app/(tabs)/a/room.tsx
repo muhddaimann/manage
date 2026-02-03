@@ -18,7 +18,9 @@ import ScrollTop from "../../../components/shared/scrollTop";
 import FullLoading from "../../../components/shared/fullLoad";
 import TwoRow from "../../../components/a/twoRow";
 import { useGesture } from "../../../hooks/useGesture";
-import useRoom from "../../../hooks/useRoom";
+import { useRouter } from "expo-router";
+import useRoom, { type SelectedSlot } from "../../../hooks/useRoom";
+import type { Room } from "../../../contexts/api/room";
 import RoomModal from "../../../components/a/roomModal";
 import DatePicker from "../../../components/shared/datePicker";
 import { useOverlay } from "../../../contexts/overlayContext";
@@ -35,7 +37,7 @@ export default function RoomPage() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { modal, dismissModal, toast } = useOverlay();
-
+  const router = useRouter();
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [selectedDate, setSelectedDate] = useState(today);
   const { towers, roomsLoading, formattedDate } = useRoom(selectedDate);
@@ -62,6 +64,26 @@ export default function RoomPage() {
   const totalTowers = towers.length;
 
   const openRoom = (room: { id: string; name: string }) => {
+    const handleConfirm = (selection: SelectedSlot, details: Room) => {
+      dismissModal();
+
+      setTimeout(() => {
+        router.push({
+          pathname: "/a/book",
+          params: {
+            roomId: selection.roomId,
+            roomName: room.name,
+            capacity: details.Capacity,
+            tower: details.Tower,
+            level: details.Level,
+            date: selectedDate,
+            startTime: selection.startTime,
+            endTime: selection.endTime,
+          },
+        });
+      }, 250);
+    };
+
     modal({
       dismissible: true,
       content: (
@@ -69,6 +91,7 @@ export default function RoomPage() {
           roomId={Number(room.id)}
           roomName={room.name}
           date={selectedDate}
+          onConfirm={handleConfirm}
         />
       ),
     });

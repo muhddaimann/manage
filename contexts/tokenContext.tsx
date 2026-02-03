@@ -68,11 +68,10 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
     if (!token) return true;
     try {
       const decoded = jwtDecode(token);
-      if (!decoded.exp) return false; // No expiration, so it's not expired
+      if (!decoded.exp) return false;
       const expiresAt = decoded.exp * 1000;
       return Date.now() > expiresAt;
     } catch (e) {
-      // If there's an error decoding, the token is likely invalid.
       return true;
     }
   }, [token]);

@@ -5,6 +5,7 @@ import {
   type Room,
   type Availability,
 } from "../contexts/api/room";
+import { useRoomStore } from "../contexts/api/roomStore";
 import { useOverlay } from "../contexts/overlayContext";
 
 export type TimeSlot = {
@@ -51,20 +52,27 @@ const toMinutes = (label: string) => {
   return h * 60 + m;
 };
 
+const toApiTime = (label: string) => {
+  const [time, meridiem] = label.split(" ");
+  let [h, m] = time.split(":").map(Number);
+  if (meridiem === "PM" && h !== 12) h += 12;
+  if (meridiem === "AM" && h === 12) h = 0;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+};
+
 const isPastDate = (date: string) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(date);
-  target.setHours(0, 0, 0, 0);
-  return target < today;
+  const t = new Date();
+  t.setHours(0, 0, 0, 0);
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d < t;
 };
 
 const getCutoffMinutes = (date: string) => {
   const now = new Date();
   const target = new Date(date);
   if (now.toDateString() !== target.toDateString()) return null;
-  const mins = now.getHours() * 60 + now.getMinutes();
-  return Math.ceil(mins / 60) * 60;
+  return Math.ceil((now.getHours() * 60 + now.getMinutes()) / 60) * 60;
 };
 
 const formatDateUI = (date: string) => {
@@ -74,6 +82,9 @@ const formatDateUI = (date: string) => {
 
 export default function useRoom(date: string) {
   const { toast } = useOverlay();
+
+  const createBooking = useRoomStore((s) => s.createBooking);
+  const storeLoading = useRoomStore((s) => s.loading);
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [availability, setAvailability] = useState<
@@ -166,13 +177,10 @@ export default function useRoom(date: string) {
       const endMin = toMinutes(selection.endLabel);
 
       if (tappedMin >= startMin && tappedMin <= endMin) {
-        // Tapped a selected slot
         if (tappedMin === startMin) {
-          // Tapped the first slot, clear selection
           setSelection(null);
           setSelectingRoom(null);
         } else {
-          // Tapped a slot in the middle or end, "unselect slot and slot onward"
           const key = `${roomId}_${date}`;
           const roomAvailability = availability[key];
           if (!roomAvailability) return;
@@ -180,10 +188,10 @@ export default function useRoom(date: string) {
           const allSlots = Object.keys(roomAvailability).sort(
             (a, b) => toMinutes(a) - toMinutes(b),
           );
-          const tappedIndex = allSlots.findIndex((l) => l === label);
+          const idx = allSlots.findIndex((l) => l === label);
 
-          if (tappedIndex > 0) {
-            const newEndLabel = allSlots[tappedIndex - 1];
+          if (idx > 0) {
+            const newEndLabel = allSlots[idx - 1];
             const { end: newEndTime } = parseSlot(newEndLabel);
             setSelection({
               ...selection,
@@ -198,7 +206,6 @@ export default function useRoom(date: string) {
         return;
       }
 
-      // Tapped an unselected slot, extend the selection
       if (tappedMin < startMin) {
         setSelection({
           roomId,
@@ -210,7 +217,6 @@ export default function useRoom(date: string) {
         return;
       }
 
-      // Check for continuity before extending forward
       const key = `${roomId}_${date}`;
       const roomAvailability = availability[key];
       if (!roomAvailability) return;
@@ -219,16 +225,16 @@ export default function useRoom(date: string) {
         (a, b) => toMinutes(a) - toMinutes(b),
       );
 
-      const slotsInBetween = allSlots.filter((slotLabel) => {
-        const min = toMinutes(slotLabel);
-        return min > endMin && min < tappedMin;
+      const between = allSlots.filter((l) => {
+        const m = toMinutes(l);
+        return m > endMin && m < tappedMin;
       });
 
-      const isContiguous = slotsInBetween.every(
-        (slotLabel) => roomAvailability[slotLabel].status === "Available",
+      const contiguous = between.every(
+        (l) => roomAvailability[l].status === "Available",
       );
 
-      if (isContiguous) {
+      if (contiguous) {
         setSelection({
           ...selection,
           endLabel: label,
@@ -239,7 +245,6 @@ export default function useRoom(date: string) {
           message: "You can only select a contiguous block of time.",
           variant: "warning",
         });
-        // Start a new selection from the tapped slot
         setSelection({
           roomId,
           startLabel: label,
@@ -269,78 +274,122 @@ export default function useRoom(date: string) {
     setSelectingRoom(null);
   }, []);
 
-  const towers = useMemo<TowerGroup[]>(() => {
-    if (isPastDate(date)) return [];
+  const submitBooking = useCallback(
+    async (params: { purpose: string; PIC: string; email: string }) => {
+      if (!selection) return { error: "No time selected" };
 
-    const map = new Map<string, Map<string, RoomUi[]>>();
+      const details = roomDetails[`${selection.roomId}_${date}`];
+      if (!details) return { error: "Room details missing" };
 
-    rooms.forEach((r) => {
-      const tower = r.Tower;
-      const level = r.Level;
-      const key = `${r.room_id}_${date}`;
-
-      const slots = availability[key]
-        ? Object.entries(availability[key])
-            .filter(([time]) =>
-              cutoffMinutes === null ? true : toMinutes(time) >= cutoffMinutes,
-            )
-            .sort(([a], [b]) => toMinutes(a) - toMinutes(b))
-            .map(([time, v]) => ({
-              time,
-              status: v.status,
-            }))
-        : undefined;
-
-      if (!map.has(tower)) map.set(tower, new Map());
-      const levelMap = map.get(tower)!;
-      if (!levelMap.has(level)) levelMap.set(level, []);
-
-      levelMap.get(level)!.push({
-        id: String(r.room_id),
-        name: r.Room_Name,
-        capacity: r.Capacity,
-        slots,
-      });
-    });
-
-    return Array.from(map.entries()).map(([tower, levels]) => ({
-      tower,
-      levels: Array.from(levels.entries()).map(([level, rooms]) => ({
-        level,
-        rooms,
-      })),
-    }));
-  }, [rooms, availability, date, cutoffMinutes]);
-
-  const getTimeSlotRows = useCallback(
-    (roomId: number) => {
-      if (isPastDate(date)) return [];
-
-      const key = `${roomId}_${date}`;
-      const data = availability[key];
-      if (!data) return [];
-
-      const ordered = Object.entries(data)
-        .filter(([time]) =>
-          cutoffMinutes === null ? true : toMinutes(time) >= cutoffMinutes,
-        )
-        .sort(([a], [b]) => toMinutes(a) - toMinutes(b));
-
-      const rows: (typeof ordered)[] = [];
-      for (let i = 0; i < ordered.length; i += 2) {
-        rows.push(ordered.slice(i, i + 2));
+      const { Room_Name, Tower, Level } = details;
+      if (!Room_Name || !Tower || !Level) {
+        return { error: "Invalid room information" };
       }
-      return rows;
+
+      const payload = {
+        bookDate: date,
+        start_time: toApiTime(selection.startTime),
+        end_time: toApiTime(selection.endTime),
+        room: Room_Name,
+        tower: Tower,
+        level: Level,
+        purpose: params.purpose,
+        PIC: params.PIC,
+        email: params.email,
+      };
+
+      console.log("[submitBooking API payload]", payload);
+
+      const res = await createBooking(
+        payload.bookDate,
+        payload.start_time,
+        payload.end_time,
+        payload.room,
+        payload.tower,
+        payload.level,
+        payload.purpose,
+        payload.PIC,
+        payload.email,
+      );
+
+      if ("error" in res && res.error) {
+        toast({ message: res.error, variant: "error" });
+        return res;
+      }
+
+      toast({ message: "Room booked successfully", variant: "success" });
+      clearSelection();
+      return res;
     },
-    [availability, date, cutoffMinutes],
+    [selection, roomDetails, date, createBooking, toast, clearSelection],
   );
 
   return {
-    towers,
+    towers: useMemo<TowerGroup[]>(() => {
+      if (isPastDate(date)) return [];
+
+      const map = new Map<string, Map<string, RoomUi[]>>();
+
+      rooms.forEach((r) => {
+        const key = `${r.room_id}_${date}`;
+        const slots = availability[key]
+          ? Object.entries(availability[key])
+              .filter(([time]) =>
+                cutoffMinutes === null
+                  ? true
+                  : toMinutes(time) >= cutoffMinutes,
+              )
+              .sort(([a], [b]) => toMinutes(a) - toMinutes(b))
+              .map(([time, v]) => ({ time, status: v.status }))
+          : undefined;
+
+        if (!map.has(r.Tower)) map.set(r.Tower, new Map());
+        const levelMap = map.get(r.Tower)!;
+        if (!levelMap.has(r.Level)) levelMap.set(r.Level, []);
+
+        levelMap.get(r.Level)!.push({
+          id: String(r.room_id),
+          name: r.Room_Name,
+          capacity: r.Capacity,
+          slots,
+        });
+      });
+
+      return Array.from(map.entries()).map(([tower, levels]) => ({
+        tower,
+        levels: Array.from(levels.entries()).map(([level, rooms]) => ({
+          level,
+          rooms,
+        })),
+      }));
+    }, [rooms, availability, date, cutoffMinutes]),
+
     roomsLoading,
     availabilityLoading,
+    bookingLoading: storeLoading,
     fetchAvailability,
-    getTimeSlotRows,
+    getTimeSlotRows: useCallback(
+      (roomId: number) => {
+        if (isPastDate(date)) return [];
+
+        const key = `${roomId}_${date}`;
+        const data = availability[key];
+        if (!data) return [];
+
+        const ordered = Object.entries(data)
+          .filter(([time]) =>
+            cutoffMinutes === null ? true : toMinutes(time) >= cutoffMinutes,
+          )
+          .sort(([a], [b]) => toMinutes(a) - toMinutes(b));
+
+        const rows: (typeof ordered)[] = [];
+        for (let i = 0; i < ordered.length; i += 2) {
+          rows.push(ordered.slice(i, i + 2));
+        }
+        return rows;
+      },
+      [availability, date, cutoffMinutes],
+    ),
     roomDetails,
     formattedDate,
     error,
@@ -348,5 +397,6 @@ export default function useRoom(date: string) {
     onSelectSlot,
     isSlotSelected,
     clearSelection,
+    submitBooking,
   };
 }

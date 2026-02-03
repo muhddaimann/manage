@@ -12,31 +12,69 @@ import { useTheme, Text, TextInput, Button } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
 import Header from "../../../components/shared/header";
-import useHome from "../../../hooks/useHome";
 import { useLocalSearchParams, useFocusEffect, router } from "expo-router";
+import { useStaffStore } from "../../../contexts/api/staffStore";
+import { useRoomStore } from "../../../contexts/api/roomStore";
+import { useOverlay } from "../../../contexts/overlayContext";
+
+const toApiTime = (label: string) => {
+  if (!label) return "";
+  const [time, meridiem] = label.split(" ");
+  let [h, m] = time.split(":").map(Number);
+  if (meridiem === "PM" && h !== 12) h += 12;
+  if (meridiem === "AM" && h === 12) h = 0;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+};
+
+const formatDateUI = (date: string) => {
+  if (!date) return "";
+  const d = new Date(date);
+  return d.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
 
 export default function RoomBook() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { setHideTabBar } = useTabs();
-  const { rooms } = useHome();
-  const { roomId } = useLocalSearchParams<{ roomId?: string }>();
-  const room = useMemo(
-    () => rooms.find((r) => r.id === roomId),
-    [rooms, roomId]
-  );
+  const { toast } = useOverlay();
 
-  const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const {
+    roomName,
+    tower,
+    level,
+    capacity,
+    date: dateParam,
+    startTime: startTimeParam,
+    endTime: endTimeParam,
+  } = useLocalSearchParams<{
+    roomName?: string;
+    tower?: string;
+    level?: string;
+    capacity?: string;
+    date?: string;
+    startTime?: string;
+    endTime?: string;
+  }>();
+
+  const date = useMemo(() => dateParam || "", [dateParam]);
+  const startTime = useMemo(() => startTimeParam || "", [startTimeParam]);
+  const endTime = useMemo(() => endTimeParam || "", [endTimeParam]);
+
+  const { createBooking, loading: bookingLoading } = useRoomStore();
+  const { staff, fetchStaff } = useStaffStore();
+
   const [purpose, setPurpose] = useState("");
+  const [pic, setPic] = useState("");
+  const [email, setEmail] = useState("");
 
   const isValid =
-    !!room &&
-    date.trim().length > 0 &&
-    startTime.trim().length > 0 &&
-    endTime.trim().length > 0 &&
-    purpose.trim().length > 0;
+    purpose.trim().length > 0 &&
+    pic.trim().length > 0 &&
+    email.trim().length > 0;
 
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.94)).current;
@@ -46,6 +84,17 @@ export default function RoomBook() {
     setHideTabBar(true);
     return () => setHideTabBar(false);
   });
+
+  useEffect(() => {
+    fetchStaff();
+  }, [fetchStaff]);
+
+  useEffect(() => {
+    if (staff) {
+      setPic(staff.full_name);
+      setEmail(staff.email);
+    }
+  }, [staff]);
 
   useEffect(() => {
     Animated.parallel([
@@ -103,10 +152,7 @@ export default function RoomBook() {
             gap: tokens.spacing.sm,
           }}
         >
-          <Header
-            title="Book Room"
-            subtitle={room ? room.name : "Select a room"}
-          />
+          <Header title="Book Room" subtitle={roomName || ""} />
 
           <View style={{ flex: 1, paddingTop: tokens.spacing.md }}>
             <Animated.View
@@ -124,16 +170,16 @@ export default function RoomBook() {
                 elevation: 12,
               }}
             >
-              {room && (
+              {roomName && (
                 <View style={{ gap: 2 }}>
                   <Text variant="titleMedium" style={{ fontWeight: "700" }}>
-                    {room.name}
+                    {roomName}
                   </Text>
                   <Text
                     variant="bodySmall"
                     style={{ color: colors.onSurfaceVariant }}
                   >
-                    {room.location} · {room.capacity} pax · {room.type}
+                    {tower} {level} · {capacity} pax
                   </Text>
                 </View>
               )}
@@ -142,28 +188,29 @@ export default function RoomBook() {
                 <TextInput
                   mode="outlined"
                   label="Date"
-                  placeholder="YYYY-MM-DD"
-                  value={date}
-                  onChangeText={setDate}
-                  returnKeyType="next"
+                  value={formatDateUI(date)}
+                  editable={false}
                 />
 
                 <TextInput
                   mode="outlined"
-                  label="Start time"
-                  placeholder="HH:MM"
-                  value={startTime}
-                  onChangeText={setStartTime}
-                  returnKeyType="next"
+                  label="Time"
+                  value={`${startTime} - ${endTime}`}
+                  editable={false}
                 />
 
                 <TextInput
                   mode="outlined"
-                  label="End time"
-                  placeholder="HH:MM"
-                  value={endTime}
-                  onChangeText={setEndTime}
-                  returnKeyType="next"
+                  label="PIC (Person In Charge)"
+                  value={pic}
+                  editable={false}
+                />
+
+                <TextInput
+                  mode="outlined"
+                  label="Email"
+                  value={email}
+                  editable={false}
                 />
 
                 <TextInput
@@ -179,9 +226,39 @@ export default function RoomBook() {
 
               <Button
                 mode="contained"
-                disabled={!isValid}
+                loading={bookingLoading}
+                disabled={!isValid || bookingLoading}
                 contentStyle={{ height: 48 }}
-                onPress={() => router.back()}
+                onPress={async () => {
+                  if (roomName && tower && level) {
+                    const res = await createBooking(
+                      date,
+                      toApiTime(startTime),
+                      toApiTime(endTime),
+                      roomName,
+                      tower,
+                      level,
+                      purpose,
+                      pic,
+                      email,
+                    );
+
+                    if ("error" in res && res.error) {
+                      toast({ message: res.error, variant: "error" });
+                    } else {
+                      toast({
+                        message: "Room booked successfully!",
+                        variant: "success",
+                      });
+                      router.back();
+                    }
+                  } else {
+                    toast({
+                      message: "Missing room details for submission.",
+                      variant: "error",
+                    });
+                  }
+                }}
               >
                 Confirm booking
               </Button>
