@@ -19,13 +19,15 @@ import { useOverlay } from "../../../contexts/overlayContext";
 import RecordModal from "../../../components/a/recordModal";
 import { useRoomStore } from "../../../contexts/api/roomStore";
 import NoData from "../../../components/shared/noData";
+import { useLoader } from "../../../contexts/loaderContext";
 
 export default function RecordRoom() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { setHideTabBar } = useTabs();
   const { modal, dismissModal, destructiveConfirm, toast } = useOverlay();
-  const { cancelBooking, loading: isCancelling } = useRoomStore();
+  const { show: showLoader, hide: hideLoader } = useLoader();
+  const { cancelBooking } = useRoomStore();
   const [tab, setTab] = useState<"ACTIVE" | "PAST">("ACTIVE");
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.96)).current;
@@ -75,14 +77,19 @@ export default function RecordRoom() {
 
       if (!confirmed) return;
 
-      const res = await cancelBooking(booking.Booking_Num);
-      if ("error" in res) {
-        toast({ message: String(res.error), variant: "error" });
-      } else {
-        toast({
-          message: "Booking withdrawn successfully",
-          variant: "success",
-        });
+      showLoader("Withdrawing...");
+      try {
+        const res = await cancelBooking(booking.Booking_Num);
+        if ("error" in res) {
+          toast({ message: String(res.error), variant: "error" });
+        } else {
+          toast({
+            message: "Booking withdrawn successfully",
+            variant: "success",
+          });
+        }
+      } finally {
+        hideLoader();
       }
     };
 
@@ -97,7 +104,6 @@ export default function RecordRoom() {
         <RecordModal
           booking={{ ...booking, status: tab }}
           onWithdraw={tab === "ACTIVE" ? initiateWithdrawal : undefined}
-          bookingLoading={isCancelling}
         />
       ),
     });

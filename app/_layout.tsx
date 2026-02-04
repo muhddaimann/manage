@@ -22,6 +22,7 @@ import ConfirmDialog from "../components/shared/confirm";
 import ToastBar from "../components/shared/toast";
 import ModalSheet from "../components/shared/modal";
 import { TabProvider } from "../contexts/tabContext";
+import { LoaderProvider } from "../contexts/loaderContext";
 
 void (async () => {
   try {
@@ -86,11 +87,13 @@ export default function RootLayout() {
                 ToastUI={ToastBar}
                 ModalUI={ModalSheet}
               >
-                <TokenProvider>
-                  <AuthProvider>
-                    <AppShell />
-                  </AuthProvider>
-                </TokenProvider>
+                <LoaderProvider>
+                  <TokenProvider>
+                    <AuthProvider>
+                      <AppShell />
+                    </AuthProvider>
+                  </TokenProvider>
+                </LoaderProvider>
               </OverlayProvider>
             </DesignProvider>
           </TabProvider>

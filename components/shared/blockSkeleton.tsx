@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { View, DimensionValue, Animated, Easing } from "react-native";
+import { DimensionValue, Animated, Easing } from "react-native";
 import { useTheme } from "react-native-paper";
 import { useDesign } from "../../contexts/designContext";
 
