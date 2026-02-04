@@ -6,63 +6,39 @@ import React, {
   useMemo,
 } from "react";
 import { View, Pressable, Animated, Easing, ScrollView } from "react-native";
-import { useTheme, Text, Button } from "react-native-paper";
+import { useTheme, Text } from "react-native-paper";
+import { ChevronRight, Archive } from "lucide-react-native";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
 import Header from "../../../components/shared/header";
 import ScrollTop from "../../../components/shared/scrollTop";
 import { useGesture } from "../../../hooks/useGesture";
 import { useFocusEffect } from "expo-router";
-import TwoRow from "../../../components/a/twoRow";
-import { CalendarCheck, Clock } from "lucide-react-native";
-
-type RoomBooking = {
-  id: string;
-  room: string;
-  date: string;
-  time: string;
-  purpose: string;
-  status: "ACTIVE" | "PAST";
-};
-
-const BOOKINGS: RoomBooking[] = [
-  {
-    id: "b1",
-    room: "Meeting Room A",
-    date: "8 Jan 2026",
-    time: "10:00 – 11:00",
-    purpose: "Sprint planning",
-    status: "ACTIVE",
-  },
-  {
-    id: "b2",
-    room: "Conference Room",
-    date: "2 Jan 2026",
-    time: "14:00 – 16:00",
-    purpose: "Client presentation",
-    status: "PAST",
-  },
-];
+import useHome from "../../../hooks/useHome";
+import { useOverlay } from "../../../contexts/overlayContext";
+import RecordModal from "../../../components/a/recordModal";
+import { useRoomStore } from "../../../contexts/api/roomStore";
+import NoData from "../../../components/shared/noData";
 
 export default function RecordRoom() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { setHideTabBar } = useTabs();
-
+  const { modal, dismissModal, destructiveConfirm, toast } = useOverlay();
+  const { cancelBooking, loading: isCancelling } = useRoomStore();
   const [tab, setTab] = useState<"ACTIVE" | "PAST">("ACTIVE");
-
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.96)).current;
-
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture({
     controlNav: false,
   });
+  const { activeBookings, pastBookings, roomLoading } = useHome();
 
   useFocusEffect(
     useCallback(() => {
       setHideTabBar(true);
       return () => setHideTabBar(false);
-    }, [])
+    }, [setHideTabBar]),
   );
 
   useEffect(() => {
@@ -81,9 +57,51 @@ export default function RecordRoom() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [opacity, scale]);
 
-  const data = useMemo(() => BOOKINGS.filter((b) => b.status === tab), [tab]);
+  const data = useMemo(
+    () => (tab === "ACTIVE" ? activeBookings : pastBookings),
+    [tab, activeBookings, pastBookings],
+  );
+
+  const openRecord = (booking: any) => {
+    const executeWithdrawal = async () => {
+      const confirmed = await destructiveConfirm({
+        title: "Withdraw Booking",
+        message:
+          "Are you sure you want to withdraw this booking? This action cannot be undone.",
+        okText: "Withdraw",
+      });
+
+      if (!confirmed) return;
+
+      const res = await cancelBooking(booking.Booking_Num);
+      if ("error" in res) {
+        toast({ message: String(res.error), variant: "error" });
+      } else {
+        toast({
+          message: "Booking withdrawn successfully",
+          variant: "success",
+        });
+      }
+    };
+
+    const initiateWithdrawal = () => {
+      dismissModal();
+      setTimeout(executeWithdrawal, 400);
+    };
+
+    modal({
+      dismissible: true,
+      content: (
+        <RecordModal
+          booking={{ ...booking, status: tab }}
+          onWithdraw={tab === "ACTIVE" ? initiateWithdrawal : undefined}
+          bookingLoading={isCancelling}
+        />
+      ),
+    });
+  };
 
   return (
     <>
@@ -97,30 +115,11 @@ export default function RecordRoom() {
           paddingHorizontal: tokens.spacing.lg,
           paddingBottom: tokens.spacing["3xl"] * 2,
           gap: tokens.spacing.md,
+          flexGrow: 1,
         }}
       >
         <Header title="Room Records" subtitle="Active & past bookings" />
 
-        <TwoRow
-          left={{
-            amount: BOOKINGS.filter((b) => b.status === "ACTIVE").length,
-            label: "Active booking",
-            icon: <CalendarCheck size={24} color={colors.onPrimary} />,
-            bgColor: colors.primary,
-            textColor: colors.onPrimary,
-            labelColor: colors.onPrimary,
-          }}
-          right={{
-            amount: BOOKINGS.filter((b) => b.status === "PAST").length,
-            label: "Booking history",
-            icon: <Clock size={24} color={colors.onPrimaryContainer} />,
-            bgColor: colors.primaryContainer,
-            textColor: colors.onPrimaryContainer,
-            labelColor: colors.onPrimaryContainer,
-          }}
-        />
-
-        {/* Tabs */}
         <View
           style={{
             flexDirection: "row",
@@ -158,62 +157,75 @@ export default function RecordRoom() {
           })}
         </View>
 
-        <Animated.View
-          style={{
-            opacity,
-            transform: [{ scale }],
-            gap: tokens.spacing.md,
-          }}
-        >
-          {data.map((b) => (
-            <View
-              key={b.id}
-              style={{
-                backgroundColor: colors.surface,
-                borderRadius: tokens.radii.xl,
-                padding: tokens.spacing.lg,
-                gap: tokens.spacing.xs,
-                shadowColor: colors.shadow,
-                shadowOpacity: 0.12,
-                shadowRadius: 16,
-                shadowOffset: { width: 0, height: 8 },
-                elevation: 8,
-              }}
-            >
-              <Text variant="titleMedium" style={{ fontWeight: "700" }}>
-                {b.room}
-              </Text>
-
-              <Text
-                variant="bodySmall"
-                style={{ color: colors.onSurfaceVariant }}
+        {data.length > 0 && (
+          <Animated.View
+            style={{
+              opacity,
+              transform: [{ scale }],
+              gap: tokens.spacing.md,
+            }}
+          >
+            {data.map((b) => (
+              <Pressable
+                key={b.booking_id}
+                onPress={() => openRecord(b)}
+                style={{
+                  backgroundColor: colors.surface,
+                  borderRadius: tokens.radii.xl,
+                  padding: tokens.spacing.lg,
+                  shadowColor: colors.shadow,
+                  shadowOpacity: 0.12,
+                  shadowRadius: 16,
+                  shadowOffset: { width: 0, height: 8 },
+                  elevation: 8,
+                }}
               >
-                {b.date} · {b.time}
-              </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: tokens.spacing.md,
+                  }}
+                >
+                  <View style={{ flex: 1, gap: 4 }}>
+                    <Text
+                      variant="titleMedium"
+                      style={{ fontWeight: "700" }}
+                      numberOfLines={1}
+                    >
+                      {b.Event_Name} @ {b.Room_Name}
+                    </Text>
 
-              <Text variant="bodySmall">{b.purpose}</Text>
+                    <Text
+                      variant="bodySmall"
+                      style={{ color: colors.onSurfaceVariant }}
+                    >
+                      {b.uiDate} · {b.uiTime}
+                    </Text>
+                  </View>
 
-              {tab === "ACTIVE" && (
-                <Button mode="outlined" contentStyle={{ height: 40 }}>
-                  Cancel booking
-                </Button>
-              )}
-            </View>
-          ))}
+                  <ChevronRight size={20} color={colors.onSurfaceVariant} />
+                </View>
+              </Pressable>
+            ))}
+          </Animated.View>
+        )}
 
-          {data.length === 0 && (
-            <Text
-              variant="bodyMedium"
-              style={{
-                color: colors.onSurfaceVariant,
-                textAlign: "center",
-                marginTop: tokens.spacing.lg,
-              }}
-            >
-              No records found
-            </Text>
-          )}
-        </Animated.View>
+        {!roomLoading && data.length === 0 && (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <NoData
+              icon={<Archive size={30} color={colors.onSurfaceVariant} />}
+              title="No records found"
+              subtitle="Your booking history will appear here."
+            />
+          </View>
+        )}
       </ScrollView>
 
       <ScrollTop visible={showScrollTop} onPress={scrollToTop} />

@@ -9,14 +9,11 @@ import {
   Users,
   DoorOpen,
   CalendarClock,
-  CalendarCheck,
-  Clock,
 } from "lucide-react-native";
 import { useDesign } from "../../../contexts/designContext";
 import Header from "../../../components/shared/header";
 import ScrollTop from "../../../components/shared/scrollTop";
 import FullLoading from "../../../components/shared/fullLoad";
-import TwoRow from "../../../components/a/twoRow";
 import { useGesture } from "../../../hooks/useGesture";
 import { useRouter } from "expo-router";
 import useRoom, { type SelectedSlot } from "../../../hooks/useRoom";
@@ -24,6 +21,8 @@ import type { Room } from "../../../contexts/api/room";
 import RoomModal from "../../../components/a/roomModal";
 import DatePicker from "../../../components/shared/datePicker";
 import { useOverlay } from "../../../contexts/overlayContext";
+import useHome from "../../../hooks/useHome";
+import RoomSection from "../../../components/a/roomSection";
 
 const isPastDate = (date: string) => {
   const t = new Date();
@@ -38,9 +37,12 @@ export default function RoomPage() {
   const { tokens } = useDesign();
   const { modal, dismissModal, toast } = useOverlay();
   const router = useRouter();
+
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [selectedDate, setSelectedDate] = useState(today);
+
   const { towers, roomsLoading, formattedDate } = useRoom(selectedDate);
+  const { activeBookings, pastBookings, roomLoading } = useHome();
 
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture({
     controlNav: false,
@@ -51,17 +53,6 @@ export default function RoomPage() {
   const toggleTower = (tower: string) => {
     setCollapsed((p) => ({ ...p, [tower]: !p[tower] }));
   };
-
-  const totalRooms = useMemo(
-    () =>
-      towers.reduce(
-        (acc, t) => acc + t.levels.reduce((a, l) => a + l.rooms.length, 0),
-        0,
-      ),
-    [towers],
-  );
-
-  const totalTowers = towers.length;
 
   const openRoom = (room: { id: string; name: string }) => {
     const handleConfirm = (selection: SelectedSlot, details: Room) => {
@@ -185,28 +176,11 @@ export default function RoomPage() {
           }
         />
 
-        {roomsLoading ? (
-          <FullLoading layout={[2]} />
-        ) : (
-          <TwoRow
-            left={{
-              amount: totalRooms,
-              label: "Total rooms",
-              icon: <CalendarCheck size={24} color={colors.onPrimary} />,
-              bgColor: colors.primary,
-              textColor: colors.onPrimary,
-              labelColor: colors.onPrimary,
-            }}
-            right={{
-              amount: totalTowers,
-              label: "Towers",
-              icon: <Clock size={24} color={colors.onPrimaryContainer} />,
-              bgColor: colors.primaryContainer,
-              textColor: colors.onPrimaryContainer,
-              labelColor: colors.onPrimaryContainer,
-            }}
-          />
-        )}
+        <RoomSection
+          loading={roomLoading}
+          activeCount={activeBookings.length}
+          pastCount={pastBookings.length}
+        />
 
         {roomsLoading ? (
           <FullLoading layout={[1, 1, 1, 1]} />

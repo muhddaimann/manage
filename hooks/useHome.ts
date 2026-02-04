@@ -4,6 +4,7 @@ import { useRoomStore } from "../contexts/api/roomStore";
 import { getActiveBroadcasts } from "../contexts/api/broadcast";
 import type { Broadcast } from "../contexts/api/broadcast";
 import { getAttendanceDef, type Attendance } from "../contexts/api/attendance";
+import { getAllRooms, type Room } from "../contexts/api/room";
 
 /* ================= NEWS ================= */
 
@@ -44,22 +45,6 @@ export type DayStatus =
   | "OFF_DAY"
   | "REST_DAY";
 
-export type DayStatusIcon =
-  | "CLOCK"
-  | "BRIEFCASE"
-  | "PALM"
-  | "CHECK"
-  | "SUN"
-  | "CALENDAR"
-  | "MOON";
-
-export type DayStatusTone =
-  | "primary"
-  | "secondary"
-  | "tertiary"
-  | "error"
-  | "outline";
-
 /* ================= HELPERS ================= */
 
 function formatToday() {
@@ -96,13 +81,38 @@ function deriveDayStatus(att: Attendance | null): DayStatus {
   return "NOT_CHECKED_IN";
 }
 
+function formatBookingDateTime(start: string, end: string) {
+  const s = new Date(start);
+  const e = new Date(end);
+
+  const date = s.toLocaleDateString("en-MY", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+  const startTime = s.toLocaleTimeString("en-MY", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const endTime = e.toLocaleTimeString("en-MY", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return {
+    date,
+    time: `${startTime} – ${endTime}`,
+  };
+}
+
 /* ================= HOOK ================= */
 
 export default function useHome() {
   const today = useMemo(formatToday, []);
   const greeting = useMemo(getGreeting, []);
 
-  /* ---------- STAFF ---------- */
   const { staff, loading: staffLoading, fetchStaff } = useStaffStore();
 
   useEffect(() => {
@@ -118,7 +128,6 @@ export default function useHome() {
     };
   }, [staff]);
 
-  /* ---------- ATTENDANCE ---------- */
   const [attendance, setAttendance] = useState<Attendance | null>(null);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
 
@@ -141,24 +150,52 @@ export default function useHome() {
 
   const dayStatus = useMemo(() => deriveDayStatus(attendance), [attendance]);
 
-  /* ---------- ROOM SUMMARY ---------- */
   const { myBookings, loading: roomLoading, fetchBookings } = useRoomStore();
+  const [rooms, setRooms] = useState<Room[]>([]);
 
   useEffect(() => {
     fetchBookings();
   }, [fetchBookings]);
 
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const res = await getAllRooms();
+      if (!alive || "error" in res) return;
+      setRooms(res);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const mappedBookings = useMemo(
+    () =>
+      myBookings.map((b) => {
+        const ui = formatBookingDateTime(b.Start_Date, b.End_Date);
+        const room = rooms.find((r) => r.Room_Name === b.Room_Name);
+        return {
+          ...b,
+          uiDate: ui.date,
+          uiTime: ui.time,
+          Capacity: room?.Capacity,
+          Tower: b.Tower || room?.Tower,
+          Level: b.Level || room?.Level,
+        };
+      }),
+    [myBookings, rooms],
+  );
+
   const activeBookings = useMemo(
-    () => myBookings.filter((b) => b.Tag === "Upcoming"),
-    [myBookings]
+    () => mappedBookings.filter((b) => b.Tag === "Upcoming"),
+    [mappedBookings],
   );
 
   const pastBookings = useMemo(
-    () => myBookings.filter((b) => b.Tag !== "Upcoming"),
-    [myBookings]
+    () => mappedBookings.filter((b) => b.Tag !== "Upcoming"),
+    [mappedBookings],
   );
 
-  /* ---------- NEWS ---------- */
   const [newsFlash, setNewsFlash] = useState<NewsFlash[]>([]);
   const [broadcastLoading, setBroadcastLoading] = useState(false);
 
@@ -180,7 +217,7 @@ export default function useHome() {
             priority: mapBroadcastPriority(b.BroadcastPriority),
             byDepartment: b.BroadcastType,
             by: b.CreatedBy,
-          }))
+          })),
         );
       }
 
@@ -210,3 +247,4 @@ export default function useHome() {
     NEWS_PRIORITY_COLOR,
   };
 }
+
