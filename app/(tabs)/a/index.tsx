@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollView, View } from "react-native";
+import { ScrollView } from "react-native";
 import { useTheme, Button } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import useHome from "../../../hooks/useHome";
@@ -11,12 +11,15 @@ import CarouselRow from "../../../components/a/newsflashCarousel";
 import ScrollTop from "../../../components/shared/scrollTop";
 import { CalendarCheck, Bell, Clock, DoorOpen } from "lucide-react-native";
 import { useGesture } from "../../../hooks/useGesture";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import FullLoading from "../../../components/shared/fullLoad";
+import { useTabs } from "../../../contexts/tabContext";
+import { useCallback } from "react";
 
 export default function Home() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
+  const { setHideTabBar } = useTabs();
   const {
     greeting,
     user,
@@ -29,6 +32,12 @@ export default function Home() {
     roomLoading,
   } = useHome();
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture();
+
+  useFocusEffect(
+    useCallback(() => {
+      setHideTabBar(false);
+    }, [setHideTabBar]),
+  );
 
   return (
     <>

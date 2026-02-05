@@ -6,12 +6,22 @@ import Header from "../../../components/c/header";
 import { ChevronRight, CreditCard } from "lucide-react-native";
 import { useOverlay } from "../../../contexts/overlayContext";
 import StaffModal from "../../../components/c/staffModal";
+import { useTabs } from "../../../contexts/tabContext";
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 
 export default function Settings() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const { modal, dismissModal } = useOverlay();
+  const { modal } = useOverlay();
+  const { setHideTabBar } = useTabs();
   const [notifications, setNotifications] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      setHideTabBar(false);
+    }, [setHideTabBar]),
+  );
 
   return (
     <View

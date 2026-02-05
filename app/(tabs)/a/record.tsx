@@ -39,7 +39,6 @@ export default function RecordRoom() {
   useFocusEffect(
     useCallback(() => {
       setHideTabBar(true);
-      return () => setHideTabBar(false);
     }, [setHideTabBar]),
   );
 

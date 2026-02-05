@@ -70,21 +70,19 @@ export default function ApplyLeave() {
   });
 
   useFocusEffect(
-    useCallback(() => {
-      setHideTabBar(true);
-      return () => {
-        setHideTabBar(false);
-        setLeaveType(undefined);
-        setPeriod(undefined);
-        setRange(undefined);
-        setReasonType(undefined);
-        setRemarks("");
-        setAttachmentName(undefined);
-        setAttachmentRef(undefined);
-      };
-    }, [])
-  );
-
+          useCallback(() => {
+          setHideTabBar(true);
+          return () => {
+            setLeaveType(undefined);
+            setPeriod(undefined);
+            setRange(undefined);
+            setReasonType(undefined);
+            setRemarks("");
+            setAttachmentName(undefined);
+            setAttachmentRef(undefined);
+          };
+        }, [setHideTabBar]),
+      );
   useEffect(() => {
     Animated.parallel([
       Animated.timing(opacity, {

@@ -1,6 +1,6 @@
 import React from "react";
-import { View, StyleSheet, Modal, ActivityIndicator } from "react-native";
-import { Text, useTheme } from "react-native-paper";
+import { View, StyleSheet, Modal } from "react-native";
+import { Text, useTheme, ActivityIndicator } from "react-native-paper";
 import { BlurView } from "expo-blur";
 import { useDesign } from "../../contexts/designContext";
 
@@ -26,40 +26,23 @@ export default function FullScreenLoader({ visible, message }: Props) {
             flex: 1,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: "rgba(0,0,0,0.45)",
+            gap: tokens.spacing.sm,
           }}
         >
-          <View
-            style={{
-              backgroundColor: colors.surface,
-              borderRadius: tokens.radii.xl,
-              paddingVertical: tokens.spacing.lg,
-              paddingHorizontal: tokens.spacing.xl,
-              alignItems: "center",
-              gap: tokens.spacing.sm,
-              minWidth: 160,
-              shadowColor: colors.shadow,
-              shadowOpacity: 0.2,
-              shadowRadius: 24,
-              shadowOffset: { width: 0, height: 12 },
-              elevation: 16,
-            }}
-          >
-            <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.surface} />
 
-            {message && (
-              <Text
-                variant="bodyMedium"
-                style={{
-                  fontWeight: "600",
-                  color: colors.onSurface,
-                  textAlign: "center",
-                }}
-              >
-                {message}
-              </Text>
-            )}
-          </View>
+          {message && (
+            <Text
+              variant="bodyMedium"
+              style={{
+                fontWeight: "600",
+                color: colors.surface,
+                textAlign: "center",
+              }}
+            >
+              {message}
+            </Text>
+          )}
         </View>
       </BlurView>
     </Modal>

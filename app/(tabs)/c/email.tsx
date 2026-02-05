@@ -73,11 +73,10 @@ export default function EmailUs() {
     });
 
     return () => {
-      setHideTabBar(false);
       show.remove();
       hide.remove();
     };
-  }, []);
+  }, [setHideTabBar]);
 
   return (
     <KeyboardAvoidingView

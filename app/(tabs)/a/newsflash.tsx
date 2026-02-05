@@ -6,8 +6,11 @@ import useHome, { NewsFlash, NewsPriority } from "../../../hooks/useHome";
 import Header from "../../../components/shared/header";
 import ScrollTop from "../../../components/shared/scrollTop";
 import { useGesture } from "../../../hooks/useGesture";
-import NewsflashList from "../../../components/a/newsflashList";
 import FullLoading from "../../../components/shared/fullLoad";
+import { useTabs } from "../../../contexts/tabContext";
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
+import NewsflashList from "../../../components/a/newsflashList";
 
 type PriorityFilter = "ALL" | NewsPriority;
 
@@ -17,9 +20,16 @@ export default function NewsflashPage() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { newsFlash, broadcastLoading } = useHome();
+  const { setHideTabBar } = useTabs();
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture({
     controlNav: false,
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      setHideTabBar(true);
+    }, [setHideTabBar]),
+  );
 
   const [priority, setPriority] = useState<PriorityFilter>("ALL");
 

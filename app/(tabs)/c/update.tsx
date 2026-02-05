@@ -67,11 +67,10 @@ export default function UpdateProfile() {
     });
 
     return () => {
-      setHideTabBar(false);
       show.remove();
       hide.remove();
     };
-  }, []);
+  }, [setHideTabBar]);
 
   const onSave = async () => {
     if (!form?.email || !form.contact_no) {

@@ -7,11 +7,21 @@ import StaticSectionHeader from "../../../components/b/header";
 import ScrollTop from "../../../components/shared/scrollTop";
 import { CalendarCheck } from "lucide-react-native";
 import { useGesture } from "../../../hooks/useGesture";
+import { useTabs } from "../../../contexts/tabContext";
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 
 export default function Leave() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
+  const { setHideTabBar } = useTabs();
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture();
+
+  useFocusEffect(
+    useCallback(() => {
+      setHideTabBar(false);
+    }, [setHideTabBar]),
+  );
 
   return (
     <>

@@ -23,6 +23,9 @@ import DatePicker from "../../../components/shared/datePicker";
 import { useOverlay } from "../../../contexts/overlayContext";
 import useHome from "../../../hooks/useHome";
 import RoomSection from "../../../components/a/roomSection";
+import { useTabs } from "../../../contexts/tabContext";
+import { useCallback } from "react";
+import { useFocusEffect } from "expo-router";
 
 const isPastDate = (date: string) => {
   const t = new Date();
@@ -36,17 +39,21 @@ export default function RoomPage() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { modal, dismissModal, toast } = useOverlay();
+  const { setHideTabBar } = useTabs();
   const router = useRouter();
-
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [selectedDate, setSelectedDate] = useState(today);
-
   const { towers, roomsLoading, formattedDate } = useRoom(selectedDate);
   const { activeBookings, pastBookings, roomLoading } = useHome();
-
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture({
     controlNav: false,
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      setHideTabBar(true);
+    }, [setHideTabBar]),
+  );
 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 

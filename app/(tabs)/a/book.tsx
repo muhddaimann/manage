@@ -16,6 +16,7 @@ import { useLocalSearchParams, useFocusEffect, router } from "expo-router";
 import { useStaffStore } from "../../../contexts/api/staffStore";
 import { useRoomStore } from "../../../contexts/api/roomStore";
 import { useOverlay } from "../../../contexts/overlayContext";
+import { useLoader } from "../../../contexts/loaderContext";
 
 const toApiTime = (label: string) => {
   if (!label) return "";
@@ -41,6 +42,7 @@ export default function RoomBook() {
   const { tokens } = useDesign();
   const { setHideTabBar } = useTabs();
   const { toast } = useOverlay();
+  const { show: showLoader, hide: hideLoader } = useLoader();
 
   const {
     roomName,
@@ -63,10 +65,8 @@ export default function RoomBook() {
   const date = useMemo(() => dateParam || "", [dateParam]);
   const startTime = useMemo(() => startTimeParam || "", [startTimeParam]);
   const endTime = useMemo(() => endTimeParam || "", [endTimeParam]);
-
-  const { createBooking, loading: bookingLoading } = useRoomStore();
+  const { createBooking } = useRoomStore();
   const { staff, fetchStaff } = useStaffStore();
-
   const [purpose, setPurpose] = useState("");
   const [pic, setPic] = useState("");
   const [email, setEmail] = useState("");
@@ -82,7 +82,6 @@ export default function RoomBook() {
 
   useFocusEffect(() => {
     setHideTabBar(true);
-    return () => setHideTabBar(false);
   });
 
   useEffect(() => {
@@ -199,8 +198,6 @@ export default function RoomBook() {
                   editable={false}
                 />
 
-
-
                 <TextInput
                   mode="outlined"
                   label="Purpose"
@@ -214,18 +211,27 @@ export default function RoomBook() {
 
               <Button
                 mode="contained"
-                loading={bookingLoading}
-                disabled={!isValid || bookingLoading}
+                disabled={!isValid}
                 contentStyle={{ height: 48 }}
                 onPress={async () => {
-                  if (roomName && tower && level) {
+                  if (!roomName || !tower || !level) {
+                    toast({
+                      message: "Missing room details for submission.",
+                      variant: "error",
+                    });
+                    return;
+                  }
+
+                  showLoader("Booking room…");
+
+                  try {
                     const res = await createBooking(
                       date,
                       toApiTime(startTime),
                       toApiTime(endTime),
-                      roomName!,
-                      tower!,
-                      level!,
+                      roomName,
+                      tower,
+                      level,
                       purpose,
                       pic,
                       email,
@@ -233,18 +239,19 @@ export default function RoomBook() {
 
                     if ("error" in res && res.error) {
                       toast({ message: res.error, variant: "error" });
-                    } else {
+                      return;
+                    }
+
+                    router.back();
+
+                    setTimeout(() => {
                       toast({
                         message: "Room booked successfully!",
                         variant: "success",
                       });
-                      router.back();
-                    }
-                  } else {
-                    toast({
-                      message: "Missing room details for submission.",
-                      variant: "error",
-                    });
+                    }, 1000);
+                  } finally {
+                    hideLoader();
                   }
                 }}
               >
