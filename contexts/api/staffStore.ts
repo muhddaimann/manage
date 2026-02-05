@@ -1,9 +1,10 @@
-import { create } from 'zustand';
-import { getStaffDetails, type StaffResponse } from './staff';
+import { create } from "zustand";
+import { getStaffDetails, type StaffResponse } from "./staff";
 
 type StaffStore = {
   staff: StaffResponse | null;
   loading: boolean;
+  error: string | null;
   fetchStaff: () => Promise<void>;
   setStaff: (data: StaffResponse) => void;
   clearStaff: () => void;
@@ -12,13 +13,18 @@ type StaffStore = {
 export const useStaffStore = create<StaffStore>((set) => ({
   staff: null,
   loading: false,
+  error: null,
 
   fetchStaff: async () => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
       const data = await getStaffDetails();
-      set({ staff: data });
-    } catch {
+      set({ staff: data, error: null });
+    } catch (e: any) {
+      set({
+        staff: null,
+        error: e?.message || "Failed to fetch staff details.",
+      });
     } finally {
       set({ loading: false });
     }

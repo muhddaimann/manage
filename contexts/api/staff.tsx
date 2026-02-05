@@ -1,5 +1,4 @@
 import api from "./api";
-import * as SecureStore from "expo-secure-store";
 
 export type StaffResponse = {
   staff_id: number;
@@ -23,12 +22,6 @@ export type StaffResponse = {
 };
 
 export const getStaffDetails = async (): Promise<StaffResponse> => {
-  const token = await SecureStore.getItemAsync("staffToken");
-
-  if (!token) {
-    throw new Error("No authorization token found");
-  }
-
   try {
     const response = await api.get<StaffResponse>("/staff.php");
     return response.data;
