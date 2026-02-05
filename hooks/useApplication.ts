@@ -4,10 +4,6 @@ import { useLeaveStore } from "../contexts/api/leaveStore";
 import { getLeaveBalance } from "../contexts/api/balance";
 import type { Leave } from "../contexts/api/leave";
 
-/* =======================
-   TYPES
-======================= */
-
 export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 export type LeaveStatusTone = "secondary" | "tertiary" | "error" | "neutral";
 
@@ -34,18 +30,15 @@ export type LeaveItem = {
   status: LeaveStatus;
   statusMeta: LeaveStatusMeta;
   statusColors: LeaveStatusColors;
-
   periodLabel: string;
   dateLabel: string;
   dateRangeLabel: string;
   durationLabel: string;
   returnLabel?: string;
-
   days: number;
   isSingleDay: boolean;
   isCancelled: boolean;
   isPending: boolean;
-
   raw: Leave;
 };
 
@@ -56,14 +49,24 @@ export type LeaveSummary = {
 };
 
 export type LeaveOptions = {
-  leaveTypes: LeaveOption<"AL">[];
+  leaveTypes: LeaveOption<
+    | "AL"
+    | "SL"
+    | "UL"
+    | "RL"
+    | "MR"
+    | "PL"
+    | "CL"
+    | "ML"
+    | "CAL"
+    | "HL"
+    | "PGL"
+    | "PH"
+    | "GL"
+  >[];
   leavePeriods: LeaveOption[];
   leaveReasons: LeaveOption[];
 };
-
-/* =======================
-   CONSTANTS
-======================= */
 
 const LEAVE_STATUS_META: Record<LeaveStatus, LeaveStatusMeta> = {
   PENDING: { label: "Pending", tone: "secondary" },
@@ -71,10 +74,6 @@ const LEAVE_STATUS_META: Record<LeaveStatus, LeaveStatusMeta> = {
   REJECTED: { label: "Rejected", tone: "error" },
   CANCELLED: { label: "Cancelled", tone: "neutral" },
 };
-
-/* =======================
-   HELPERS
-======================= */
 
 function formatDate(date: string) {
   const d = new Date(`${date}T00:00:00`);
@@ -105,20 +104,14 @@ function resolveStatus(l: Leave): LeaveStatus {
   ) {
     return "CANCELLED";
   }
-
   if (l.manager_status === "Approved") return "APPROVED";
   if (l.manager_status === "Rejected") return "REJECTED";
   return "PENDING";
 }
 
-/* =======================
-   HOOK
-======================= */
-
 export default function useLeave() {
   const { colors } = useTheme();
   const { leaves, fetchLeaves, loading } = useLeaveStore();
-
   const [annualLeaveLeft, setAnnualLeaveLeft] = useState(0);
   const [balanceLoading, setBalanceLoading] = useState(true);
 
@@ -138,7 +131,6 @@ export default function useLeave() {
         setBalanceLoading(false);
       }
     };
-
     fetchBalance();
   }, []);
 
@@ -163,18 +155,32 @@ export default function useLeave() {
 
   const options: LeaveOptions = useMemo(
     () => ({
-      leaveTypes: [{ value: "AL", label: "Annual Leave" }],
+      leaveTypes: [
+        { label: "Annual Leave", value: "AL" },
+        { label: "Sick Leave", value: "SL" },
+        { label: "Unpaid Leave", value: "UL" },
+        { label: "Replacement Leave", value: "RL" },
+        { label: "Marriage Leave", value: "MR" },
+        { label: "Paternity Leave", value: "PL" },
+        { label: "Compassionate Leave", value: "CL" },
+        { label: "Maternity Leave", value: "ML" },
+        { label: "Calamity Leave", value: "CAL" },
+        { label: "Hospitalisation", value: "HL" },
+        { label: "Pilgrimage Leave", value: "PGL" },
+        { label: "Public Holiday", value: "PH" },
+        { label: "Garden Leave", value: "GL" },
+      ],
       leavePeriods: [
         { value: "FULL", label: "Full Day" },
-        { value: "HALF_AM", label: "Half Day (Morning)" },
-        { value: "HALF_PM", label: "Half Day (Afternoon)" },
+        { value: "HALF_AM", label: "First Half Day" },
+        { value: "HALF_PM", label: "Second Half Day" },
       ],
       leaveReasons: [
         { value: "PERSONAL", label: "Personal matters" },
         { value: "FAMILY", label: "Family matters" },
         { value: "MEDICAL", label: "Medical appointment" },
         { value: "EMERGENCY", label: "Emergency" },
-        { value: "OTHER", label: "Other" },
+        { value: "OTHER", label: "Others" },
       ],
     }),
     [],
@@ -182,14 +188,10 @@ export default function useLeave() {
 
   const leave = useMemo<LeaveSummary>(() => {
     if (loading) {
-      return {
-        annualLeaveLeft,
-        pending: 0,
-        history: [],
-      };
+      return { annualLeaveLeft, pending: 0, history: [] };
     }
 
-    const history: LeaveItem[] = leaves.map((l: Leave) => {
+    const history: LeaveItem[] = leaves.map((l) => {
       const status = resolveStatus(l);
       const days = Number(l.duration) || 1;
       const statusMeta = LEAVE_STATUS_META[status];
@@ -201,7 +203,6 @@ export default function useLeave() {
         status,
         statusMeta,
         statusColors: toneColors[statusMeta.tone],
-
         periodLabel: l.leave_period,
         dateLabel: formatDate(l.start_date),
         dateRangeLabel: buildDateRangeLabel(l.start_date, l.end_date),
@@ -210,12 +211,10 @@ export default function useLeave() {
           status !== "CANCELLED" && days >= 1
             ? buildReturnLabel(l.end_date)
             : undefined,
-
         days,
         isSingleDay: days === 1,
         isCancelled: status === "CANCELLED",
         isPending: status === "PENDING",
-
         raw: l,
       };
     });

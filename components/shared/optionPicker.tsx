@@ -66,6 +66,8 @@ export default function OptionPicker<T extends string = string>({
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        bounces={false}
+        style={{ maxHeight: 280 }}
         contentContainerStyle={{
           gap: tokens.spacing.sm,
           paddingVertical: tokens.spacing.xs,

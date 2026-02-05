@@ -142,14 +142,15 @@ export default function LeaveModal({
 
       {isPending && (
         <Button
-          mode="outlined"
+          mode="contained"
           onPress={() => onWithdraw?.(leave.leave_id)}
           style={{
             marginTop: tokens.spacing.sm,
             borderRadius: tokens.radii.lg,
             borderColor: colors.error,
           }}
-          textColor={colors.error}
+          buttonColor={colors.error}
+          textColor={colors.onError}
           contentStyle={{ height: 44 }}
         >
           Withdraw

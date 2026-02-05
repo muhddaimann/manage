@@ -79,10 +79,16 @@ export default function DatePicker({
   const canConfirm =
     mode === "SINGLE" || (range.start && range.end && range.start !== "");
 
-  const buttonLabel =
-    mode === "SINGLE"
-      ? `Confirm · ${formatDate(single)}`
-      : `Confirm · ${formatDate(range.start)} – ${formatDate(range.end)}`;
+  const buttonLabel = useMemo(() => {
+    if (mode === "SINGLE") {
+      return `Confirm · ${formatDate(single)}`;
+    }
+    // For RANGE mode
+    if (range.start === range.end) {
+      return `Confirm · ${formatDate(range.start)}`;
+    }
+    return `Confirm · ${formatDate(range.start)} – ${formatDate(range.end)}`;
+  }, [mode, single, range]);
 
   return (
     <View

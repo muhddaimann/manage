@@ -44,7 +44,16 @@ export default function StaffModal() {
         />
 
         <View style={{ alignItems: "center", gap: 2 }}>
-          <Text variant="titleLarge" style={{ fontWeight: "800" }}>
+          <Text
+            variant="titleLarge"
+            style={{
+              fontWeight: "800",
+              textAlign: "center",
+              maxWidth: "90%",
+            }}
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
             {staff.full_name}
           </Text>
 
