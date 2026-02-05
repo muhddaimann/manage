@@ -109,6 +109,12 @@ function resolveStatus(l: Leave): LeaveStatus {
   return "PENDING";
 }
 
+function diffDays(start: string, end: string): number {
+  const s = new Date(`${start}T00:00:00`).getTime();
+  const e = new Date(`${end}T00:00:00`).getTime();
+  return Math.floor((e - s) / 86400000) + 1;
+}
+
 export default function useLeave() {
   const { colors } = useTheme();
   const { leaves, fetchLeaves, loading } = useLeaveStore();
@@ -124,9 +130,7 @@ export default function useLeave() {
       try {
         const month = new Date().toISOString().slice(0, 7);
         const res = await getLeaveBalance(month);
-        if (!("error" in res)) {
-          setAnnualLeaveLeft(res.balance);
-        }
+        if (!("error" in res)) setAnnualLeaveLeft(res.balance);
       } finally {
         setBalanceLoading(false);
       }
@@ -187,9 +191,7 @@ export default function useLeave() {
   );
 
   const leave = useMemo<LeaveSummary>(() => {
-    if (loading) {
-      return { annualLeaveLeft, pending: 0, history: [] };
-    }
+    if (loading) return { annualLeaveLeft, pending: 0, history: [] };
 
     const history: LeaveItem[] = leaves.map((l) => {
       const status = resolveStatus(l);
@@ -208,9 +210,7 @@ export default function useLeave() {
         dateRangeLabel: buildDateRangeLabel(l.start_date, l.end_date),
         durationLabel: `${days} day${days !== 1 ? "s" : ""}`,
         returnLabel:
-          status !== "CANCELLED" && days >= 1
-            ? buildReturnLabel(l.end_date)
-            : undefined,
+          status !== "CANCELLED" ? buildReturnLabel(l.end_date) : undefined,
         days,
         isSingleDay: days === 1,
         isCancelled: status === "CANCELLED",
@@ -224,11 +224,20 @@ export default function useLeave() {
       pending: history.filter((l) => l.isPending).length,
       history,
     };
-  }, [leaves, annualLeaveLeft, loading, colors]);
+  }, [leaves, annualLeaveLeft, loading, toneColors]);
+
+  const helpers = useMemo(
+    () => ({
+      diffDays,
+      buildDateRangeLabel,
+    }),
+    [],
+  );
 
   return {
     leave,
     loading: loading || balanceLoading,
     options,
+    helpers,
   };
 }
