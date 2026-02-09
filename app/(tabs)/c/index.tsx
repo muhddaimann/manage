@@ -24,6 +24,12 @@ export default function Settings() {
   );
 
   return (
+  <View
+    style={{
+      flex: 1,
+      backgroundColor: colors.background,
+    }}
+  >
     <View
       style={{
         padding: tokens.spacing.lg,
@@ -160,5 +166,6 @@ export default function Settings() {
         </View>
       </View>
     </View>
-  );
+  </View>
+);
 }

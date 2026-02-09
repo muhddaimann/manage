@@ -148,17 +148,21 @@ export default function DatePicker({
             return;
           }
 
-          if (!range.start) {
-            setRange({ start: day.dateString, end: "" });
+          const newDate = day.dateString;
+
+          if (!range.start || (range.start && range.end)) {
+            // If no start date, or if both are already set (starting a new range)
+            setRange({ start: newDate, end: "" });
             return;
           }
 
-          if (!range.end) {
-            setRange({ start: range.start, end: day.dateString });
-            return;
+          // If only start date is set, now select the end date
+          // Smartly decide start and end based on chronological order
+          if (newDate < range.start) {
+            setRange({ start: newDate, end: range.start });
+          } else {
+            setRange({ start: range.start, end: newDate });
           }
-
-          setRange({ start: day.dateString, end: "" });
         }}
         theme={{
           todayTextColor: colors.primary,

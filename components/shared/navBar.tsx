@@ -57,8 +57,18 @@ export default function FloatingTabBar({ state, navigation }: any) {
   const activeRoute = state.routes[activeIndex].name as "a" | "b" | "c";
 
   const onTabPress = (route: any, index: number) => {
-    if (index !== activeIndex) {
-      navigation.navigate(route.name);
+    const isFocused = state.index === index;
+    const event = navigation.emit({
+      type: 'tabPress',
+      target: route.key,
+      canPreventDefault: true,
+    });
+
+    if (!isFocused && !event.defaultPrevented) {
+      navigation.navigate(route.name, route.params);
+    } else if (isFocused && !event.defaultPrevented) {
+      // If tapping the currently active tab, navigate to its root to "pop to top"
+      router.push(route.name);
     }
   };
 
@@ -90,10 +100,10 @@ export default function FloatingTabBar({ state, navigation }: any) {
               icon={<CalendarPlus size={20} color={colors.primary} />}
               onPress={() => {
                 dismissModal();
-                router.push("/b");
-                requestAnimationFrame(() => {
-                  router.push("/b/leave");
-                });
+                // Explicitly navigate to the 'b' tab first, then push to b/leave within it
+                // This ensures the 'b' tab is active and its stack is correctly managed.
+                navigation.navigate('b');
+                router.push("/b/leave");
               }}
             />
 
