@@ -37,7 +37,7 @@ export default function Leave() {
           gap: tokens.spacing.md,
         }}
       >
-        <View style={{ marginTop: tokens.spacing.md }}>
+        <View style={{  }}>
           <StaticSectionHeader
             title="You’re viewing"
             label="Leave Applications"

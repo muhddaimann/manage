@@ -1,7 +1,7 @@
-import { useMemo, useEffect, useState, useCallback } from "react";
+import { useMemo, useEffect, useCallback } from "react";
 import { useTheme } from "react-native-paper";
 import { useLeaveStore } from "../contexts/api/leaveStore";
-import { getLeaveBalance } from "../contexts/api/balance";
+import { useBalanceStore } from "../contexts/api/balanceStore";
 import type { Leave } from "../contexts/api/leave";
 
 export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
@@ -134,29 +134,16 @@ export default function useLeave() {
     fetchLeaves,
     loading,
     addNewLeave,
+    withdraw,
     submitting,
     submissionError,
   } = useLeaveStore();
-
-  const [annualLeaveLeft, setAnnualLeaveLeft] = useState(0);
-  const [balanceLoading, setBalanceLoading] = useState(true);
+  const { annualLeaveLeft, balanceLoading, fetchBalance } = useBalanceStore();
 
   useEffect(() => {
     fetchLeaves();
-  }, [fetchLeaves]);
-
-  useEffect(() => {
-    const fetchBalance = async () => {
-      try {
-        const month = new Date().toISOString().slice(0, 7);
-        const res = await getLeaveBalance(month);
-        if (!("error" in res)) setAnnualLeaveLeft(res.balance);
-      } finally {
-        setBalanceLoading(false);
-      }
-    };
     fetchBalance();
-  }, []);
+  }, [fetchLeaves, fetchBalance]);
 
   const toneColors: Record<LeaveStatusTone, LeaveStatusColors> = {
     secondary: {
@@ -270,8 +257,6 @@ export default function useLeave() {
     }) => {
       const duration = resolveDuration(payload.period, payload.range);
 
-
-
       const formData = new FormData();
       formData.append("leave_type", payload.leaveType);
       formData.append("leave_period", payload.period);
@@ -289,9 +274,24 @@ export default function useLeave() {
         formData.append("document_file", payload.attachment as any);
       }
 
-      return addNewLeave(formData);
+      const result = await addNewLeave(formData);
+      if (result.success) {
+        await fetchBalance();
+      }
+      return result;
     },
-    [addNewLeave],
+    [addNewLeave, fetchBalance],
+  );
+
+  const withdrawRequest = useCallback(
+    async (id: number) => {
+      const result = await withdraw(id);
+      if (result.success) {
+        await fetchBalance();
+      }
+      return result;
+    },
+    [withdraw, fetchBalance],
   );
 
   return {
@@ -300,6 +300,7 @@ export default function useLeave() {
     options,
     helpers,
     submitLeaveRequest,
+    withdrawRequest,
     submitting,
     submissionError,
   };

@@ -5,6 +5,8 @@ import { FileX2, ChevronRight } from "lucide-react-native";
 import { useDesign } from "../../contexts/designContext";
 import { useOverlay } from "../../contexts/overlayContext";
 import { useLeaveStore } from "../../contexts/api/leaveStore";
+import { useBalanceStore } from "../../contexts/api/balanceStore";
+import { useLoader } from "../../contexts/loaderContext";
 import NoData from "../../components/shared/noData";
 import LeaveModal from "./applicationModal";
 import FullLoading from "../../components/shared/fullLoad";
@@ -37,9 +39,13 @@ export default function LeaveList({ data }: LeaveListProps) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const { modal, dismissModal, confirm, toast } = useOverlay();
-  const { withdraw } = useLeaveStore();
+  const { show: showLoader, hide: hideLoader } = useLoader();
+
+  const withdraw = useLeaveStore((s) => s.withdraw);
+  const loading = useLeaveStore((s) => s.loading);
+  const fetchBalance = useBalanceStore((s) => s.fetchBalance);
+
   const [filter, setFilter] = useState<LeaveFilter>("ALL");
-  const [withdrawing, setWithdrawing] = useState(false);
 
   const filteredData = useMemo(() => {
     if (filter === "ALL") return data;
@@ -64,20 +70,25 @@ export default function LeaveList({ data }: LeaveListProps) {
 
             if (!ok) return;
 
+            showLoader("Withdrawing leave…");
+
             try {
-              setWithdrawing(true);
-              await withdraw(leaveId);
-              toast({
-                message: "Leave withdrawn successfully",
-                variant: "success",
-              });
-            } catch {
-              toast({
-                message: "Failed to withdraw leave",
-                variant: "error",
-              });
+              const result = await withdraw(leaveId);
+
+              if (result.success) {
+                await fetchBalance();
+                toast({
+                  message: "Leave withdrawn successfully",
+                  variant: "success",
+                });
+              } else {
+                toast({
+                  message: result.error || "Failed to withdraw leave",
+                  variant: "error",
+                });
+              }
             } finally {
-              setWithdrawing(false);
+              hideLoader();
             }
           }}
         />
@@ -158,10 +169,12 @@ export default function LeaveList({ data }: LeaveListProps) {
     </Pressable>
   );
 
+  if (loading) {
+    return <FullLoading />;
+  }
+
   return (
     <View style={{ gap: tokens.spacing.md }}>
-      {withdrawing && <FullLoading />}
-
       <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
         {FILTERS.map((f) => (
           <Pressable
