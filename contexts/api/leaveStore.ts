@@ -4,6 +4,8 @@ import { getLeave, addLeave, withdrawLeave, type Leave, type LeaveResponse } fro
 type LeaveStore = {
   leaves: Leave[];
   loading: boolean;
+  submitting: boolean; // Add submitting state
+  submissionError: string | null; // Add submission error state
   fetchLeaves: () => Promise<void>;
   addNewLeave: (formData: FormData) => Promise<LeaveResponse>;
   withdraw: (id: number) => Promise<void>;
@@ -12,6 +14,8 @@ type LeaveStore = {
 export const useLeaveStore = create<LeaveStore>((set, get) => ({
   leaves: [],
   loading: false,
+  submitting: false, // Initialize submitting state
+  submissionError: null, // Initialize submissionError state
 
   fetchLeaves: async () => {
     set({ loading: true });
@@ -24,11 +28,24 @@ export const useLeaveStore = create<LeaveStore>((set, get) => ({
   },
 
   addNewLeave: async (formData) => {
-    const res = await addLeave(formData);
-    if (res.leave_id) {
-      await get().fetchLeaves();
+    set({ submitting: true, submissionError: null });
+    try {
+      const res = await addLeave(formData);
+      if (res.leave_id) {
+        await get().fetchLeaves();
+        set({ submissionError: null });
+        return { success: true, message: res.message };
+      }
+      // If no leave_id but no explicit error, implies a generic failure or incomplete success
+      set({ submissionError: res.message || "Failed to add leave application." });
+      return { success: false, error: res.message || "Failed to add leave application." };
+    } catch (e: any) {
+      const errorMessage = e?.message || "An unexpected error occurred during submission.";
+      set({ submissionError: errorMessage });
+      return { success: false, error: errorMessage };
+    } finally {
+      set({ submitting: false });
     }
-    return res;
   },
 
   withdraw: async (id) => {

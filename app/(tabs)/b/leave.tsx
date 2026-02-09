@@ -25,40 +25,47 @@ import DatePicker from "../../../components/shared/datePicker";
 import OptionPicker from "../../../components/shared/optionPicker";
 import DocumentPicker from "../../../components/shared/documentPicker";
 import { useGesture } from "../../../hooks/useGesture";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import useLeave from "../../../hooks/useApplication";
 
 export default function ApplyLeave() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
+  const router = useRouter();
   const { modal, dismissModal, alert } = useOverlay();
   const { setHideTabBar } = useTabs();
-  const { options, helpers } = useLeave();
+  const { options, helpers, submitLeaveRequest, submitting } = useLeave();
   const [leaveType, setLeaveType] = useState<string>();
   const [period, setPeriod] = useState<string>();
   const [range, setRange] = useState<{ start: string; end: string }>();
   const [reasonType, setReasonType] = useState<string>();
   const [remarks, setRemarks] = useState("");
+  const [attachment, setAttachment] = useState<{
+    uri: string;
+    name: string;
+    type?: string;
+  }>();
   const [attachmentName, setAttachmentName] = useState<string>();
   const [attachmentRef, setAttachmentRef] = useState<string>();
+  const isFullDay = period === "Full Day";
 
   const duration = useMemo(() => {
     if (!period || !range?.start) return 0;
-    if (period === "FULL" && range?.end) {
+    if (isFullDay && range?.end) {
       return helpers.diffDays(range.start, range.end);
     }
     return 0.5;
-  }, [period, range, helpers]);
+  }, [period, range, helpers, isFullDay]);
 
   const isValid = useMemo(
     () =>
       !!leaveType &&
       !!period &&
       !!range?.start &&
-      (period !== "FULL" || !!range?.end) &&
+      (!isFullDay || !!range?.end) &&
       !!reasonType &&
       duration > 0,
-    [leaveType, period, range, reasonType, duration]
+    [leaveType, period, range, reasonType, duration, isFullDay],
   );
 
   const opacity = useRef(new Animated.Value(0)).current;
@@ -70,19 +77,21 @@ export default function ApplyLeave() {
   });
 
   useFocusEffect(
-          useCallback(() => {
-          setHideTabBar(true);
-          return () => {
-            setLeaveType(undefined);
-            setPeriod(undefined);
-            setRange(undefined);
-            setReasonType(undefined);
-            setRemarks("");
-            setAttachmentName(undefined);
-            setAttachmentRef(undefined);
-          };
-        }, [setHideTabBar]),
-      );
+    useCallback(() => {
+      setHideTabBar(true);
+      return () => {
+        setLeaveType(undefined);
+        setPeriod(undefined);
+        setRange(undefined);
+        setReasonType(undefined);
+        setRemarks("");
+        setAttachment(undefined);
+        setAttachmentName(undefined);
+        setAttachmentRef(undefined);
+      };
+    }, [setHideTabBar]),
+  );
+
   useEffect(() => {
     Animated.parallel([
       Animated.timing(opacity, {
@@ -125,6 +134,45 @@ export default function ApplyLeave() {
       hide.remove();
     };
   }, []);
+
+  const handleSubmit = async () => {
+    if (!isValid) return;
+
+    try {
+      const result = await submitLeaveRequest({
+        leaveType: leaveType!,
+        period: period!,
+        range: range!,
+        reasonType: reasonType!,
+        remarks,
+        attachment,
+        attachmentRef,
+      });
+
+      if (result && "error" in result) {
+        alert({
+          title: "Submission Failed",
+          message: result.error || "An unexpected error occurred.",
+          variant: "error",
+        });
+        return;
+      }
+
+      alert({
+        title: "Submission Successful",
+        message: "Your leave request has been submitted successfully.",
+        variant: "success",
+      });
+
+      router.back();
+    } catch {
+      alert({
+        title: "Submission Failed",
+        message: "An unexpected error occurred.",
+        variant: "error",
+      });
+    }
+  };
 
   const openLeaveType = () =>
     modal({
@@ -177,9 +225,9 @@ export default function ApplyLeave() {
       dismissible: true,
       content: (
         <DatePicker
-          mode={period === "FULL" ? "RANGE" : "SINGLE"}
-          initialRange={period === "FULL" ? range : undefined}
-          initialDate={period !== "FULL" ? range?.start : undefined}
+          mode={isFullDay ? "RANGE" : "SINGLE"}
+          initialRange={isFullDay ? range : undefined}
+          initialDate={!isFullDay ? range?.start : undefined}
           onConfirm={(v) => {
             if (typeof v === "string") {
               setRange({ start: v, end: v });
@@ -220,6 +268,7 @@ export default function ApplyLeave() {
           subtitle="Attach supporting document (optional)"
           onDone={(payload) => {
             if (payload) {
+              setAttachment(payload);
               setAttachmentName(payload.name);
               setAttachmentRef(payload.referenceNo);
             }
@@ -372,10 +421,12 @@ export default function ApplyLeave() {
 
             <Button
               mode="contained"
-              disabled={!isValid}
+              disabled={!isValid || submitting}
+              loading={submitting}
+              onPress={handleSubmit}
               contentStyle={{ height: 48 }}
             >
-              Submit request
+              {submitting ? "Submitting..." : "Submit request"}
             </Button>
           </Animated.View>
         </ScrollView>

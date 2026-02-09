@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useCallback } from "react";
 import { useTheme } from "react-native-paper";
 import { useLeaveStore } from "../contexts/api/leaveStore";
 import { getLeaveBalance } from "../contexts/api/balance";
@@ -115,9 +115,29 @@ function diffDays(start: string, end: string): number {
   return Math.floor((e - s) / 86400000) + 1;
 }
 
+function resolveDuration(
+  period: string,
+  range: { start: string; end: string },
+) {
+  if (!range?.start) return "0";
+  if (period === "Full Day") {
+    if (!range.end) return "0";
+    return String(diffDays(range.start, range.end));
+  }
+  return "0.5";
+}
+
 export default function useLeave() {
   const { colors } = useTheme();
-  const { leaves, fetchLeaves, loading } = useLeaveStore();
+  const {
+    leaves,
+    fetchLeaves,
+    loading,
+    addNewLeave,
+    submitting,
+    submissionError,
+  } = useLeaveStore();
+
   const [annualLeaveLeft, setAnnualLeaveLeft] = useState(0);
   const [balanceLoading, setBalanceLoading] = useState(true);
 
@@ -175,16 +195,16 @@ export default function useLeave() {
         { label: "Garden Leave", value: "GL" },
       ],
       leavePeriods: [
-        { value: "FULL", label: "Full Day" },
-        { value: "HALF_AM", label: "First Half Day" },
-        { value: "HALF_PM", label: "Second Half Day" },
+        { value: "Full Day", label: "Full Day" },
+        { value: "1st Half Day", label: "First Half Day" },
+        { value: "2nd Half Day", label: "Second Half Day" },
       ],
       leaveReasons: [
-        { value: "PERSONAL", label: "Personal matters" },
-        { value: "FAMILY", label: "Family matters" },
-        { value: "MEDICAL", label: "Medical appointment" },
-        { value: "EMERGENCY", label: "Emergency" },
-        { value: "OTHER", label: "Others" },
+        { value: "Personal", label: "Personal matters" },
+        { value: "Family Matters", label: "Family matters" },
+        { value: "Medical", label: "Medical appointment" },
+        { value: "Emergency", label: "Emergency" },
+        { value: "Others", label: "Others" },
       ],
     }),
     [],
@@ -234,10 +254,53 @@ export default function useLeave() {
     [],
   );
 
+  const submitLeaveRequest = useCallback(
+    async (payload: {
+      leaveType: string;
+      period: string;
+      range: { start: string; end: string };
+      reasonType: string;
+      remarks: string;
+      attachment?: {
+        uri: string;
+        name: string;
+        type?: string;
+      };
+      attachmentRef?: string;
+    }) => {
+      const duration = resolveDuration(payload.period, payload.range);
+
+
+
+      const formData = new FormData();
+      formData.append("leave_type", payload.leaveType);
+      formData.append("leave_period", payload.period);
+      formData.append("start_date", payload.range.start);
+      formData.append("end_date", payload.range.end);
+      formData.append("duration", duration);
+      formData.append("reason", payload.reasonType);
+      formData.append("remarks", payload.remarks);
+
+      if (payload.attachmentRef) {
+        formData.append("document_ref_no", payload.attachmentRef);
+      }
+
+      if (payload.attachment) {
+        formData.append("document_file", payload.attachment as any);
+      }
+
+      return addNewLeave(formData);
+    },
+    [addNewLeave],
+  );
+
   return {
     leave,
     loading: loading || balanceLoading,
     options,
     helpers,
+    submitLeaveRequest,
+    submitting,
+    submissionError,
   };
 }

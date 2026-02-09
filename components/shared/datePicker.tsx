@@ -33,10 +33,11 @@ export default function DatePicker({
 }: DatePickerProps) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
+
   const [single, setSingle] = useState(initialDate ?? todayISO());
   const [range, setRange] = useState({
-    start: initialRange?.start ?? todayISO(),
-    end: initialRange?.end ?? todayISO(),
+    start: initialRange?.start ?? "",
+    end: initialRange?.end ?? "",
   });
 
   const markedDates = useMemo(() => {
@@ -49,7 +50,21 @@ export default function DatePicker({
       };
     }
 
+    if (!range.start) return {};
+
     const marks: Record<string, any> = {};
+
+    if (!range.end) {
+      marks[range.start] = {
+        selected: true,
+        startingDay: true,
+        endingDay: true,
+        color: colors.primary,
+        textColor: colors.onPrimary,
+      };
+      return marks;
+    }
+
     let current = new Date(range.start);
     const end = new Date(range.end);
 
@@ -76,19 +91,18 @@ export default function DatePicker({
     return marks;
   }, [mode, single, range, colors]);
 
-  const canConfirm =
-    mode === "SINGLE" || (range.start && range.end && range.start !== "");
+  const canConfirm = mode === "SINGLE" || (!!range.start && !!range.end);
 
-  const buttonLabel = useMemo(() => {
-    if (mode === "SINGLE") {
-      return `Confirm · ${formatDate(single)}`;
-    }
-    // For RANGE mode
-    if (range.start === range.end) {
-      return `Confirm · ${formatDate(range.start)}`;
-    }
-    return `Confirm · ${formatDate(range.start)} – ${formatDate(range.end)}`;
-  }, [mode, single, range]);
+  const buttonLabel =
+    mode === "SINGLE"
+      ? `Confirm · ${formatDate(single)}`
+      : range.start && range.end && range.start !== range.end
+        ? `Confirm · ${formatDate(range.start)} – ${formatDate(range.end)}`
+        : range.start && range.end
+          ? `Confirm · ${formatDate(range.start)}`
+          : range.start
+            ? `Confirm · ${formatDate(range.start)}`
+            : "Confirm";
 
   return (
     <View
@@ -121,10 +135,7 @@ export default function DatePicker({
           icon="calendar"
           size={30}
           iconColor={colors.primary}
-          style={{
-            margin: 0,
-            alignSelf: "center",
-          }}
+          style={{ margin: 0 }}
         />
       </View>
 
@@ -134,17 +145,20 @@ export default function DatePicker({
         onDayPress={(day) => {
           if (mode === "SINGLE") {
             setSingle(day.dateString);
-          } else {
-            if (!range.start || range.start !== range.end) {
-              setRange({ start: day.dateString, end: day.dateString });
-            } else {
-              if (day.dateString < range.start) {
-                setRange({ start: day.dateString, end: range.start });
-              } else {
-                setRange({ start: range.start, end: day.dateString });
-              }
-            }
+            return;
           }
+
+          if (!range.start) {
+            setRange({ start: day.dateString, end: "" });
+            return;
+          }
+
+          if (!range.end) {
+            setRange({ start: range.start, end: day.dateString });
+            return;
+          }
+
+          setRange({ start: day.dateString, end: "" });
         }}
         theme={{
           todayTextColor: colors.primary,

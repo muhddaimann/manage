@@ -4,9 +4,10 @@ import { Text, useTheme } from "react-native-paper";
 import { FileX2, ChevronRight } from "lucide-react-native";
 import { useDesign } from "../../contexts/designContext";
 import { useOverlay } from "../../contexts/overlayContext";
+import { useLeaveStore } from "../../contexts/api/leaveStore";
 import NoData from "../../components/shared/noData";
 import LeaveModal from "./applicationModal";
-import { Leave } from "../../contexts/api/leave";
+import FullLoading from "../../components/shared/fullLoad";
 import {
   LeaveStatus,
   LeaveStatusMeta,
@@ -23,7 +24,7 @@ export type LeaveListItem = {
   status: LeaveStatus;
   statusMeta: LeaveStatusMeta;
   statusColors: LeaveItem["statusColors"];
-  raw: Leave;
+  raw: LeaveItem["raw"];
 };
 
 type LeaveListProps = {
@@ -35,33 +36,52 @@ const FILTERS: LeaveFilter[] = ["ALL", "APPROVED", "PENDING", "CANCELLED"];
 export default function LeaveList({ data }: LeaveListProps) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const { modal, dismissModal } = useOverlay();
+  const { modal, dismissModal, confirm, toast } = useOverlay();
+  const { withdraw } = useLeaveStore();
   const [filter, setFilter] = useState<LeaveFilter>("ALL");
+  const [withdrawing, setWithdrawing] = useState(false);
 
   const filteredData = useMemo(() => {
     if (filter === "ALL") return data;
     return data.filter((i) => i.status === filter);
   }, [data, filter]);
 
-  const filterTone = (f: LeaveFilter) => {
-    if (f === "ALL") return { bg: colors.primary, fg: colors.onPrimary };
-
-    const sample = data.find((d) => d.status === f);
-    return sample
-      ? {
-          bg: sample.statusColors.container,
-          fg: sample.statusColors.onContainer,
-        }
-      : {
-          bg: colors.surfaceVariant,
-          fg: colors.onSurfaceVariant,
-        };
-  };
-
   const openDetails = (item: LeaveListItem) => {
     modal({
       dismissible: true,
-      content: <LeaveModal item={item} onClose={dismissModal} />,
+      content: (
+        <LeaveModal
+          item={item}
+          onClose={dismissModal}
+          onWithdraw={async (leaveId) => {
+            dismissModal();
+
+            const ok = await confirm({
+              title: "Withdraw leave?",
+              message: "This action cannot be undone.",
+              variant: "error",
+            });
+
+            if (!ok) return;
+
+            try {
+              setWithdrawing(true);
+              await withdraw(leaveId);
+              toast({
+                message: "Leave withdrawn successfully",
+                variant: "success",
+              });
+            } catch {
+              toast({
+                message: "Failed to withdraw leave",
+                variant: "error",
+              });
+            } finally {
+              setWithdrawing(false);
+            }
+          }}
+        />
+      ),
     });
   };
 
@@ -86,16 +106,8 @@ export default function LeaveList({ data }: LeaveListProps) {
           gap: tokens.spacing.md,
         }}
       >
-        {/* LEFT */}
         <View style={{ flex: 1, gap: tokens.spacing.sm }}>
-          {/* Status + Duration */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: tokens.spacing.sm,
-            }}
-          >
+          <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
             <View
               style={{
                 paddingHorizontal: tokens.spacing.sm,
@@ -125,20 +137,14 @@ export default function LeaveList({ data }: LeaveListProps) {
             >
               <Text
                 variant="labelSmall"
-                style={{
-                  color: colors.onSurfaceVariant,
-                  fontWeight: "600",
-                }}
+                style={{ color: colors.onSurfaceVariant, fontWeight: "600" }}
               >
                 {item.meta}
               </Text>
             </View>
           </View>
 
-          <Text
-            variant="labelLarge"
-            style={{ fontWeight: "600", color: colors.onSurface }}
-          >
+          <Text variant="labelLarge" style={{ fontWeight: "600" }}>
             {item.primary}
           </Text>
 
@@ -154,37 +160,36 @@ export default function LeaveList({ data }: LeaveListProps) {
 
   return (
     <View style={{ gap: tokens.spacing.md }}>
-      <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
-        {FILTERS.map((f) => {
-          const active = f === filter;
-          const tone = filterTone(f);
+      {withdrawing && <FullLoading />}
 
-          return (
-            <Pressable
-              key={f}
-              onPress={() => setFilter(f)}
+      <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
+        {FILTERS.map((f) => (
+          <Pressable
+            key={f}
+            onPress={() => setFilter(f)}
+            style={{
+              paddingHorizontal: tokens.spacing.md,
+              paddingVertical: tokens.spacing.sm,
+              borderRadius: tokens.radii.full,
+              backgroundColor:
+                f === filter ? colors.primary : colors.surfaceVariant,
+            }}
+          >
+            <Text
+              variant="labelMedium"
               style={{
-                paddingHorizontal: tokens.spacing.md,
-                paddingVertical: tokens.spacing.sm,
-                borderRadius: tokens.radii.full,
-                backgroundColor: active ? tone.bg : colors.surfaceVariant,
+                color:
+                  f === filter ? colors.onPrimary : colors.onSurfaceVariant,
+                fontWeight: f === filter ? "700" : "500",
               }}
             >
-              <Text
-                variant="labelMedium"
-                style={{
-                  color: active ? tone.fg : colors.onSurfaceVariant,
-                  fontWeight: active ? "700" : "500",
-                }}
-              >
-                {f}
-              </Text>
-            </Pressable>
-          );
-        })}
+              {f}
+            </Text>
+          </Pressable>
+        ))}
       </View>
 
-      {filteredData.length > 0 ? (
+      {filteredData.length ? (
         <FlatList
           data={filteredData}
           keyExtractor={(i) => i.id}
