@@ -46,8 +46,8 @@ export default function ScrollTop({
       <Pressable
         onPress={onPress}
         style={{
-          width: 52,
-          height: 52,
+          width: 44,
+          height: 44,
           borderRadius: tokens.radii.full,
           backgroundColor: colors.primary,
           alignItems: "center",

@@ -7,9 +7,7 @@ import {
   Plus,
   LogOut,
   CalendarPlus,
-  Clock,
   DoorOpen,
-  UserCheck,
 } from "lucide-react-native";
 import { Text, useTheme } from "react-native-paper";
 import { useDesign } from "../../contexts/designContext";
@@ -33,7 +31,6 @@ export default function FloatingTabBar({ state, navigation }: any) {
   const { signOut } = useAuth();
   const { modal, dismissModal } = useOverlay();
   const { hideTabBar, setHideTabBar } = useTabs();
-
   const translateY = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
 
@@ -66,56 +63,55 @@ export default function FloatingTabBar({ state, navigation }: any) {
   };
 
   const openActions = () => {
-    if (activeRoute === "c") {
-      signOut();
-      return;
-    }
+  if (activeRoute === "c") {
+    signOut();
+    return;
+  }
 
-    modal({
-      content: (
-        <View
-          style={{
-            backgroundColor: colors.surface,
-            borderRadius: tokens.radii.xl,
-            padding: tokens.spacing.xl,
-            gap: tokens.spacing.lg,
-          }}
-        >
-          {activeRoute === "a" && (
-            <>
-              <ActionItem
-                label="Apply Leave"
-                icon={<CalendarPlus size={20} color={colors.primary} />}
-                onPress={() => {
-                  dismissModal();
-                  router.push("/b/leave");
-                }}
-              />
-              <ActionItem
-                label="Apply Room"
-                icon={<DoorOpen size={20} color={colors.primary} />}
-                onPress={() => {
-                  dismissModal();
-                  router.push("/a/book");
-                }}
-              />
-            </>
-          )}
+  if (activeRoute === "b") {
+    router.push("/b/leave");
+    return;
+  }
 
-          {activeRoute === "b" && (
+  modal({
+    content: (
+      <View
+        style={{
+          backgroundColor: colors.surface,
+          borderRadius: tokens.radii.xl,
+          padding: tokens.spacing.xl,
+          gap: tokens.spacing.lg,
+        }}
+      >
+        {activeRoute === "a" && (
+          <>
             <ActionItem
               label="Apply Leave"
               icon={<CalendarPlus size={20} color={colors.primary} />}
               onPress={() => {
                 dismissModal();
-                router.push("/b/leave");
+                router.push("/b");
+                requestAnimationFrame(() => {
+                  router.push("/b/leave");
+                });
               }}
             />
-          )}
-        </View>
-      ),
-    });
-  };
+
+            <ActionItem
+              label="Check Room Availability"
+              icon={<DoorOpen size={20} color={colors.primary} />}
+              onPress={() => {
+                dismissModal();
+                router.push("/a/room");
+              }}
+            />
+          </>
+        )}
+      </View>
+    ),
+  });
+};
+
 
   const danger = activeRoute === "c";
 
@@ -198,7 +194,7 @@ function NavButton({
   label: string;
   color: string;
   onPress: () => void;
-}) {  
+}) {
   return (
     <Pressable
       onPress={onPress}

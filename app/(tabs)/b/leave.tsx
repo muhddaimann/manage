@@ -19,6 +19,7 @@ import { useTheme, TextInput, Button, Text } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
 import { useOverlay } from "../../../contexts/overlayContext";
+import { useLoader } from "../../../contexts/loaderContext";
 import Header from "../../../components/shared/header";
 import ScrollTop from "../../../components/shared/scrollTop";
 import DatePicker from "../../../components/shared/datePicker";
@@ -33,8 +34,9 @@ export default function ApplyLeave() {
   const { tokens } = useDesign();
   const router = useRouter();
   const { modal, dismissModal, alert } = useOverlay();
+  const { show: showLoader, hide: hideLoader } = useLoader();
   const { setHideTabBar } = useTabs();
-  const { options, helpers, submitLeaveRequest, submitting } = useLeave();
+  const { options, helpers, submitLeaveRequest } = useLeave();
   const [leaveType, setLeaveType] = useState<string>();
   const [period, setPeriod] = useState<string>();
   const [range, setRange] = useState<{ start: string; end: string }>();
@@ -138,6 +140,8 @@ export default function ApplyLeave() {
   const handleSubmit = async () => {
     if (!isValid) return;
 
+    showLoader("Submitting request...");
+
     try {
       const result = await submitLeaveRequest({
         leaveType: leaveType!,
@@ -149,28 +153,27 @@ export default function ApplyLeave() {
         attachmentRef,
       });
 
-      if (result && "error" in result) {
+      if (result.success) {
+        alert({
+          title: "Submission Successful",
+          message:
+            result.message ||
+            "Your leave request has been submitted successfully.",
+          variant: "success",
+        });
+
+        setTimeout(() => {
+          router.back();
+        }, 300);
+      } else {
         alert({
           title: "Submission Failed",
           message: result.error || "An unexpected error occurred.",
           variant: "error",
         });
-        return;
       }
-
-      alert({
-        title: "Submission Successful",
-        message: "Your leave request has been submitted successfully.",
-        variant: "success",
-      });
-
-      router.back();
-    } catch {
-      alert({
-        title: "Submission Failed",
-        message: "An unexpected error occurred.",
-        variant: "error",
-      });
+    } finally {
+      hideLoader();
     }
   };
 
@@ -421,12 +424,11 @@ export default function ApplyLeave() {
 
             <Button
               mode="contained"
-              disabled={!isValid || submitting}
-              loading={submitting}
+              disabled={!isValid}
               onPress={handleSubmit}
               contentStyle={{ height: 48 }}
             >
-              {submitting ? "Submitting..." : "Submit request"}
+              Submit request
             </Button>
           </Animated.View>
         </ScrollView>

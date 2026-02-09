@@ -40,7 +40,6 @@ export default function LeaveList({ data }: LeaveListProps) {
   const { tokens } = useDesign();
   const { modal, dismissModal, confirm, toast } = useOverlay();
   const { show: showLoader, hide: hideLoader } = useLoader();
-
   const withdraw = useLeaveStore((s) => s.withdraw);
   const loading = useLeaveStore((s) => s.loading);
   const fetchBalance = useBalanceStore((s) => s.fetchBalance);
