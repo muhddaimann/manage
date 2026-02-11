@@ -25,23 +25,28 @@ import ScrollTop from "../../../components/shared/scrollTop";
 import DatePicker from "../../../components/shared/datePicker";
 import OptionPicker from "../../../components/shared/optionPicker";
 import DocumentPicker from "../../../components/shared/documentPicker";
+import ClinicPicker from "../../../components/shared/clinicPicker";
 import { useGesture } from "../../../hooks/useGesture";
 import { useFocusEffect, useRouter } from "expo-router";
 import useLeave from "../../../hooks/useApplication";
+import { Clinic } from "../../../contexts/api/clinic";
 
 export default function ApplyLeave() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
   const router = useRouter();
-  const { modal, dismissModal, alert } = useOverlay();
+  const { modal, dismissModal, alert, toast } = useOverlay();
   const { show: showLoader, hide: hideLoader } = useLoader();
   const { setHideTabBar } = useTabs();
   const { options, helpers, submitLeaveRequest } = useLeave();
+
   const [leaveType, setLeaveType] = useState<string>();
   const [period, setPeriod] = useState<string>();
   const [range, setRange] = useState<{ start: string; end: string }>();
   const [reasonType, setReasonType] = useState<string>();
   const [remarks, setRemarks] = useState("");
+  const [clinic, setClinic] = useState<Clinic | null>(null);
+  const [illness, setIllness] = useState("");
   const [attachment, setAttachment] = useState<{
     uri: string;
     name: string;
@@ -49,6 +54,15 @@ export default function ApplyLeave() {
   }>();
   const [attachmentName, setAttachmentName] = useState<string>();
   const [attachmentRef, setAttachmentRef] = useState<string>();
+
+  const selectedLeave = useMemo(
+    () => options.leaveTypes.find((o) => o.value === leaveType),
+    [leaveType, options.leaveTypes],
+  );
+
+  const isMedical = selectedLeave?.isMedical;
+  const requiresAttachment = selectedLeave?.requiresAttachment;
+
   const isFullDay = period === "Full Day";
 
   const duration = useMemo(() => {
@@ -66,8 +80,18 @@ export default function ApplyLeave() {
       !!range?.start &&
       (!isFullDay || !!range?.end) &&
       !!reasonType &&
-      duration > 0,
-    [leaveType, period, range, reasonType, duration, isFullDay],
+      duration > 0 &&
+      (!requiresAttachment || !!attachment),
+    [
+      leaveType,
+      period,
+      range,
+      reasonType,
+      duration,
+      isFullDay,
+      requiresAttachment,
+      attachment,
+    ],
   );
 
   const opacity = useRef(new Animated.Value(0)).current;
@@ -87,6 +111,8 @@ export default function ApplyLeave() {
         setRange(undefined);
         setReasonType(undefined);
         setRemarks("");
+        setClinic(null);
+        setIllness("");
         setAttachment(undefined);
         setAttachmentName(undefined);
         setAttachmentRef(undefined);
@@ -149,6 +175,8 @@ export default function ApplyLeave() {
         range: range!,
         reasonType: reasonType!,
         remarks,
+        clinicId: isMedical && clinic ? clinic.clinic_id : undefined,
+        illness: isMedical ? illness : undefined,
         attachment,
         attachmentRef,
       });
@@ -177,6 +205,22 @@ export default function ApplyLeave() {
     }
   };
 
+  const openClinic = () =>
+    modal({
+      dismissible: true,
+      content: (
+        <ClinicPicker
+          title="Select clinic"
+          onDone={(selected) => {
+            if (selected) {
+              setClinic(selected);
+            }
+            dismissModal();
+          }}
+        />
+      ),
+    });
+
   const openLeaveType = () =>
     modal({
       dismissible: true,
@@ -188,7 +232,19 @@ export default function ApplyLeave() {
           options={options.leaveTypes}
           initialValue={leaveType}
           onSelect={(v) => {
+            const selected = options.leaveTypes.find((o) => o.value === v);
+
             setLeaveType(v);
+            setClinic(null);
+            setIllness("");
+
+            if (selected?.requiresAttachment) {
+              toast({
+                message: "Supporting document is required for this leave type.",
+                variant: "info",
+              });
+            }
+
             dismissModal();
           }}
         />
@@ -268,7 +324,11 @@ export default function ApplyLeave() {
       content: (
         <DocumentPicker
           title="Attachment"
-          subtitle="Attach supporting document (optional)"
+          subtitle={
+            requiresAttachment
+              ? "Attachment is required"
+              : "Attach supporting document (optional)"
+          }
           onDone={(payload) => {
             if (payload) {
               setAttachment(payload);
@@ -396,11 +456,38 @@ export default function ApplyLeave() {
                 </View>
               </Pressable>
 
+              {isMedical && (
+                <>
+                  <Pressable onPress={openClinic}>
+                    <View pointerEvents="none">
+                      <TextInput
+                        mode="outlined"
+                        label="Clinic"
+                        value={clinic?.clinic_name ?? ""}
+                        placeholder="Select clinic"
+                        editable={false}
+                      />
+                    </View>
+                  </Pressable>
+
+                  <TextInput
+                    mode="outlined"
+                    label="Illness"
+                    value={illness}
+                    onChangeText={setIllness}
+                  />
+                </>
+              )}
+
               <Pressable onPress={openAttachment}>
                 <View pointerEvents="none">
                   <TextInput
                     mode="outlined"
-                    label="Attachment"
+                    label={
+                      requiresAttachment
+                        ? "Attachment (required)"
+                        : "Attachment"
+                    }
                     value={attachmentName ?? ""}
                     placeholder="Tap to attach document"
                     editable={false}

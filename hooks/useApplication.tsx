@@ -21,6 +21,8 @@ export type LeaveOption<T extends string = string> = {
   value: T;
   label: string;
   description?: string;
+  isMedical?: boolean;
+  requiresAttachment?: boolean;
 };
 
 export type LeaveItem = {
@@ -63,9 +65,27 @@ export type LeaveOptions = {
     | "PGL"
     | "PH"
     | "GL"
+    | "EL"
+    | "WFH"
   >[];
   leavePeriods: LeaveOption[];
   leaveReasons: LeaveOption[];
+};
+
+export type SubmitLeavePayload = {
+  leaveType: string;
+  period: string;
+  range: { start: string; end: string };
+  reasonType: string;
+  remarks: string;
+  clinicId?: number;
+  illness?: string;
+  attachment?: {
+    uri: string;
+    name: string;
+    type?: string;
+  };
+  attachmentRef?: string;
 };
 
 const LEAVE_STATUS_META: Record<LeaveStatus, LeaveStatusMeta> = {
@@ -168,18 +188,38 @@ export default function useLeave() {
     () => ({
       leaveTypes: [
         { label: "Annual Leave", value: "AL" },
-        { label: "Sick Leave", value: "SL" },
+        {
+          label: "Sick Leave",
+          value: "SL",
+          isMedical: true,
+          requiresAttachment: true,
+        },
         { label: "Unpaid Leave", value: "UL" },
         { label: "Replacement Leave", value: "RL" },
         { label: "Marriage Leave", value: "MR" },
         { label: "Paternity Leave", value: "PL" },
         { label: "Compassionate Leave", value: "CL" },
-        { label: "Maternity Leave", value: "ML" },
+        { label: "Maternity Leave", value: "ML", isMedical: true },
         { label: "Calamity Leave", value: "CAL" },
-        { label: "Hospitalisation", value: "HL" },
+        {
+          label: "Hospitalisation",
+          value: "HL",
+          isMedical: true,
+          requiresAttachment: true,
+        },
         { label: "Pilgrimage Leave", value: "PGL" },
         { label: "Public Holiday", value: "PH" },
         { label: "Garden Leave", value: "GL" },
+        {
+          label: "Emergency Leave",
+          value: "EL",
+          requiresAttachment: true,
+        },
+        {
+          label: "Work From Home",
+          value: "WFH",
+          requiresAttachment: true,
+        },
       ],
       leavePeriods: [
         { value: "Full Day", label: "Full Day" },
@@ -187,7 +227,8 @@ export default function useLeave() {
         { value: "2nd Half Day", label: "Second Half Day" },
       ],
       leaveReasons: [
-        { value: "Personal", label: "Personal matters" },
+        { value: "Personal", label: "Personal" },
+        { value: "Back To Hometown", label: "Back To Hometown" },
         { value: "Family Matters", label: "Family matters" },
         { value: "Medical", label: "Medical appointment" },
         { value: "Emergency", label: "Emergency" },
@@ -242,20 +283,16 @@ export default function useLeave() {
   );
 
   const submitLeaveRequest = useCallback(
-    async (payload: {
-      leaveType: string;
-      period: string;
-      range: { start: string; end: string };
-      reasonType: string;
-      remarks: string;
-      attachment?: {
-        uri: string;
-        name: string;
-        type?: string;
-      };
-      attachmentRef?: string;
-    }) => {
+    async (payload: SubmitLeavePayload) => {
       const duration = resolveDuration(payload.period, payload.range);
+
+      const selectedLeave = options.leaveTypes.find(
+        (l) => l.value === payload.leaveType,
+      );
+
+      if (selectedLeave?.requiresAttachment && !payload.attachment) {
+        return { success: false, error: "Attachment is required." };
+      }
 
       const formData = new FormData();
       formData.append("leave_type", payload.leaveType);
@@ -265,6 +302,14 @@ export default function useLeave() {
       formData.append("duration", duration);
       formData.append("reason", payload.reasonType);
       formData.append("remarks", payload.remarks);
+
+      if (payload.clinicId) {
+        formData.append("clinic_id", String(payload.clinicId));
+      }
+
+      if (payload.illness) {
+        formData.append("illness", payload.illness);
+      }
 
       if (payload.attachmentRef) {
         formData.append("document_ref_no", payload.attachmentRef);
@@ -280,7 +325,7 @@ export default function useLeave() {
       }
       return result;
     },
-    [addNewLeave, fetchBalance],
+    [addNewLeave, fetchBalance, options.leaveTypes],
   );
 
   const withdrawRequest = useCallback(
