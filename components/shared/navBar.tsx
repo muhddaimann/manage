@@ -58,70 +58,69 @@ export default function FloatingTabBar({ state, navigation }: any) {
 
   const onTabPress = (route: any, index: number) => {
     const isFocused = state.index === index;
+
     const event = navigation.emit({
-      type: 'tabPress',
+      type: "tabPress",
       target: route.key,
       canPreventDefault: true,
     });
 
-    if (!isFocused && !event.defaultPrevented) {
-      navigation.navigate(route.name, route.params);
-    } else if (isFocused && !event.defaultPrevented) {
-      // If tapping the currently active tab, navigate to its root to "pop to top"
-      router.push(route.name);
+    if (isFocused || event.defaultPrevented) {
+      return;
     }
+
+    navigation.navigate(route.name, route.params);
   };
 
   const openActions = () => {
-  if (activeRoute === "c") {
-    signOut();
-    return;
-  }
+    if (activeRoute === "c") {
+      signOut();
+      return;
+    }
 
-  if (activeRoute === "b") {
-    router.push("/b/leave");
-    return;
-  }
+    if (activeRoute === "b") {
+      router.push("/b/leave");
+      return;
+    }
 
-  modal({
-    content: (
-      <View
-        style={{
-          backgroundColor: colors.surface,
-          borderRadius: tokens.radii.xl,
-          padding: tokens.spacing.xl,
-          gap: tokens.spacing.lg,
-        }}
-      >
-        {activeRoute === "a" && (
-          <>
-            <ActionItem
-              label="Apply Leave"
-              icon={<CalendarPlus size={20} color={colors.primary} />}
-              onPress={() => {
-                dismissModal();
-                // Explicitly navigate to the 'b' tab first, then push to b/leave within it
-                // This ensures the 'b' tab is active and its stack is correctly managed.
-                navigation.navigate('b');
-                router.push("/b/leave");
-              }}
-            />
+    modal({
+      content: (
+        <View
+          style={{
+            backgroundColor: colors.surface,
+            borderRadius: tokens.radii.xl,
+            padding: tokens.spacing.xl,
+            gap: tokens.spacing.lg,
+          }}
+        >
+          {activeRoute === "a" && (
+            <>
+              <ActionItem
+                label="Apply Leave"
+                icon={<CalendarPlus size={20} color={colors.primary} />}
+                onPress={() => {
+                  dismissModal();
+                  // Explicitly navigate to the 'b' tab first, then push to b/leave within it
+                  // This ensures the 'b' tab is active and its stack is correctly managed.
+                  navigation.navigate("b");
+                  router.push("/b/leave");
+                }}
+              />
 
-            <ActionItem
-              label="Check Room Availability"
-              icon={<DoorOpen size={20} color={colors.primary} />}
-              onPress={() => {
-                dismissModal();
-                router.push("/a/room");
-              }}
-            />
-          </>
-        )}
-      </View>
-    ),
-  });
-};
-
+              <ActionItem
+                label="Check Room Availability"
+                icon={<DoorOpen size={20} color={colors.primary} />}
+                onPress={() => {
+                  dismissModal();
+                  router.push("/a/room");
+                }}
+              />
+            </>
+          )}
+        </View>
+      ),
+    });
+  };
 
   const danger = activeRoute === "c";
 

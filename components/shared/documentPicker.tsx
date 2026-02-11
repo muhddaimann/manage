@@ -199,6 +199,7 @@ export default function DocumentPicker({
           <Button
             mode="contained"
             disabled={!referenceNo.trim()}
+            style={{ marginTop: tokens.spacing.sm }}
             onPress={() => {
               onDone?.({
                 ...attachedDocument,
