@@ -33,20 +33,22 @@ export default function NewsflashList({
 
   const openDetails = (item: NewsFlash) => {
     const handleModalAcknowledge = async (id: string) => {
-      const result = await onAcknowledge(id); // Call original onAcknowledge prop
+      const result = await onAcknowledge(id);
       if (result?.status === "success") {
-        dismissModal(); // Dismiss modal first
+        dismissModal();
         toast({
           message: "Acknowledged successfully",
           variant: "success",
         });
       }
-      return result; // Return result as onAcknowledge expects Promise<any>
+      return result;
     };
 
     modal({
       dismissible: true,
-      content: <NewsflashModal item={item} onAcknowledge={handleModalAcknowledge} />, // Pass wrapped function
+      content: (
+        <NewsflashModal item={item} onAcknowledge={handleModalAcknowledge} />
+      ),
     });
   };
 
@@ -109,19 +111,29 @@ export default function NewsflashList({
             <View
               style={{
                 flexDirection: "row",
-                justifyContent: "space-between",
+                alignItems: "center",
                 marginTop: tokens.spacing.xs,
               }}
             >
               <Text
                 variant="labelSmall"
-                style={{ color: colors.onSurfaceVariant }}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={{
+                  flex: 1,
+                  color: colors.onSurfaceVariant,
+                }}
               >
                 {item.byDepartment}
               </Text>
+
               <Text
                 variant="labelSmall"
-                style={{ color: colors.onSurfaceVariant }}
+                style={{
+                  marginLeft: tokens.spacing.sm,
+                  flexShrink: 0,
+                  color: colors.onSurfaceVariant,
+                }}
               >
                 {item.date}
               </Text>
