@@ -27,6 +27,7 @@ export default function Header() {
       style={{
         alignItems: "center",
         gap: tokens.spacing.lg,
+        width: "100%",
       }}
     >
       <Avatar.Text
@@ -39,12 +40,33 @@ export default function Header() {
         }}
       />
 
-      <View style={{ alignItems: "center", gap: 4 }}>
-        <Text variant="titleLarge" style={{ fontWeight: "800" }}>
+      <View
+        style={{
+          alignItems: "center",
+          gap: 4,
+          width: "100%",
+          paddingHorizontal: tokens.spacing.lg,
+        }}
+      >
+        <Text
+          variant="titleLarge"
+          style={{
+            fontWeight: "800",
+            textAlign: "center",
+          }}
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
           {user.name}
         </Text>
 
-        <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
+        <Text
+          variant="bodyMedium"
+          style={{
+            color: colors.onSurfaceVariant,
+            textAlign: "center",
+          }}
+        >
           {user.role}
         </Text>
 
@@ -52,6 +74,8 @@ export default function Header() {
           style={{
             flexDirection: "row",
             alignItems: "center",
+            justifyContent: "center",
+            flexWrap: "wrap",
             gap: tokens.spacing.xs,
             marginTop: 2,
           }}
@@ -61,7 +85,10 @@ export default function Header() {
             style={{
               fontWeight: "700",
               color: colors.primary,
+              textAlign: "center",
             }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
           >
             {user.shortName}
           </Text>
