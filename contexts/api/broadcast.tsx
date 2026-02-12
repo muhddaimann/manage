@@ -1,7 +1,7 @@
-import api from './api';
+import api from "./api";
 
 export interface Broadcast {
-  broadcast_id: number;
+  ID: number;
   BroadcastType: string;
   BroadcastPriority: string;
   NewsName: string;
@@ -11,44 +11,79 @@ export interface Broadcast {
   Content: string;
   CreatedBy: string;
   CreatedDateTime: string;
+  Acknowledged: number;
 }
 
 export interface ApiResponse<T> {
-  status: 'success' | 'error';
+  status: "success" | "error";
   data?: T;
   message?: string;
+  acknowledged?: number;
 }
 
-export const getActiveBroadcasts = async (): Promise<ApiResponse<Broadcast[]> | null> => {
+export const getActiveBroadcasts = async (): Promise<ApiResponse<
+  Broadcast[]
+> | null> => {
   try {
-    const response = await api.get<ApiResponse<Broadcast[]>>('/broadcast.php');
+    const response = await api.get<ApiResponse<Broadcast[]>>("/broadcast.php");
 
-    if (response.data.status === 'success') {
+    if (response.data.status === "success") {
       return response.data;
-    } else {
-      console.error('Failed to fetch active broadcasts:', response.data.message || 'Unknown error');
-      return null;
     }
+
+    console.error(
+      "Failed to fetch active broadcasts:",
+      response.data.message || "Unknown error",
+    );
+    return null;
   } catch (error) {
-    console.error('Error fetching active broadcasts:', error);
+    console.error("Error fetching active broadcasts:", error);
     return null;
   }
 };
 
 export const getBroadcastById = async (
-  broadcast_id: string
+  broadcast_id: number,
 ): Promise<ApiResponse<Broadcast> | null> => {
   try {
-    const response = await api.get<ApiResponse<Broadcast>>(`/broadcast.php?id=${broadcast_id}`);
+    const response = await api.get<ApiResponse<Broadcast>>(
+      `/broadcast.php?id=${broadcast_id}`,
+    );
 
-    if (response.data.status === 'success' && response.data.data) {
+    if (response.data.status === "success") {
       return response.data;
-    } else {
-      console.error('Failed to fetch broadcast:', response.data.message || 'Unknown error');
-      return null;
     }
+
+    console.error(
+      "Failed to fetch broadcast:",
+      response.data.message || "Unknown error",
+    );
+    return null;
   } catch (error) {
-    console.error('Error fetching broadcast details:', error);
+    console.error("Error fetching broadcast details:", error);
+    return null;
+  }
+};
+
+export const acknowledgeBroadcast = async (
+  broadcast_id: number,
+): Promise<ApiResponse<null> | null> => {
+  try {
+    const response = await api.post<ApiResponse<null>>("/broadcast.php", {
+      broadcast_id,
+    });
+
+    if (response.data.status === "success") {
+      return response.data;
+    }
+
+    console.error(
+      "Failed to acknowledge broadcast:",
+      response.data.message || "Unknown error",
+    );
+    return null;
+  } catch (error) {
+    console.error("Error acknowledging broadcast:", error);
     return null;
   }
 };

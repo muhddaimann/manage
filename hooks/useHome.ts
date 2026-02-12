@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useStaffStore } from "../contexts/api/staffStore";
 import { useRoomStore } from "../contexts/api/roomStore";
-import { getActiveBroadcasts } from "../contexts/api/broadcast";
+import {
+  getActiveBroadcasts,
+  acknowledgeBroadcast,
+} from "../contexts/api/broadcast";
 import type { Broadcast } from "../contexts/api/broadcast";
 import { getAttendanceDef, type Attendance } from "../contexts/api/attendance";
 import { getAllRooms, type Room } from "../contexts/api/room";
-
-/* ================= NEWS ================= */
+import { useOverlay } from "../contexts/overlayContext";
 
 export type NewsPriority = "NORMAL" | "IMPORTANT" | "CRITICAL";
 
@@ -24,17 +26,14 @@ export type NewsFlash = {
   priority: NewsPriority;
   byDepartment: string;
   by: string;
+  acknowledged: boolean;
 };
-
-/* ================= USER ================= */
 
 export type UserProfile = {
   name: string;
   role: string;
   initials: string;
 };
-
-/* ================= DAY STATUS ================= */
 
 export type DayStatus =
   | "NOT_CHECKED_IN"
@@ -44,8 +43,6 @@ export type DayStatus =
   | "PUBLIC_HOLIDAY"
   | "OFF_DAY"
   | "REST_DAY";
-
-/* ================= HELPERS ================= */
 
 function formatToday() {
   return new Date().toLocaleDateString("en-MY", {
@@ -107,9 +104,9 @@ function formatBookingDateTime(start: string, end: string) {
   };
 }
 
-/* ================= HOOK ================= */
-
 export default function useHome() {
+  const { toast } = useOverlay();
+
   const today = useMemo(formatToday, []);
   const greeting = useMemo(getGreeting, []);
 
@@ -199,52 +196,65 @@ export default function useHome() {
   const [newsFlash, setNewsFlash] = useState<NewsFlash[]>([]);
   const [broadcastLoading, setBroadcastLoading] = useState(false);
 
+  const fetchBroadcasts = useCallback(async () => {
+    setBroadcastLoading(true);
+    const res = await getActiveBroadcasts();
+
+    if (res?.status === "success" && res.data) {
+      setNewsFlash(
+        res.data.map((b: Broadcast, i) => ({
+          id: String(b.ID ?? i),
+          title: b.NewsName,
+          body: b.Description || b.Content,
+          date: b.StartDate,
+          priority: mapBroadcastPriority(b.BroadcastPriority),
+          byDepartment: b.BroadcastType,
+          by: b.CreatedBy,
+          acknowledged: b.Acknowledged === 1,
+        })),
+      );
+    }
+
+    setBroadcastLoading(false);
+  }, []);
+
   useEffect(() => {
-    let alive = true;
+    fetchBroadcasts();
+  }, [fetchBroadcasts]);
 
-    (async () => {
-      setBroadcastLoading(true);
-      const res = await getActiveBroadcasts();
-      if (!alive) return;
+  const acknowledgeNews = useCallback(
+    async (id: string) => {
+      const numericId = Number(id);
+      const res = await acknowledgeBroadcast(numericId);
 
-      if (res?.status === "success" && res.data) {
-        setNewsFlash(
-          res.data.map((b: Broadcast, i) => ({
-            id: String(b.broadcast_id ?? i),
-            title: b.NewsName,
-            body: b.Description || b.Content,
-            date: b.StartDate,
-            priority: mapBroadcastPriority(b.BroadcastPriority),
-            byDepartment: b.BroadcastType,
-            by: b.CreatedBy,
-          })),
+      if (res?.status === "success") {
+        setNewsFlash((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, acknowledged: true } : n)),
         );
+
+
       }
 
-      setBroadcastLoading(false);
-    })();
-
-    return () => {
-      alive = false;
-    };
-  }, []);
+      return res;
+    },
+    [toast],
+  );
 
   return {
     today,
     greeting,
     user,
     attendance,
-
     staffLoading,
     attendanceLoading,
     roomLoading,
     broadcastLoading,
-
     dayStatus,
     activeBookings,
     pastBookings,
     newsFlash,
+    acknowledgeNews,
+    refetchBroadcasts: fetchBroadcasts,
     NEWS_PRIORITY_COLOR,
   };
 }
-

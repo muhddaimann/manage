@@ -12,6 +12,7 @@ import NewsflashModal from "./newsflashModal";
 
 type NewsflashListProps = {
   data: NewsFlash[];
+  onAcknowledge: (id: string) => Promise<any>;
 };
 
 const PRIORITY_LABEL: Record<NewsPriority, string> = {
@@ -22,15 +23,30 @@ const PRIORITY_LABEL: Record<NewsPriority, string> = {
 
 const stripHtml = (v: string) => v.replace(/<[^>]*>/g, "").trim();
 
-export default function NewsflashList({ data }: NewsflashListProps) {
+export default function NewsflashList({
+  data,
+  onAcknowledge,
+}: NewsflashListProps) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const { modal } = useOverlay();
+  const { modal, dismissModal, toast } = useOverlay();
 
   const openDetails = (item: NewsFlash) => {
+    const handleModalAcknowledge = async (id: string) => {
+      const result = await onAcknowledge(id); // Call original onAcknowledge prop
+      if (result?.status === "success") {
+        dismissModal(); // Dismiss modal first
+        toast({
+          message: "Acknowledged successfully",
+          variant: "success",
+        });
+      }
+      return result; // Return result as onAcknowledge expects Promise<any>
+    };
+
     modal({
       dismissible: true,
-      content: <NewsflashModal item={item} />,
+      content: <NewsflashModal item={item} onAcknowledge={handleModalAcknowledge} />, // Pass wrapped function
     });
   };
 
@@ -54,6 +70,7 @@ export default function NewsflashList({ data }: NewsflashListProps) {
               shadowOpacity: pressed ? 0.12 : 0.18,
               shadowRadius: pressed ? 6 : 10,
               shadowOffset: { width: 0, height: pressed ? 2 : 6 },
+              opacity: item.acknowledged ? 0.75 : 1,
             })}
           >
             <View

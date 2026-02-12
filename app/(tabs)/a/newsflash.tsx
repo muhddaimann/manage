@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { ScrollView, View, Pressable } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
@@ -9,7 +9,6 @@ import { useGesture } from "../../../hooks/useGesture";
 import FullLoading from "../../../components/shared/fullLoad";
 import { useTabs } from "../../../contexts/tabContext";
 import { useFocusEffect } from "expo-router";
-import { useCallback } from "react";
 import NewsflashList from "../../../components/a/newsflashList";
 
 type PriorityFilter = "ALL" | NewsPriority;
@@ -19,7 +18,9 @@ const PRIORITIES: PriorityFilter[] = ["ALL", "CRITICAL", "IMPORTANT", "NORMAL"];
 export default function NewsflashPage() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const { newsFlash, broadcastLoading } = useHome();
+  const { newsFlash, broadcastLoading, acknowledgeNews, refetchBroadcasts } =
+    useHome();
+
   const { setHideTabBar } = useTabs();
   const { scrollRef, onScroll, scrollToTop, showScrollTop } = useGesture({
     controlNav: false,
@@ -28,7 +29,8 @@ export default function NewsflashPage() {
   useFocusEffect(
     useCallback(() => {
       setHideTabBar(true);
-    }, [setHideTabBar]),
+      refetchBroadcasts();
+    }, [setHideTabBar, refetchBroadcasts]),
   );
 
   const [priority, setPriority] = useState<PriorityFilter>("ALL");
@@ -89,7 +91,7 @@ export default function NewsflashPage() {
         {broadcastLoading ? (
           <FullLoading layout={[1, 1, 1, 1, 1]} />
         ) : (
-          <NewsflashList data={filteredData} />
+          <NewsflashList data={filteredData} onAcknowledge={acknowledgeNews} />
         )}
       </ScrollView>
 
