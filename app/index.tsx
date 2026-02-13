@@ -10,6 +10,7 @@ import {
   Image,
 } from "react-native";
 import { useTheme, Text, TextInput, Button } from "react-native-paper";
+import { Eye, EyeOff } from "lucide-react-native";
 import { useDesign } from "../contexts/designContext";
 import { useAuth } from "../contexts/authContext";
 
@@ -19,10 +20,12 @@ export default function SignIn() {
   const { signIn, loading } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [secure, setSecure] = useState(true);
   const focusPassword = useRef<(() => void) | null>(null);
+
   const isValid = useMemo(
     () => username.trim().length > 0 && password.length > 0,
-    [username, password]
+    [username, password],
   );
 
   const opacity = useRef(new Animated.Value(0)).current;
@@ -102,7 +105,7 @@ export default function SignIn() {
           >
             <View style={{ alignItems: "center", gap: tokens.spacing.sm }}>
               <Image
-                source={require("../assets/images/iconn.png")}
+                source={require("../assets/images/icon.png")}
                 style={{ width: 56, height: 56, resizeMode: "contain" }}
               />
 
@@ -136,13 +139,25 @@ export default function SignIn() {
                 label="Password"
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
+                secureTextEntry={secure}
                 returnKeyType="go"
                 ref={(
-                  instance: React.ComponentRef<typeof TextInput> | null
+                  instance: React.ComponentRef<typeof TextInput> | null,
                 ) => {
                   focusPassword.current = instance?.focus ?? null;
                 }}
+                right={
+                  <TextInput.Icon
+                    icon={() =>
+                      secure ? (
+                        <EyeOff size={18} color={colors.onSurfaceVariant} />
+                      ) : (
+                        <Eye size={18} color={colors.onSurfaceVariant} />
+                      )
+                    }
+                    onPress={() => setSecure((s) => !s)}
+                  />
+                }
                 onSubmitEditing={() => {
                   if (isValid && !loading) {
                     Keyboard.dismiss();

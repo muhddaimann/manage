@@ -9,7 +9,9 @@ import React, {
 import { router } from "expo-router";
 import { OverlayContext } from "./overlayContext";
 import { useToken } from "./tokenContext";
+import { useNotifications } from "./notificationContext";
 import { login } from "./api/auth";
+import { jwtDecode } from "jwt-decode";
 
 type User = { username: string } | null;
 
@@ -42,12 +44,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [bootstrapped, setBootstrapped] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const overlay = useContext(OverlayContext);
   if (!overlay) {
     throw new Error("AuthProvider must be used within OverlayProvider");
   }
 
   const { toast, destructiveConfirm } = overlay;
+  const { register, unregister } = useNotifications();
 
   const {
     token,
@@ -61,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const forceRelogin = useCallback(
     async (reason?: string) => {
+      await unregister();
       await clearToken();
       setUser(null);
       setError(null);
@@ -72,30 +77,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       router.replace("/");
     },
-    [clearToken, toast],
+    [clearToken, toast, unregister],
   );
 
   useEffect(() => {
     if (!tokenReady) return;
 
-    if (token) {
-      if (isExpired()) {
-        forceRelogin("Session expired. Please sign in again.");
-      } else {
-        setUser({ username: "user" });
-        router.replace("/welcome");
+    const init = async () => {
+      if (!token) {
+        setUser(null);
+        setBootstrapped(true);
+        router.replace("/");
+        return;
       }
-    }
-    setBootstrapped(true);
-  }, [tokenReady, token, isExpired, forceRelogin]);
+
+      if (isExpired()) {
+        await unregister();
+        await clearToken();
+        setUser(null);
+        setBootstrapped(true);
+        router.replace("/");
+        return;
+      }
+
+      try {
+        const decoded: any = jwtDecode(token);
+        const username =
+          decoded?.username || decoded?.Username || decoded?.sub || "user";
+
+        setUser({ username });
+      } catch {
+        setUser({ username: "user" });
+      }
+
+      await register();
+      setBootstrapped(true);
+      router.replace("/welcome");
+    };
+
+    init();
+  }, [tokenReady, token]);
 
   useEffect(() => {
     if (!user) return;
+
     const timer = setInterval(() => {
       if (isExpired()) {
         forceRelogin("Session expired. Please sign in again.");
       }
-    }, 1000 * 60); // every minute
+    }, 1000 * 60);
+
     return () => clearInterval(timer);
   }, [user, isExpired, forceRelogin]);
 
@@ -108,8 +139,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const res = await login({ username, password });
 
         if (res.status === "success" && res.token) {
+          await unregister();
           await setToken(res.token);
           setUser({ username });
+          await register();
 
           toast({
             message: `Signed in as ${username}`,
@@ -140,7 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
       }
     },
-    [setToken, toast],
+    [setToken, toast, register, unregister],
   );
 
   const signOut = useCallback(async () => {
@@ -153,13 +186,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!ok) return;
 
+    await unregister();
     await clearToken();
     setUser(null);
     setError(null);
 
     toast({ message: "Signed out", variant: "info" });
     router.replace("/goodbye");
-  }, [destructiveConfirm, clearToken, toast]);
+  }, [destructiveConfirm, clearToken, toast, unregister]);
 
   const value = useMemo(
     () => ({

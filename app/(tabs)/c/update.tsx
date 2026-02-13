@@ -14,6 +14,7 @@ import { useTabs } from "../../../contexts/tabContext";
 import Header from "../../../components/shared/header";
 import useSettings from "../../../hooks/useSettings";
 import { useOverlay } from "../../../contexts/overlayContext";
+import { useLoader } from "../../../contexts/loaderContext";
 import { router } from "expo-router";
 
 export default function UpdateProfile() {
@@ -21,8 +22,10 @@ export default function UpdateProfile() {
   const { tokens } = useDesign();
   const { setHideTabBar } = useTabs();
   const { toast } = useOverlay();
-  const { staff, form, loading, saving, updateField, saveProfile, hasChanges } =
+  const { show, hide } = useLoader();
+  const { staff, form, loading, updateField, saveProfile, hasChanges } =
     useSettings();
+
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.94)).current;
   const liftY = useRef(new Animated.Value(0)).current;
@@ -46,7 +49,7 @@ export default function UpdateProfile() {
       }),
     ]).start();
 
-    const show = Keyboard.addListener("keyboardWillShow", () => {
+    const showKb = Keyboard.addListener("keyboardWillShow", () => {
       Animated.spring(liftY, {
         toValue: -20,
         damping: 20,
@@ -56,7 +59,7 @@ export default function UpdateProfile() {
       }).start();
     });
 
-    const hide = Keyboard.addListener("keyboardWillHide", () => {
+    const hideKb = Keyboard.addListener("keyboardWillHide", () => {
       Animated.spring(liftY, {
         toValue: 0,
         damping: 18,
@@ -67,8 +70,8 @@ export default function UpdateProfile() {
     });
 
     return () => {
-      show.remove();
-      hide.remove();
+      showKb.remove();
+      hideKb.remove();
     };
   }, [setHideTabBar]);
 
@@ -81,18 +84,26 @@ export default function UpdateProfile() {
       return;
     }
 
+    show("Updating profile…");
+
     try {
       await saveProfile();
-      toast({
-        message: "Profile updated successfully",
-        variant: "success",
-      });
+
       router.back();
+
+      setTimeout(() => {
+        toast({
+          message: "Profile updated successfully",
+          variant: "success",
+        });
+      }, 1000);
     } catch {
       toast({
         message: "Failed to update profile",
         variant: "error",
       });
+    } finally {
+      hide();
     }
   };
 
@@ -181,8 +192,7 @@ export default function UpdateProfile() {
 
               <Button
                 mode="contained"
-                disabled={!hasChanges || saving}
-                loading={saving}
+                disabled={!hasChanges}
                 contentStyle={{ height: 48 }}
                 onPress={onSave}
               >

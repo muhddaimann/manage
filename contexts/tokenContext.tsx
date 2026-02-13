@@ -42,9 +42,7 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
 
     (async () => {
       const t = await SecureStore.getItemAsync(TOKEN_KEY);
-
       if (!mounted) return;
-
       setTokenState(t);
       setBootstrapped(true);
     })();
@@ -67,11 +65,10 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
   const isExpired = useCallback(() => {
     if (!token) return true;
     try {
-      const decoded = jwtDecode(token);
-      if (!decoded.exp) return false;
-      const expiresAt = decoded.exp * 1000;
-      return Date.now() > expiresAt;
-    } catch (e) {
+      const decoded: any = jwtDecode(token);
+      if (!decoded?.exp) return false;
+      return Date.now() > decoded.exp * 1000;
+    } catch {
       return true;
     }
   }, [token]);
@@ -84,7 +81,7 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
       isExpired,
       bootstrapped,
     }),
-    [token, setToken, clearToken, isExpired, bootstrapped]
+    [token, setToken, clearToken, isExpired, bootstrapped],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -76,63 +76,94 @@ Faith Manage — Leading teams with clarity and control
 │ ├─ No payroll, tax, or accounting modules.
 │ ├─ No advanced performance appraisal system.
 │ ├─ No external recruitment or onboarding workflows.
-```
 
-manage/
-├─ .expo/
-│  ├─ types/
-│  │  └─ router.d.ts
-│  ├─ web/
-│  │  └─ cache/
-│  │     └─ production/
-│  │        └─ images/
-│  │           └─ favicon/
-│  │              └─ favicon-24272cdaeff82cc5facdaccd982a6f05b60c4504704bbf94c19a6388659880bb-contain-transparent/
-│  │                 └─ favicon-48.png
-│  ├─ devices.json
-│  └─ README.md
-├─ app/
-│  ├─ (modals)/
-│  │  ├─ _layout.tsx
-│  │  ├─ forgot.tsx
-│  │  ├─ signIn.tsx
-│  │  └─ signUp.tsx
-│  ├─ (tabs)/
-│  │  ├─ a/
-│  │  │  ├─ _layout.tsx
-│  │  │  └─ index.tsx
-│  │  ├─ b/
-│  │  │  ├─ _layout.tsx
-│  │  │  └─ index.tsx
-│  │  └─ _layout.tsx
-│  ├─ _layout.tsx
-│  ├─ goodbye.tsx
-│  ├─ index.tsx
-│  └─ welcome.tsx
-├─ assets/
-├─ components/
-│  ├─ a/
-│  │  └─ header.tsx
-│  ├─ b/
-│  │  └─ header.tsx
-│  └─ shared/
-│     ├─ alert.tsx
-│     ├─ confirm.tsx
-│     ├─ header.tsx
-│     ├─ modal.tsx
-│     └─ toast.tsx
-├─ constants/
-│  ├─ design.ts
-│  └─ theme.ts
-├─ contexts/
-│  ├─ authContext.tsx
-│  ├─ designContext.tsx
-│  ├─ overlayContext.tsx
-│  └─ themeContext.tsx
-├─ hooks/
-├─ .gitignore
-├─ app.json
-├─ package-lock.json
-├─ package.json
-├─ README.md
-└─ tsconfig.json
+
+├─ Push Notification Module
+│  ├─ Purpose
+│  │  ├─ Enable real-time push notifications via Expo
+│  │  ├─ Support multi-device per staff
+│  │  ├─ Provide scalable foundation for targeting & broadcast
+│  │  └─ Maintain token lifecycle management
+│  │
+│  ├─ Core Components
+│  │  ├─ Mobile App (Expo)
+│  │  ├─ Backend API (PHP + JWT)
+│  │  ├─ Database (MySQL)
+│  │  └─ Expo Push Server
+│  │
+│  ├─ Authentication Flow
+│  │  ├─ User Login
+│  │  │  ├─ Verify credentials
+│  │  │  └─ Issue JWT (staff_id, SiteDepartmentProfileID)
+│  │  ├─ App stores JWT
+│  │  └─ All push APIs require Authorization: Bearer <token>
+│  │
+│  ├─ Token Registration Flow
+│  │  ├─ After login
+│  │  ├─ Request notification permission
+│  │  ├─ Retrieve Expo Push Token
+│  │  ├─ POST /push/register
+│  │  │  ├─ Validate JWT
+│  │  │  ├─ Resolve staff_id
+│  │  │  └─ Insert/Update token
+│  │  └─ Token marked IsActive = 1
+│  │
+│  ├─ Token Deactivation Flow
+│  │  ├─ Triggered on logout
+│  │  ├─ POST /push/unregister
+│  │  └─ Set IsActive = 0
+│  │
+│  ├─ Database Tables
+│  │  ├─ staff
+│  │  │  └─ Core user identity table
+│  │  │
+│  │  ├─ staff_push_token
+│  │  │  ├─ ID (PK)
+│  │  │  ├─ StaffID (FK reference to staff)
+│  │  │  ├─ ExpoPushToken (UNIQUE)
+│  │  │  ├─ DeviceType (ios/android)
+│  │  │  ├─ IsActive (1/0)
+│  │  │  ├─ CreatedAt
+│  │  │  └─ UpdatedAt
+│  │  │
+│  │  └─ push_notification_log
+│  │     ├─ ID (PK)
+│  │     ├─ StaffID
+│  │     ├─ ExpoPushToken
+│  │     ├─ Title
+│  │     ├─ Body
+│  │     ├─ Status
+│  │     ├─ ExpoResponse
+│  │     └─ CreatedAt
+│  │
+│  ├─ Simple Send Flow
+│  │  ├─ Admin triggers send
+│  │  ├─ Backend fetches active tokens
+│  │  ├─ Send batch (≤100 tokens) to Expo API
+│  │  ├─ Expo delivers to devices
+│  │  └─ Log result (success / failure)
+│  │
+│  ├─ Expo Integration
+│  │  ├─ Endpoint: https://exp.host/--/api/v2/push/send
+│  │  ├─ Payload includes:
+│  │  │  ├─ to (ExpoPushToken)
+│  │  │  ├─ title
+│  │  │  ├─ body
+│  │  │  └─ data (optional metadata)
+│  │  └─ Handle DeviceNotRegistered error
+│  │
+│  ├─ Token Lifecycle Management
+│  │  ├─ Register on login
+│  │  ├─ Deactivate on logout
+│  │  ├─ Disable if invalid token response
+│  │  └─ Support multi-device per staff
+│  │
+│  └─ Future Enhancements
+│     ├─ Department-based targeting
+│     ├─ Broadcast-triggered push
+│     ├─ Scheduled notifications
+│     ├─ Queue-based processing
+│     └─ Delivery analytics dashboard
+
+
+```

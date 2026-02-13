@@ -4,6 +4,7 @@ import { Text, Divider, Switch, useTheme } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import Header from "../../../components/c/header";
 import { ChevronRight, CreditCard } from "lucide-react-native";
+import { useNotifications } from "../../../contexts/notificationContext";
 import { useOverlay } from "../../../contexts/overlayContext";
 import StaffModal from "../../../components/c/staffModal";
 import { useTabs } from "../../../contexts/tabContext";
@@ -13,9 +14,9 @@ import { useCallback } from "react";
 export default function Settings() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const { modal } = useOverlay();
+  const { modal, alert } = useOverlay();
   const { setHideTabBar } = useTabs();
-  const [notifications, setNotifications] = useState(true);
+  const { permissionStatus, register } = useNotifications();
 
   useFocusEffect(
     useCallback(() => {
@@ -138,8 +139,28 @@ export default function Settings() {
             </View>
 
             <Switch
-              value={notifications}
-              onValueChange={setNotifications}
+              value={permissionStatus === "granted"}
+              onValueChange={async (newValue) => {
+                if (newValue) {
+                  // User wants to turn notifications ON
+                  const token = await register();
+                  if (!token) {
+                    // Permission denied or failed to get token after register() attempt
+                    alert({
+                      title: "Notifications Denied",
+                      message:
+                        "Please enable notifications in your device's settings to receive them.",
+                    });
+                  }
+                } else {
+                  // User wants to turn notifications OFF
+                  alert({
+                    title: "Turn off Notifications",
+                    message:
+                      "To stop receiving notifications, please disable them in your device's system settings.",
+                  });
+                }
+              }}
               color={colors.primary}
             />
           </View>

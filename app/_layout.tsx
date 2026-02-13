@@ -17,6 +17,7 @@ import { ThemeProvider } from "../contexts/themeContext";
 import { DesignProvider } from "../contexts/designContext";
 import { OverlayProvider } from "../contexts/overlayContext";
 import { AuthProvider } from "../contexts/authContext";
+import { NotificationProvider } from "../contexts/notificationContext";
 import AlertDialog from "../components/shared/alert";
 import ConfirmDialog from "../components/shared/confirm";
 import ToastBar from "../components/shared/toast";
@@ -90,7 +91,9 @@ export default function RootLayout() {
                 <LoaderProvider>
                   <TokenProvider>
                     <AuthProvider>
-                      <AppShell />
+                      <NotificationProvider>
+                        <AppShell />
+                      </NotificationProvider>
                     </AuthProvider>
                   </TokenProvider>
                 </LoaderProvider>
