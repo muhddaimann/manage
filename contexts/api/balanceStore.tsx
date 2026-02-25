@@ -22,4 +22,6 @@ export const useBalanceStore = create<BalanceStore>((set) => ({
       set({ balanceLoading: false });
     }
   },
+
+  clear: () => set({ annualLeaveLeft: 0, balanceLoading: false }),
 }));

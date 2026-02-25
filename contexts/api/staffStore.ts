@@ -31,5 +31,11 @@ export const useStaffStore = create<StaffStore>((set) => ({
   },
 
   setStaff: (data) => set({ staff: data }),
-  clearStaff: () => set({ staff: null }),
+
+  clearStaff: () =>
+    set({
+      staff: null,
+      loading: false,
+      error: null,
+    }),
 }));

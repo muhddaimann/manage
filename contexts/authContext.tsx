@@ -12,6 +12,7 @@ import { useToken } from "./tokenContext";
 import { useNotifications } from "./notificationContext";
 import { login } from "./api/auth";
 import { jwtDecode } from "jwt-decode";
+import { useClear } from "../hooks/useClear";
 
 type User = { username: string } | null;
 
@@ -52,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const { toast, destructiveConfirm } = overlay;
   const { register, unregister } = useNotifications();
+  const { clearAll } = useClear();
 
   const {
     token,
@@ -145,7 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await register();
 
           toast({
-            message: `Signed in as ${username}`,
+            message: `Welcome back, ${username} 🚀`,
             variant: "success",
           });
 
@@ -156,16 +158,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const msg =
           res.message ||
           (res.status === "invalid_password"
-            ? "Invalid password"
+            ? "Oops, that password doesn’t look right."
             : res.status === "user_not_found"
-              ? "User not found"
-              : "Sign in failed");
+              ? "We couldn’t find your account."
+              : "Unable to sign in. Please try again.");
 
         setError(msg);
         toast({ message: msg, variant: "error" });
         return false;
       } catch (e: any) {
-        const msg = e?.message || "Unexpected error";
+        const msg = e?.message || "Something went wrong. Please try again.";
         setError(msg);
         toast({ message: msg, variant: "error" });
         return false;
@@ -188,12 +190,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     await unregister();
     await clearToken();
+    clearAll();
     setUser(null);
     setError(null);
 
-    toast({ message: "Signed out", variant: "info" });
+    toast({
+      message: "See ya 👋",
+      variant: "info",
+    });
+
     router.replace("/goodbye");
-  }, [destructiveConfirm, clearToken, toast, unregister]);
+  }, [destructiveConfirm, clearToken, toast, unregister, clearAll]);
 
   const value = useMemo(
     () => ({

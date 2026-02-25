@@ -3,11 +3,6 @@ import * as Device from "expo-device";
 import { Platform } from "react-native";
 import api from "./api";
 
-/**
- * This function handles getting the user's permission and retrieving the Expo Push Token.
- * It also configures the notification channel for Android.
- * @returns The Expo Push Token string, or undefined if permission is denied or on a simulator.
- */
 export async function registerForPushNotificationsAsync(): Promise<
   string | undefined
 > {
@@ -46,11 +41,6 @@ export async function registerForPushNotificationsAsync(): Promise<
   return token;
 }
 
-/**
- * This function sends the retrieved Expo token to your backend server.
- * @param expoPushToken The token received from registerForPushNotificationsAsync.
- * @param authToken The JWT token for authenticating the user.
- */
 export async function sendTokenToBackend(
   expoPushToken: string,
   authToken: string
@@ -68,16 +58,10 @@ export async function sendTokenToBackend(
     console.log("Expo Push Token sent to backend successfully.");
   } catch (error) {
     console.error("Failed to send Expo Push Token to backend:", error);
-    // Optionally, re-throw the error if the caller needs to handle it.
     throw error;
   }
 }
 
-/**
- * This function removes the retrieved Expo token from your backend server.
- * @param expoPushToken The token to remove.
- * @param authToken The JWT token for authenticating the user.
- */
 export async function removeTokenFromBackend(
   expoPushToken: string,
   authToken: string

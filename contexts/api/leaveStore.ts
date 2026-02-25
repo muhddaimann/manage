@@ -84,4 +84,12 @@ export const useLeaveStore = create<LeaveStore>((set, get) => ({
       set({ submitting: false });
     }
   },
+
+  clear: () =>
+    set({
+      leaves: [],
+      loading: false,
+      submitting: false,
+      submissionError: null,
+    }),
 }));

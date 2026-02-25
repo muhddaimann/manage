@@ -165,5 +165,7 @@ Faith Manage — Leading teams with clarity and control
 │     ├─ Queue-based processing
 │     └─ Delivery analytics dashboard
 
+├─ {Campaign name}
+│  ├─ Goals etc
 
 ```

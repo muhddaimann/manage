@@ -80,4 +80,6 @@ export const useRoomStore = create<RoomState>((set) => ({
       set({ loading: false });
       return res;
     },
+
+  clear: () => set({ myBookings: [], loading: false, error: null }),
 }));

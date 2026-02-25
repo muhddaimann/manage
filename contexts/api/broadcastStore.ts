@@ -45,4 +45,6 @@ export const useBroadcastStore = create<BroadcastStore>((set) => ({
           ? { ...state.selectedBroadcast, Acknowledged: 1 }
           : state.selectedBroadcast,
     })),
+
+  clear: () => set({ broadcasts: [], selectedBroadcast: null }),
 }));
