@@ -140,26 +140,8 @@ export default function Settings() {
 
             <Switch
               value={permissionStatus === "granted"}
-              onValueChange={async (newValue) => {
-                if (newValue) {
-                  // User wants to turn notifications ON
-                  const token = await register();
-                  if (!token) {
-                    // Permission denied or failed to get token after register() attempt
-                    alert({
-                      title: "Notifications Denied",
-                      message:
-                        "Please enable notifications in your device's settings to receive them.",
-                    });
-                  }
-                } else {
-                  // User wants to turn notifications OFF
-                  alert({
-                    title: "Turn off Notifications",
-                    message:
-                      "To stop receiving notifications, please disable them in your device's system settings.",
-                  });
-                }
+              onValueChange={async () => {
+                await register(true);
               }}
               color={colors.primary}
             />

@@ -20,14 +20,15 @@ const PRIORITY_LABEL: Record<NewsPriority, string> = {
 
 type CarouselRowProps = {
   data: NewsFlash[];
+  onAcknowledge: (id: string) => Promise<any>;
 };
 
 const stripHtml = (v: string) => v.replace(/<[^>]*>/g, "").trim();
 
-export default function CarouselRow({ data }: CarouselRowProps) {
+export default function CarouselRow({ data, onAcknowledge }: CarouselRowProps) {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const { modal } = useOverlay();
+  const { modal, dismissModal, toast } = useOverlay();
 
   const listRef = useRef<FlatList<NewsFlash>>(null);
   const [index, setIndex] = useState(0);
@@ -54,11 +55,26 @@ export default function CarouselRow({ data }: CarouselRowProps) {
   }, [index, limitedData.length, SNAP_INTERVAL]);
 
   const openDetails = (item: NewsFlash) => {
+    const handleModalAcknowledge = async (id: string) => {
+      const result = await onAcknowledge(id);
+      if (result?.status === "success") {
+        dismissModal();
+        toast({
+          message: "Acknowledged successfully",
+          variant: "success",
+        });
+      }
+      return result;
+    };
+
     modal({
       dismissible: true,
-      content: <NewsflashModal item={item} />,
+      content: (
+        <NewsflashModal item={item} onAcknowledge={handleModalAcknowledge} />
+      ),
     });
   };
+
 
   return (
     <View style={{ gap: tokens.spacing.sm }}>
@@ -85,33 +101,57 @@ export default function CarouselRow({ data }: CarouselRowProps) {
             >
               <View
                 style={{
-                  backgroundColor: colors.surface,
+                  backgroundColor: item.acknowledged
+                    ? colors.surfaceVariant
+                    : colors.surface,
                   borderRadius: tokens.radii.xl,
                   marginHorizontal: tokens.spacing.xxs,
                   padding: tokens.spacing.md,
                   gap: tokens.spacing.xs,
-                  elevation: 3,
+                  elevation: item.acknowledged ? 0 : 3,
                   shadowColor: colors.shadow,
                   shadowOpacity: 0.12,
                   shadowRadius: 6,
                   shadowOffset: { width: 0, height: 3 },
+                  opacity: item.acknowledged ? 0.8 : 1,
                 }}
               >
                 <View
                   style={{
-                    alignSelf: "flex-start",
-                    paddingHorizontal: tokens.spacing.sm,
-                    paddingVertical: 4,
-                    borderRadius: tokens.radii.full,
-                    backgroundColor: color,
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                   }}
                 >
-                  <Text
-                    variant="labelSmall"
-                    style={{ color: "#fff", fontWeight: "700" }}
+                  <View
+                    style={{
+                      alignSelf: "flex-start",
+                      paddingHorizontal: tokens.spacing.sm,
+                      paddingVertical: 4,
+                      borderRadius: tokens.radii.full,
+                      backgroundColor: color,
+                    }}
                   >
-                    {label}
-                  </Text>
+                    <Text
+                      variant="labelSmall"
+                      style={{ color: "#fff", fontWeight: "700" }}
+                    >
+                      {label}
+                    </Text>
+                  </View>
+
+                  {item.acknowledged && (
+                    <Text
+                      variant="labelSmall"
+                      style={{
+                        color: colors.onSurfaceVariant,
+                        fontWeight: "600",
+                        fontStyle: "italic",
+                      }}
+                    >
+                      Read
+                    </Text>
+                  )}
                 </View>
 
                 <Text variant="titleSmall" style={{ fontWeight: "700" }}>

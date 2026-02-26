@@ -8,7 +8,7 @@ import {
   Animated,
   Easing,
 } from "react-native";
-import { useTheme, Text, TextInput, Button } from "react-native-paper";
+import { useTheme, TextInput, Button } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
 import Header from "../../../components/shared/header";

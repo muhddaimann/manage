@@ -63,33 +63,56 @@ export default function NewsflashList({
             key={item.id}
             onPress={() => openDetails(item)}
             style={({ pressed }) => ({
-              backgroundColor: colors.surface,
+              backgroundColor: item.acknowledged
+                ? colors.surfaceVariant
+                : colors.surface,
               borderRadius: tokens.radii.xl,
               padding: tokens.spacing.lg,
               gap: tokens.spacing.xs,
-              elevation: pressed ? 2 : 6,
+              elevation: item.acknowledged ? 0 : pressed ? 2 : 6,
               shadowColor: colors.shadow,
               shadowOpacity: pressed ? 0.12 : 0.18,
               shadowRadius: pressed ? 6 : 10,
               shadowOffset: { width: 0, height: pressed ? 2 : 6 },
-              opacity: item.acknowledged ? 0.75 : 1,
+              opacity: item.acknowledged ? 0.8 : 1,
             })}
           >
             <View
               style={{
-                alignSelf: "flex-start",
-                paddingHorizontal: tokens.spacing.sm,
-                paddingVertical: 4,
-                borderRadius: tokens.radii.full,
-                backgroundColor: color,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
               }}
             >
-              <Text
-                variant="labelSmall"
-                style={{ color: "#fff", fontWeight: "700" }}
+              <View
+                style={{
+                  alignSelf: "flex-start",
+                  paddingHorizontal: tokens.spacing.sm,
+                  paddingVertical: 4,
+                  borderRadius: tokens.radii.full,
+                  backgroundColor: color,
+                }}
               >
-                {label}
-              </Text>
+                <Text
+                  variant="labelSmall"
+                  style={{ color: "#fff", fontWeight: "700" }}
+                >
+                  {label}
+                </Text>
+              </View>
+
+              {item.acknowledged && (
+                <Text
+                  variant="labelSmall"
+                  style={{
+                    color: colors.onSurfaceVariant,
+                    fontWeight: "600",
+                    fontStyle: "italic",
+                  }}
+                >
+                  Read
+                </Text>
+              )}
             </View>
 
             <Text
