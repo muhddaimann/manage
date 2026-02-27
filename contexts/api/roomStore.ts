@@ -28,6 +28,8 @@ interface RoomState {
   ) => Promise<BookingResponse | ErrorResponse>;
 
   cancelBooking: (bookingNumber: string) => Promise<CancelBookingResponse>;
+
+  clear: () => void;
 }
 
 export const useRoomStore = create<RoomState>((set) => ({

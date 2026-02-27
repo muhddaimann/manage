@@ -20,6 +20,7 @@ type LeaveStore = {
   fetchLeaves: () => Promise<void>;
   addNewLeave: (formData: FormData) => Promise<StoreActionResponse>;
   withdraw: (id: number) => Promise<StoreActionResponse>;
+  clear: () => void;
 };
 
 export const useLeaveStore = create<LeaveStore>((set, get) => ({

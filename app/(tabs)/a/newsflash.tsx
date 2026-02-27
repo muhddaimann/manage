@@ -36,8 +36,22 @@ export default function NewsflashPage() {
   const [priority, setPriority] = useState<PriorityFilter>("ALL");
 
   const filteredData = useMemo<NewsFlash[]>(() => {
-    if (priority === "ALL") return newsFlash;
-    return newsFlash.filter((n) => n.priority === priority);
+    let base = newsFlash;
+    if (priority !== "ALL") {
+      base = newsFlash.filter((n) => n.priority === priority);
+    }
+
+    return [...base].sort((a, b) => {
+      // If a specific priority is selected, prioritize unacknowledged items
+      if (priority !== "ALL") {
+        if (a.acknowledged !== b.acknowledged) {
+          return a.acknowledged ? 1 : -1;
+        }
+      }
+
+      // Default/Secondary sort: Date time (newest first)
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
   }, [newsFlash, priority]);
 
   return (

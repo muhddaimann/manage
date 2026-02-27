@@ -23,6 +23,7 @@ interface BroadcastStore {
   clearBroadcast: () => void;
 
   markAcknowledged: (id: number) => void;
+  clear: () => void;
 }
 
 export const useBroadcastStore = create<BroadcastStore>((set) => ({

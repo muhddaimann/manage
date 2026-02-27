@@ -104,6 +104,12 @@ function formatBookingDateTime(start: string, end: string) {
   };
 }
 
+const PRIORITY_WEIGHT: Record<NewsPriority, number> = {
+  CRITICAL: 3,
+  IMPORTANT: 2,
+  NORMAL: 1,
+};
+
 export default function useHome() {
   const { toast } = useOverlay();
 
@@ -240,6 +246,23 @@ export default function useHome() {
     [toast],
   );
 
+  const carouselNews = useMemo(() => {
+    return [...newsFlash].sort((a, b) => {
+      // 1. Unread items first
+      if (a.acknowledged !== b.acknowledged) {
+        return a.acknowledged ? 1 : -1;
+      }
+
+      // 2. Higher priority first
+      if (a.priority !== b.priority) {
+        return PRIORITY_WEIGHT[b.priority] - PRIORITY_WEIGHT[a.priority];
+      }
+
+      // 3. Newest first
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
+  }, [newsFlash]);
+
   return {
     today,
     greeting,
@@ -253,6 +276,7 @@ export default function useHome() {
     activeBookings,
     pastBookings,
     newsFlash,
+    carouselNews,
     acknowledgeNews,
     refetchBroadcasts: fetchBroadcasts,
     NEWS_PRIORITY_COLOR,

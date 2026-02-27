@@ -77,6 +77,7 @@ export const getAttendanceDef = async (): Promise<AttendanceAPIResponse | Attend
   try {
     // const response = await api.get<AttendanceAPIResponse>('/attendance.php?default=true');
     const response = await api.get<AttendanceAPIResponse>('/attendance.php');
+    
     return response.data;
   } catch (error) {
     console.error('Error fetching attendance records:', error);

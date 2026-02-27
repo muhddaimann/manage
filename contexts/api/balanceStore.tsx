@@ -5,6 +5,7 @@ type BalanceStore = {
   annualLeaveLeft: number;
   balanceLoading: boolean;
   fetchBalance: () => Promise<void>;
+  clear: () => void;
 };
 
 export const useBalanceStore = create<BalanceStore>((set) => ({

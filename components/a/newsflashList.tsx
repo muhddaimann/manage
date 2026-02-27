@@ -64,7 +64,7 @@ export default function NewsflashList({
             onPress={() => openDetails(item)}
             style={({ pressed }) => ({
               backgroundColor: item.acknowledged
-                ? colors.surfaceVariant
+                ? colors.tertiaryContainer
                 : colors.surface,
               borderRadius: tokens.radii.xl,
               padding: tokens.spacing.lg,
@@ -100,19 +100,6 @@ export default function NewsflashList({
                   {label}
                 </Text>
               </View>
-
-              {item.acknowledged && (
-                <Text
-                  variant="labelSmall"
-                  style={{
-                    color: colors.onSurfaceVariant,
-                    fontWeight: "600",
-                    fontStyle: "italic",
-                  }}
-                >
-                  Read
-                </Text>
-              )}
             </View>
 
             <Text

@@ -24,6 +24,7 @@ export default function Home() {
     greeting,
     user,
     newsFlash,
+    carouselNews,
     acknowledgeNews,
     activeBookings,
     pastBookings,
@@ -87,7 +88,7 @@ export default function Home() {
         {broadcastLoading ? (
           <FullLoading layout={[1]} />
         ) : (
-          <CarouselRow data={newsFlash} onAcknowledge={acknowledgeNews} />
+          <CarouselRow data={carouselNews} onAcknowledge={acknowledgeNews} />
         )}
 
         <SectionHeader

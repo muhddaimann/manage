@@ -102,7 +102,7 @@ export default function CarouselRow({ data, onAcknowledge }: CarouselRowProps) {
               <View
                 style={{
                   backgroundColor: item.acknowledged
-                    ? colors.surfaceVariant
+                    ? colors.tertiaryContainer
                     : colors.surface,
                   borderRadius: tokens.radii.xl,
                   marginHorizontal: tokens.spacing.xxs,
@@ -139,19 +139,6 @@ export default function CarouselRow({ data, onAcknowledge }: CarouselRowProps) {
                       {label}
                     </Text>
                   </View>
-
-                  {item.acknowledged && (
-                    <Text
-                      variant="labelSmall"
-                      style={{
-                        color: colors.onSurfaceVariant,
-                        fontWeight: "600",
-                        fontStyle: "italic",
-                      }}
-                    >
-                      Read
-                    </Text>
-                  )}
                 </View>
 
                 <Text variant="titleSmall" style={{ fontWeight: "700" }}>

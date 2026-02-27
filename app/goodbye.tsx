@@ -1,14 +1,12 @@
 import React, { useEffect, useRef } from "react";
 import { View, ActivityIndicator, Animated, Easing } from "react-native";
 import { useTheme, Text } from "react-native-paper";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDesign } from "../contexts/designContext";
 import { useRouter } from "expo-router";
 
 export default function Goodbye() {
   const { colors } = useTheme();
   const { tokens } = useDesign();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
 
   const opacity = useRef(new Animated.Value(0)).current;

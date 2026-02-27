@@ -7,7 +7,7 @@ type StaffStore = {
   error: string | null;
   fetchStaff: () => Promise<void>;
   setStaff: (data: StaffResponse) => void;
-  clearStaff: () => void;
+  clear: () => void;
 };
 
 export const useStaffStore = create<StaffStore>((set) => ({
@@ -32,7 +32,7 @@ export const useStaffStore = create<StaffStore>((set) => ({
 
   setStaff: (data) => set({ staff: data }),
 
-  clearStaff: () =>
+  clear: () =>
     set({
       staff: null,
       loading: false,
